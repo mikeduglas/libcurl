@@ -236,4 +236,8 @@ SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataP
 Perform                         PROCEDURE(), CURLcode
 
 StrError                        PROCEDURE(CURLcode errcode), STRING
+
+
+!
+ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>), CURLcode, PROC
                               END

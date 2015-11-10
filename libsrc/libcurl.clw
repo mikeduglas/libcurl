@@ -219,4 +219,67 @@ TCurlClass.StrError           PROCEDURE(CURLcode errcode)
   CODE
   RETURN curl_easy_strerror(errcode)
   
+TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>)
+res                             CURLcode
+fhandle                         HANDLE
+filename                        CSTRING(256)
+url                             CSTRING(256)
+  CODE
+  filename = CLIP(pLocalFile)
+  url = CLIP(pRemoteFile)
+    
+  ! create file
+  fhandle = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0)
+  IF fhandle = 0
+    RETURN -1
+  END
+
+  ! set WriteFile callback
+  res = SELF.SetOpt(CURLOPT_WRITEFUNCTION, curl::CapWrite)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! destination
+  res = SELF.SetOpt(CURLOPT_WRITEDATA, ADDRESS(fhandle))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  IF NOT OMITTED(cbproc)
+    ! progress proc
+    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, cbproc)
+    IF res <> CURLE_OK
+      RETURN res
+    END
+
+    ! enable progress
+    res = SELF.SetOpt(CURLOPT_NOPROGRESS, FALSE)
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+  
+  ! remote file
+  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+    
+!!    /* url is redirected, so we tell libcurl to follow redirection */     
+!    res = curl.SetOpt(CURLOPT_FOLLOWLOCATION, 1)
+!    IF res <> CURLE_OK
+!      RETURN res
+!    END
+
+  ! выполняем запрсо
+  res = SELF.Perform()
+  IF res <> CURLE_OK
+    RETURN res
+  END
+ 
+  CloseHandle(fhandle)
+  
+  RETURN CURLE_OK
+
 !!!endregion

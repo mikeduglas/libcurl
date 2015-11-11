@@ -71,6 +71,7 @@
       curl_easy_setopt(CURL curl, CURLoption option, LONG param), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::CapWriteProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ProgressDataProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
+!      curl_easy_setopt(CURL curl, CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
 
 !      * The curl_easy_strerror function may be used to turn a CURLcode value
 !      * into the equivalent human readable error string.  This is useful
@@ -169,16 +170,72 @@ cs                              CSTRING(LEN(s) + LEN(prefix) + 1)
 !!!endregion
 
 !!!region callbacks
-curl::CapWrite                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, *HANDLE fhandle)
+curl::CapWrite                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
+fs                              &curl::FileStruct
+filename                        CSTRING(256)
 bytesWritten                    size_t
 rc                              BOOL
   CODE
-  rc = WriteFile(fhandle, buffer, bufsize * nmemb, bytesWritten, 0)
+  IF pFileStruct = 0
+    RETURN -1
+  END
+  
+  fs &= (pFileStruct)
+  
+  IF fs.fhandle = 0
+    ! create file
+    filename = CLIP(fs.filename)
+    fs.fhandle = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0)
+    IF fs.fhandle = 0
+      RETURN -1
+    END
+  END
+  
+  rc = WriteFile(fs.fhandle, buffer, bufsize * nmemb, bytesWritten, 0)
   IF rc
     RETURN bytesWritten
   END
   
   RETURN -1 !error
+  
+curl::CapRead                 PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
+fs                              &curl::FileStruct
+filename                        CSTRING(256)
+bytesRead                       size_t
+rc                              BOOL
+  CODE
+  IF pFileStruct = 0
+    RETURN -1
+  END
+  
+  fs &= (pFileStruct)
+  
+  IF fs.fhandle = 0
+    ! open file
+    filename = CLIP(fs.filename)
+    fs.fhandle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)
+    IF fs.fhandle = 0
+      RETURN -1
+    END
+  END
+  
+  rc = ReadFile(fs.fhandle, buffer, bufsize * nmemb, bytesRead, 0)
+  IF rc
+    RETURN bytesRead
+  END
+  
+  RETURN -1 !error
+
+curl::XFerInfo                PROCEDURE(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow)
+curl                            &TCurlClass
+  CODE
+  IF ptr
+    curl &= (ptr)
+    RETURN curl.XFerInfo(dltotal, dlnow, ultotal, ulnow)
+  END
+  
+  RETURN 0
+
 !!!endregion
 
 !!!region TCurlClass
@@ -210,6 +267,10 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::CapWriteProcTyp
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ProgressDataProcType cbproc)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, cbproc)
+  
+!TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc)
+!  CODE
+!  RETURN curl_easy_setopt(SELF.curl, option, cbproc)
 
 TCurlClass.Perform            PROCEDURE()
   CODE
@@ -219,21 +280,22 @@ TCurlClass.StrError           PROCEDURE(CURLcode errcode)
   CODE
   RETURN curl_easy_strerror(errcode)
   
+TCurlClass.SetUserPwd         PROCEDURE(STRING pUser, STRING pPwd)
+userpwd                         CSTRING(256)
+  CODE
+  IF pUser AND pPwd
+    userpwd = CLIP(pUser) &':'& CLIP(pPwd)
+  ELSE
+    userpwd = ''
+  END
+  
+  RETURN SELF.SetOpt(CURLOPT_USERPWD, ADDRESS(userpwd))
+
 TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>)
 res                             CURLcode
-fhandle                         HANDLE
-filename                        CSTRING(256)
+fs                              LIKE(curl::FileStruct)
 url                             CSTRING(256)
   CODE
-  filename = CLIP(pLocalFile)
-  url = CLIP(pRemoteFile)
-    
-  ! create file
-  fhandle = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0)
-  IF fhandle = 0
-    RETURN -1
-  END
-
   ! set WriteFile callback
   res = SELF.SetOpt(CURLOPT_WRITEFUNCTION, curl::CapWrite)
   IF res <> CURLE_OK
@@ -241,45 +303,117 @@ url                             CSTRING(256)
   END
 
   ! destination
-  res = SELF.SetOpt(CURLOPT_WRITEDATA, ADDRESS(fhandle))
+  fs.filename = pLocalFile
+  fs.fhandle = 0
+  res = SELF.SetOpt(CURLOPT_WRITEDATA, ADDRESS(fs))
   IF res <> CURLE_OK
     RETURN res
   END
 
-  IF NOT OMITTED(cbproc)
-    ! progress proc
+  IF OMITTED(cbproc)
+    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, curl::XFerInfo)
+  
+    ! pass self to progress function
+    res = SELF.SetOpt(CURLOPT_PROGRESSDATA, ADDRESS(SELF))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  ELSE
     res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, cbproc)
-    IF res <> CURLE_OK
-      RETURN res
-    END
+  END
+  IF res <> CURLE_OK
+    RETURN res
+  END
 
-    ! enable progress
-    res = SELF.SetOpt(CURLOPT_NOPROGRESS, FALSE)
-    IF res <> CURLE_OK
-      RETURN res
-    END
+  ! enable progress
+  res = SELF.SetOpt(CURLOPT_NOPROGRESS, FALSE)
+  IF res <> CURLE_OK
+    RETURN res
   END
   
   ! remote file
+  url = CLIP(pRemoteFile)    
   res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
   IF res <> CURLE_OK
     RETURN res
   END
-    
-!!    /* url is redirected, so we tell libcurl to follow redirection */     
-!    res = curl.SetOpt(CURLOPT_FOLLOWLOCATION, 1)
-!    IF res <> CURLE_OK
-!      RETURN res
-!    END
-
-  ! выполняем запрсо
+  
+  ! perform request
   res = SELF.Perform()
   IF res <> CURLE_OK
     RETURN res
   END
  
-  CloseHandle(fhandle)
+  CloseHandle(fs.fhandle)
   
   RETURN CURLE_OK
 
+!http://curl.haxx.se/libcurl/c/ftpupload.html
+TCurlClass.WriteFile          PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>)
+res                             CURLcode
+fs                              LIKE(curl::FileStruct)
+url                             CSTRING(256)
+  CODE
+  ! set ReadFile callback
+  res = SELF.SetOpt(CURLOPT_READFUNCTION, curl::CapRead)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! source
+  fs.filename = pLocalFile
+  fs.fhandle = 0
+  res = SELF.SetOpt(CURLOPT_READDATA, ADDRESS(fs))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  IF OMITTED(cbproc)
+    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, curl::XFerInfo)
+  
+    ! pass self to progress function
+    res = SELF.SetOpt(CURLOPT_PROGRESSDATA, ADDRESS(SELF))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  ELSE
+    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, cbproc)
+  END
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! enable progress
+  res = SELF.SetOpt(CURLOPT_NOPROGRESS, FALSE)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  ! enable uploading
+  res = SELF.SetOpt(CURLOPT_UPLOAD, TRUE)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! remote file
+  url = CLIP(pRemoteFile)
+  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  ! perform request
+  res = SELF.Perform()
+  IF res <> CURLE_OK
+    RETURN res
+  END
+ 
+  CloseHandle(fs.fhandle)
+  
+  RETURN CURLE_OK
+
+TCurlClass.XFerInfo           PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow)
+  CODE
+  RETURN 0
+  
 !!!endregion

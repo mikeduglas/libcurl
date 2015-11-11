@@ -25,8 +25,5 @@
   <ItemGroup>
     <Compile Include="test.clw" />
   </ItemGroup>
-  <ItemGroup>
-    <Library Include="libcurl.lib" />
-  </ItemGroup>
   <Import Project="$(ClarionBinPath)\SoftVelocity.Build.Clarion.targets" />
 </Project>

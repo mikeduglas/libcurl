@@ -1,4 +1,8 @@
 # libcurl
 libcurl for Clarion
 
-Initial release
+v0.99
+
+- methods .ReadFile, .WriteFile, .SetUserPwd
+- virtual method .XFerInfo
+- SSH support

@@ -1,6 +1,7 @@
 CURL                          EQUATE(LONG)
 
 size_t                        EQUATE(UNSIGNED)
+!curl_off_t                    EQUATE(INT64)
 
 CURLcode                      EQUATE(LONG)
 CURLE_OK                      EQUATE(0)
@@ -201,19 +202,58 @@ CURLOPT_FOLLOWLOCATION        EQUATE(52 + CURLOPTTYPE_LONG)
 CURLOPT_WRITEFUNCTION         EQUATE(11 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_WRITEDATA             EQUATE(1 + CURLOPTTYPE_OBJECTPOINT)
 
+CURLOPT_READFUNCTION          EQUATE(12 + CURLOPTTYPE_FUNCTIONPOINT)
+CURLOPT_READDATA              EQUATE(9 + CURLOPTTYPE_OBJECTPOINT)
+CURLOPT_UPLOAD                EQUATE(46 + CURLOPTTYPE_LONG)
+
 CURLOPT_PROGRESSFUNCTION      EQUATE(56 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_NOPROGRESS            EQUATE(43 + CURLOPTTYPE_LONG)
+CURLOPT_XFERINFOFUNCTION      EQUATE(219 + CURLOPTTYPE_FUNCTIONPOINT)
+CURLOPT_PROGRESSDATA          EQUATE(57 + CURLOPTTYPE_OBJECTPOINT)
+CURLOPT_XFERINFODATA          EQUATE(CURLOPT_PROGRESSDATA)
+
+CURLOPT_USERPWD               EQUATE(5 + CURLOPTTYPE_OBJECTPOINT)       !"user:password;options" to use when fetching.
+CURLOPT_SSH_AUTH_TYPES        EQUATE(151 + CURLOPTTYPE_LONG)            !allowed SSH authentication methods
+
+CURLOPT_SSH_PUBLIC_KEYFILE    EQUATE(152 + CURLOPTTYPE_OBJECTPOINT)     !Used by scp/sftp to do public/private key authentication
+CURLOPT_SSH_PRIVATE_KEYFILE   EQUATE(153 + CURLOPTTYPE_OBJECTPOINT)     !Used by scp/sftp to do public/private key authentication
+CURLOPT_SSH_HOST_PUBLIC_KEY_MD5   EQUATE(162 + CURLOPTTYPE_OBJECTPOINT) !used by scp/sftp to verify the host's public key
+CURLOPT_SSH_KNOWNHOSTS        EQUATE(183 + CURLOPTTYPE_OBJECTPOINT)     !set the SSH knownhost file name to use
+CURLOPT_SSH_KEYFUNCTION       EQUATE(184 + CURLOPTTYPE_FUNCTIONPOINT)   !set the SSH host key callback, must point to a curl_sshkeycallback function
+CURLOPT_SSH_KEYDATA           EQUATE(185 + CURLOPTTYPE_OBJECTPOINT)     !set the SSH host key callback custom pointer
+
+CURLSSH_AUTH_ANY              EQUATE(-1)          !~0     !/* all types supported by the server */
+CURLSSH_AUTH_NONE             EQUATE(0)                   !/* none allowed, silly but complete */
+CURLSSH_AUTH_PUBLICKEY        EQUATE(00001b)      !(1<<0) !/* public/private key files */
+CURLSSH_AUTH_PASSWORD         EQUATE(00010b)      !(1<<1) !/* password */
+CURLSSH_AUTH_HOST             EQUATE(00100b)      !(1<<2) !/* host key files */
+CURLSSH_AUTH_KEYBOARD         EQUATE(01000b)      !(1<<3) !/* keyboard interactive */
+CURLSSH_AUTH_AGENT            EQUATE(10000b)      !(1<<4) !/* agent (ssh-agent, pageant...) */
+CURLSSH_AUTH_DEFAULT          EQUATE(CURLSSH_AUTH_ANY)
 
   INCLUDE('svapi.inc')
 
+curl::FileStruct              GROUP, TYPE
+filename                        STRING(256)
+fhandle                         HANDLE
+                              END
+
+
   MAP
     ! CURL callback procedure prototypes
-    curl::CapWriteProcType(LONG buffer, size_t bufsize, size_t nmemb, *HANDLE userdata), size_t, C, TYPE
+    curl::CapWriteProcType(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C, TYPE
+    curl::CapReadProcType(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C, TYPE
+
+    ! This is the CURLOPT_PROGRESSFUNCTION callback proto. It is now considered deprecated but was the only choice up until 7.31.0
     curl::ProgressDataProcType(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C, TYPE
+!    ! This is the CURLOPT_XFERINFOFUNCTION callback proto. It was introduced in 7.32.0, it avoids floating point and provides more detailed information.
+!    curl::XFerInfoProcType(LONG ptr, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow), LONG, C, TYPE
 
     MODULE('libcurl')
       curl::DebugInfo(STRING s)
-      curl::CapWrite(LONG buffer, size_t bufsize, size_t nmemb, *HANDLE fhandle), size_t, C
+      curl::CapWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
+      curl::CapRead(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
+      curl::XFerInfo(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C
     END
 
     ! CreateFile, WriteFile, CloseHandle etc
@@ -232,12 +272,20 @@ Cleanup                         PROCEDURE()
 SetOpt                          PROCEDURE(CURLoption option, LONG param), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::CapWriteProcType cbproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataProcType cbproc), CURLcode, PROC
+!SetOpt                          PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, PROC
 
 Perform                         PROCEDURE(), CURLcode
 
 StrError                        PROCEDURE(CURLcode errcode), STRING
 
 
-!
+!set user and password in form "user:password"
+SetUserPwd                      PROCEDURE(STRING pUser, STRING pPwd), CURLcode, PROC
+!download file
 ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>), CURLcode, PROC
+!upload file
+WriteFile                       PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>), CURLcode, PROC
+
+!derive XFerInfo to display prgress info
+XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, VIRTUAL
                               END

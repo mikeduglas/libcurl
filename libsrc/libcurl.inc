@@ -289,4 +289,3 @@ WriteFile                       PROCEDURE(STRING pRemoteFile, STRING pLocalFile,
 !derive XFerInfo to display prgress info
 XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, VIRTUAL
                               END
-

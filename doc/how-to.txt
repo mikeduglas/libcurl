@@ -1,0 +1,88 @@
+libcurl for Clarion v1.00
+
+How-to.
+
+1. Download file
+
+curl  TCurlClass
+res   CURLcode, AUTO
+
+  CODE
+  curl.Init()
+  
+  !if login/password req'd
+  curl.SetUserPwd(username, password)
+
+  res = curl.ReadFile(Url, Filename)
+  IF res = CURLE_OK
+    ! OK
+  ELSIF res = -1 
+    MESSAGE('Cannot create local file', 'libcurl', ICON:Exclamation)
+  ELSE
+    MESSAGE('Download failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+  END
+
+2. Upload file
+
+curl  TCurlClass
+res   CURLcode, AUTO
+
+  CODE
+  curl.Init()
+
+  !if login/password req'd
+  curl.SetUserPwd(username, password)
+
+  res = curl.WriteFile(Url, Filename)
+  IF res = CURLE_OK
+    ! OK
+  ELSIF res = -1 
+    MESSAGE('Cannot open local file', 'libcurl', ICON:Exclamation)
+  ELSE
+    MESSAGE('Upload failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+  END
+
+3. Http GET/POST
+
+curl        TCurlClass
+res         CURLcode, AUTO
+respBuffer  STRING(32768) !big enuff to hold received response
+
+  CODE  
+  curl.Init()
+
+  ! if http headers req'd, add them using AddHttpHeader(), then call SetHttpHeaders().
+  curl.AddHttpHeader('Accept: text/plain')
+  curl.AddHttpHeader('Accept-Charset: utf-8')
+    
+  curl.SetHttpHeaders()
+  
+  ! if server response req'd
+  curl.SetHttpGET(TRUE)
+
+  !if login/password req'd
+  curl.SetUserPwd(username, password)
+
+  ! if ssl req'd
+  curl.SetSSLVerifyHost(false)  ! do not verify host name
+  curl.SetSSLVerifyPeer(true)   ! verify peer
+  
+  ! set ssl version (see CURL_SSLVERSION_xxx constants)
+  curl.SetSSLVersion(CURL_SSLVERSION_DEFAULT)
+    
+  ! if certificate req'd
+  curl.SetCAInfo('.\certificates\mycert.crt')
+  
+  IF pSaveToFile
+    res = curl.SendRequest(Url, PostParams, Filename)
+  ELSE  ! save response to string variable
+    res = curl.SendRequestStr(Url, PostParams, respBuffer)
+  END
+  
+  IF res = CURLE_OK
+    ! OK
+  ELSIF res = -1 
+    MESSAGE('Cannot open local file', 'libcurl', ICON:Exclamation)
+  ELSE
+    MESSAGE('SendRequest failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+  END

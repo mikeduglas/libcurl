@@ -1,3 +1,8 @@
+!** libcurl for Clarion v1.00 
+!** 12.11.2015
+!** mikeduglas66@gmail.com
+
+
   MEMBER
 
   INCLUDE('libcurl.inc')
@@ -31,6 +36,7 @@
 !      * transfer is completed.
 !CURL_EXTERN CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ...); 
       curl_easy_getinfo(CURL curl, CURLINFO info, LONG arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
+      curl_easy_getinfo(CURL curl, CURLINFO info, *CSTRING arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
 
       curl_easy_init(), CURL, C, RAW, NAME('curl_easy_init')
 
@@ -69,7 +75,7 @@
 
 !CURL_EXTERN   CURLcode curl_easy_setopt(CURL *curl, CURLoption option, ...);       
       curl_easy_setopt(CURL curl, CURLoption option, LONG param), CURLcode, C, RAW, NAME('curl_easy_setopt')
-      curl_easy_setopt(CURL curl, CURLoption option, curl::CapWriteProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
+      curl_easy_setopt(CURL curl, CURLoption option, curl::ReadWriteProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ProgressDataProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
 !      curl_easy_setopt(CURL curl, CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
 
@@ -146,8 +152,17 @@
 !      curl_share_init @50
 !      curl_share_setopt @51
 !      curl_share_strerror @52
-!      curl_slist_append @53
-!      curl_slist_free_all @54
+
+! * Appends a string to a linked list. If no list exists, it will be created
+! * first. Returns the new list, after appending.
+!CURL_EXTERN struct curl_slist *curl_slist_append(struct curl_slist *,
+!                                                 const char *); 
+      curl_slist_append(LONG slist, *CSTRING sdata), LONG, PROC, C, RAW, NAME('curl_slist_append')
+
+! * free a previously built curl_slist.
+!CURL_EXTERN void curl_slist_free_all(struct curl_slist *);
+      curl_slist_free_all(LONG slist), C, RAW, NAME('curl_slist_free_all')
+
 !      curl_strequal @55
 !      curl_strnequal @56
 !      curl_unescape @57
@@ -157,6 +172,7 @@
 
     MODULE('WinAPI')
       curl::OutputDebugString(*CSTRING lpOutputString), PASCAL, RAW, NAME('OutputDebugStringA')
+      curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
     END
   END
 
@@ -170,8 +186,8 @@ cs                              CSTRING(LEN(s) + LEN(prefix) + 1)
 !!!endregion
 
 !!!region callbacks
-curl::CapWrite                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
-fs                              &curl::FileStruct
+curl::FileWrite               PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
+fs                              &TCurlFileStruct
 filename                        CSTRING(256)
 bytesWritten                    size_t
 rc                              BOOL
@@ -198,8 +214,8 @@ rc                              BOOL
   
   RETURN -1 !error
   
-curl::CapRead                 PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
-fs                              &curl::FileStruct
+curl::FileRead                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
+fs                              &TCurlFileStruct
 filename                        CSTRING(256)
 bytesRead                       size_t
 rc                              BOOL
@@ -226,6 +242,38 @@ rc                              BOOL
   
   RETURN -1 !error
 
+curl::StringWrite             PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pStringStruct)
+ss                              &TCurlStringStruct
+bytesReceived                   size_t, AUTO
+bytesWritten                    size_t, AUTO
+rc                              BOOL
+  CODE
+  IF pStringStruct = 0
+    RETURN -1
+  END
+  
+  ss &= (pStringStruct)
+  IF ss.buffer = 0
+    RETURN -1
+  END
+
+  bytesReceived = bufsize * nmemb
+  IF bytesReceived <= ss.bufsize - ss.filled
+    bytesWritten = bytesReceived
+  ELSE
+!    bytesWritten = ss.bufsize - ss.filled
+    RETURN -1
+  END
+  
+  IF bytesWritten
+    curl::memcpy(ss.buffer + ss.filled, buffer, bytesWritten)
+    ss.filled += bytesWritten
+  
+    RETURN bytesWritten
+  END
+  
+  RETURN -1
+
 curl::XFerInfo                PROCEDURE(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow)
 curl                            &TCurlClass
   CODE
@@ -238,9 +286,21 @@ curl                            &TCurlClass
 
 !!!endregion
 
+!!!region TCurlFileStruct
+TCurlFileStruct.Destruct      PROCEDURE()
+  CODE
+  IF SELF.fhandle
+    IF CloseHandle(SELF.fhandle) = 0
+      curl::DebugInfo('CloseHandle failed, win error '& GetLastError())
+    END
+  END
+  
+!!!endregion
+  
 !!!region TCurlClass
 TCurlClass.Construct          PROCEDURE()
   CODE
+  SELF.headers = 0
   
 TCurlClass.Destruct           PROCEDURE()
   CODE
@@ -252,6 +312,7 @@ TCurlClass.Init               PROCEDURE()
   
 TCurlClass.Cleanup            PROCEDURE()
   CODE
+  SELF.FreeHttpHeaders()
   IF SELF.curl
     curl_easy_cleanup(SELF.curl)
   END
@@ -260,7 +321,7 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, LONG param)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, param)
   
-TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::CapWriteProcType cbproc)
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ReadWriteProcType cbproc)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, cbproc)
   
@@ -290,27 +351,45 @@ userpwd                         CSTRING(256)
   END
   
   RETURN SELF.SetOpt(CURLOPT_USERPWD, ADDRESS(userpwd))
-
-TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>)
-res                             CURLcode
-fs                              LIKE(curl::FileStruct)
-url                             CSTRING(256)
+  
+TCurlClass.SetReadCallback    PROCEDURE(curl::ReadWriteProcType readproc, LONG pData)
+res                             CURLcode, AUTO
   CODE
-  ! set WriteFile callback
-  res = SELF.SetOpt(CURLOPT_WRITEFUNCTION, curl::CapWrite)
+  ! set callback
+  res = SELF.SetOpt(CURLOPT_READFUNCTION, readproc)
   IF res <> CURLE_OK
     RETURN res
   END
 
-  ! destination
-  fs.filename = pLocalFile
-  fs.fhandle = 0
-  res = SELF.SetOpt(CURLOPT_WRITEDATA, ADDRESS(fs))
+  ! data passed to callback proc
+  res = SELF.SetOpt(CURLOPT_READDATA, pData)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  RETURN CURLE_OK
+
+TCurlClass.SetWriteCallback   PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData)
+res                             CURLcode, AUTO
+  CODE
+  ! set callback
+  res = SELF.SetOpt(CURLOPT_WRITEFUNCTION, writeproc)
   IF res <> CURLE_OK
     RETURN res
   END
 
-  IF OMITTED(cbproc)
+  ! data passed to callback proc
+  res = SELF.SetOpt(CURLOPT_WRITEDATA, pData)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  RETURN CURLE_OK
+
+TCurlClass.SetXFerCallback    PROCEDURE(<curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+  CODE
+  IF OMITTED(xferproc)
     res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, curl::XFerInfo)
   
     ! pass self to progress function
@@ -319,7 +398,7 @@ url                             CSTRING(256)
       RETURN res
     END
   ELSE
-    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, cbproc)
+    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, xferproc)
   END
   IF res <> CURLE_OK
     RETURN res
@@ -331,6 +410,27 @@ url                             CSTRING(256)
     RETURN res
   END
   
+  RETURN CURLE_OK
+
+TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+fs                              LIKE(TCurlFileStruct)
+url                             CSTRING(256)
+  CODE
+  ! set WriteFile callback
+  fs.filename = pLocalFile
+  fs.fhandle = 0
+  res = SELF.SetWriteCallback(curl::FileWrite, ADDRESS(fs))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  ! progress
+  res = SELF.SetXFerCallback(xferproc)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
   ! remote file
   url = CLIP(pRemoteFile)    
   res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
@@ -343,54 +443,31 @@ url                             CSTRING(256)
   IF res <> CURLE_OK
     RETURN res
   END
- 
-  CloseHandle(fs.fhandle)
   
   RETURN CURLE_OK
 
 !http://curl.haxx.se/libcurl/c/ftpupload.html
-TCurlClass.WriteFile          PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>)
-res                             CURLcode
-fs                              LIKE(curl::FileStruct)
+TCurlClass.WriteFile          PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+fs                              LIKE(TCurlFileStruct)
 url                             CSTRING(256)
   CODE
   ! set ReadFile callback
-  res = SELF.SetOpt(CURLOPT_READFUNCTION, curl::CapRead)
-  IF res <> CURLE_OK
-    RETURN res
-  END
-
-  ! source
   fs.filename = pLocalFile
   fs.fhandle = 0
-  res = SELF.SetOpt(CURLOPT_READDATA, ADDRESS(fs))
+  res = SELF.SetReadCallback(curl::FileRead, ADDRESS(fs))
   IF res <> CURLE_OK
     RETURN res
   END
 
-  IF OMITTED(cbproc)
-    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, curl::XFerInfo)
-  
-    ! pass self to progress function
-    res = SELF.SetOpt(CURLOPT_PROGRESSDATA, ADDRESS(SELF))
-    IF res <> CURLE_OK
-      RETURN res
-    END
-  ELSE
-    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, cbproc)
-  END
-  IF res <> CURLE_OK
-    RETURN res
-  END
-
-  ! enable progress
-  res = SELF.SetOpt(CURLOPT_NOPROGRESS, FALSE)
-  IF res <> CURLE_OK
-    RETURN res
-  END
-  
   ! enable uploading
   res = SELF.SetOpt(CURLOPT_UPLOAD, TRUE)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+    
+  ! progress
+  res = SELF.SetXFerCallback(xferproc)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -407,13 +484,147 @@ url                             CSTRING(256)
   IF res <> CURLE_OK
     RETURN res
   END
- 
-  CloseHandle(fs.fhandle)
   
   RETURN CURLE_OK
+
+TCurlClass.SendRequest        PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+fs                              LIKE(TCurlFileStruct)
+pf                              CSTRING(LEN(pPostFields) + 1)
+url                             CSTRING(256)
+  CODE
+  IF pResponseFile <> ''
+    fs.filename = pResponseFile
+    fs.fhandle = 0
+    res = SELF.SetWriteCallback(curl::FileWrite, ADDRESS(fs))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+ 
+  res = SELF.SetXFerCallback(xferproc)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+!  /* First set the URL that is about to receive our POST. This URL can
+!     just as well be a https:// URL if that is what should receive the
+!     data. */ 
+  url = CLIP(pUrl)
+  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+!  /* Now specify the POST data */ 
+  IF pPostFields <> ''
+    pf = CLIP(pPostFields)
+    res = SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pf))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+  
+  ! perform request
+  RETURN SELF.Perform()
+
+TCurlClass.SendRequestStr     PROCEDURE(STRING pUrl, <STRING pPostFields>, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+ss                              LIKE(TCurlStringStruct)
+pf                              CSTRING(LEN(pPostFields) + 1)
+url                             CSTRING(256)
+  CODE
+  IF NOT OMITTED(pResponseBuf)
+    ss.buffer = ADDRESS(pResponseBuf)
+    ss.bufsize = LEN(pResponseBuf)
+    ss.filled = 0
+    res = SELF.SetWriteCallback(curl::StringWrite, ADDRESS(ss))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+  
+  res = SELF.SetXFerCallback(xferproc)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+!  /* First set the URL that is about to receive our POST. This URL can
+!     just as well be a https:// URL if that is what should receive the
+!     data. */ 
+  url = CLIP(pUrl)
+  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+!  /* Now specify the POST data */ 
+  IF pPostFields <> ''
+    pf = CLIP(pPostFields)
+    res = SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pf))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+
+  ! perform request
+  RETURN SELF.Perform()
 
 TCurlClass.XFerInfo           PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow)
   CODE
   RETURN 0
+  
+TCurlClass.AddHttpHeader      PROCEDURE(STRING pHeader)
+szheader                        CSTRING(256)
+  CODE
+  szheader = CLIP(pHeader)
+  curl_slist_append(SELF.headers, szheader)
+  
+TCurlClass.FreeHttpHeaders    PROCEDURE()
+  CODE
+  IF SELF.headers <> 0
+    curl_slist_free_all(SELF.headers)
+  END
+  
+TCurlClass.SetHttpHeaders     PROCEDURE()
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_HTTPHEADER, SELF.headers)
+  
+TCurlClass.SetHttpGET         PROCEDURE(BOOL pValue = TRUE)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_HTTPGET, pValue)
+
+TCurlClass.SetSSLVerifyHost   PROCEDURE(BOOL pValue)
+  CODE
+  !default value is 2
+  !1 is not supported
+  !http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html#DESCRIPTION
+  RETURN SELF.SetOpt(CURLOPT_SSL_VERIFYHOST, CHOOSE(pValue = TRUE, 2, 0))
+  
+TCurlClass.SetSSLVerifyPeer   PROCEDURE(BOOL pValue)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_SSL_VERIFYPEER, pValue)
+
+TCurlClass.SetCAInfo          PROCEDURE(STRING pCert)
+szcert                          CSTRING(256)
+  CODE
+  szcert = CLIP(pCert)
+  RETURN SELF.SetOpt(CURLOPT_CAINFO, ADDRESS(szcert))
+  
+TCurlClass.SetSSLVersion      PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_SSLVERSION, pSSLVersion)
+
+TCurlClass.GetContentType     PROCEDURE()
+szct                            CSTRING(256)
+res                             CURLcode, AUTO
+  CODE
+!  res = curl_easy_getinfo(SELF.curl, CURLINFO_CONTENT_TYPE, ADDRESS(szct))
+  res = curl_easy_getinfo(SELF.curl, CURLINFO_CONTENT_TYPE, szct)
+  IF res = CURLE_OK
+    RETURN szct
+  END
+  
+  RETURN ''
   
 !!!endregion

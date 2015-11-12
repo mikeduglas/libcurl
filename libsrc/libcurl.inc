@@ -1,9 +1,28 @@
+!** libcurl for Clarion v1.00 
+!** 12.11.2015
+!** mikeduglas66@gmail.com
+
+
 CURL                          EQUATE(LONG)
 
 size_t                        EQUATE(UNSIGNED)
 !curl_off_t                    EQUATE(INT64)
 
 CURLcode                      EQUATE(LONG)
+
+
+!/* linked-list structure for the CURLOPT_QUOTE option (and other) */
+!struct curl_slist {
+!  char *data;
+!  struct curl_slist *next;
+!}; 
+curl_slist                    GROUP, TYPE
+pdata                           &CSTRING
+pnext                           &curl_list
+                              END
+
+
+
 CURLE_OK                      EQUATE(0)
 
 !CURLE_OK = 0,
@@ -130,51 +149,58 @@ CURLE_OK                      EQUATE(0)
 !                                   match */
 !CURL_LAST /* never use! */ 
 
+CURLINFO_STRING               EQUATE(0100000h)
+CURLINFO_LONG                 EQUATE(0200000h)
+CURLINFO_DOUBLE               EQUATE(0300000h)
+CURLINFO_SLIST                EQUATE(0400000h)
+CURLINFO_MASK                 EQUATE(00fffffh)
+CURLINFO_TYPEMASK             EQUATE(0f00000h)
+
 CURLINFO                      EQUATE(LONG)
-!CURLINFO_NONE, /* first, never use this */
-!CURLINFO_EFFECTIVE_URL    = CURLINFO_STRING + 1,
-!CURLINFO_RESPONSE_CODE    = CURLINFO_LONG   + 2,
-!CURLINFO_TOTAL_TIME       = CURLINFO_DOUBLE + 3,
-!CURLINFO_NAMELOOKUP_TIME  = CURLINFO_DOUBLE + 4,
-!CURLINFO_CONNECT_TIME     = CURLINFO_DOUBLE + 5,
-!CURLINFO_PRETRANSFER_TIME = CURLINFO_DOUBLE + 6,
-!CURLINFO_SIZE_UPLOAD      = CURLINFO_DOUBLE + 7,
-!CURLINFO_SIZE_DOWNLOAD    = CURLINFO_DOUBLE + 8,
-!CURLINFO_SPEED_DOWNLOAD   = CURLINFO_DOUBLE + 9,
-!CURLINFO_SPEED_UPLOAD     = CURLINFO_DOUBLE + 10,
-!CURLINFO_HEADER_SIZE      = CURLINFO_LONG   + 11,
-!CURLINFO_REQUEST_SIZE     = CURLINFO_LONG   + 12,
-!CURLINFO_SSL_VERIFYRESULT = CURLINFO_LONG   + 13,
-!CURLINFO_FILETIME         = CURLINFO_LONG   + 14,
-!CURLINFO_CONTENT_LENGTH_DOWNLOAD   = CURLINFO_DOUBLE + 15,
-!CURLINFO_CONTENT_LENGTH_UPLOAD     = CURLINFO_DOUBLE + 16,
-!CURLINFO_STARTTRANSFER_TIME = CURLINFO_DOUBLE + 17,
-!CURLINFO_CONTENT_TYPE     = CURLINFO_STRING + 18,
-!CURLINFO_REDIRECT_TIME    = CURLINFO_DOUBLE + 19,
-!CURLINFO_REDIRECT_COUNT   = CURLINFO_LONG   + 20,
-!CURLINFO_PRIVATE          = CURLINFO_STRING + 21,
-!CURLINFO_HTTP_CONNECTCODE = CURLINFO_LONG   + 22,
-!CURLINFO_HTTPAUTH_AVAIL   = CURLINFO_LONG   + 23,
-!CURLINFO_PROXYAUTH_AVAIL  = CURLINFO_LONG   + 24,
-!CURLINFO_OS_ERRNO         = CURLINFO_LONG   + 25,
-!CURLINFO_NUM_CONNECTS     = CURLINFO_LONG   + 26,
-!CURLINFO_SSL_ENGINES      = CURLINFO_SLIST  + 27,
-!CURLINFO_COOKIELIST       = CURLINFO_SLIST  + 28,
-!CURLINFO_LASTSOCKET       = CURLINFO_LONG   + 29,
-!CURLINFO_FTP_ENTRY_PATH   = CURLINFO_STRING + 30,
-!CURLINFO_REDIRECT_URL     = CURLINFO_STRING + 31,
-!CURLINFO_PRIMARY_IP       = CURLINFO_STRING + 32,
-!CURLINFO_APPCONNECT_TIME  = CURLINFO_DOUBLE + 33,
-!CURLINFO_CERTINFO         = CURLINFO_SLIST  + 34,
-!CURLINFO_CONDITION_UNMET  = CURLINFO_LONG   + 35,
-!CURLINFO_RTSP_SESSION_ID  = CURLINFO_STRING + 36,
-!CURLINFO_RTSP_CLIENT_CSEQ = CURLINFO_LONG   + 37,
-!CURLINFO_RTSP_SERVER_CSEQ = CURLINFO_LONG   + 38,
-!CURLINFO_RTSP_CSEQ_RECV   = CURLINFO_LONG   + 39,
-!CURLINFO_PRIMARY_PORT     = CURLINFO_LONG   + 40,
-!CURLINFO_LOCAL_IP         = CURLINFO_STRING + 41,
-!CURLINFO_LOCAL_PORT       = CURLINFO_LONG   + 42,
-!CURLINFO_TLS_SESSION      = CURLINFO_SLIST  + 43, 
+CURLINFO_NONE                 EQUATE(0)             !/* first, never use this */
+CURLINFO_EFFECTIVE_URL        EQUATE(CURLINFO_STRING + 1)
+CURLINFO_RESPONSE_CODE        EQUATE(CURLINFO_LONG   + 2)
+CURLINFO_TOTAL_TIME           EQUATE(CURLINFO_DOUBLE + 3)
+CURLINFO_NAMELOOKUP_TIME      EQUATE(CURLINFO_DOUBLE + 4)
+CURLINFO_CONNECT_TIME         EQUATE(CURLINFO_DOUBLE + 5)
+CURLINFO_PRETRANSFER_TIME     EQUATE(CURLINFO_DOUBLE + 6)
+CURLINFO_SIZE_UPLOAD          EQUATE(CURLINFO_DOUBLE + 7)
+CURLINFO_SIZE_DOWNLOAD        EQUATE(CURLINFO_DOUBLE + 8)
+CURLINFO_SPEED_DOWNLOAD       EQUATE(CURLINFO_DOUBLE + 9)
+CURLINFO_SPEED_UPLOAD         EQUATE(CURLINFO_DOUBLE + 10)
+CURLINFO_HEADER_SIZE          EQUATE(CURLINFO_LONG   + 11)
+CURLINFO_REQUEST_SIZE         EQUATE(CURLINFO_LONG   + 12)
+CURLINFO_SSL_VERIFYRESULT     EQUATE(CURLINFO_LONG   + 13)
+CURLINFO_FILETIME             EQUATE(CURLINFO_LONG   + 14)
+CURLINFO_CONTENT_LENGTH_DOWNLOAD  EQUATE(CURLINFO_DOUBLE + 15)
+CURLINFO_CONTENT_LENGTH_UPLOAD    EQUATE(CURLINFO_DOUBLE + 16)
+CURLINFO_STARTTRANSFER_TIME   EQUATE(CURLINFO_DOUBLE + 17)
+CURLINFO_CONTENT_TYPE         EQUATE(CURLINFO_STRING + 18)
+CURLINFO_REDIRECT_TIME        EQUATE(CURLINFO_DOUBLE + 19)
+CURLINFO_REDIRECT_COUNT       EQUATE(CURLINFO_LONG   + 20)
+CURLINFO_PRIVATE              EQUATE(CURLINFO_STRING + 21)
+CURLINFO_HTTP_CONNECTCODE     EQUATE(CURLINFO_LONG   + 22)
+CURLINFO_HTTPAUTH_AVAIL       EQUATE(CURLINFO_LONG   + 23)
+CURLINFO_PROXYAUTH_AVAIL      EQUATE(CURLINFO_LONG   + 24)
+CURLINFO_OS_ERRNO             EQUATE(CURLINFO_LONG   + 25)
+CURLINFO_NUM_CONNECTS         EQUATE(CURLINFO_LONG   + 26)
+CURLINFO_SSL_ENGINES          EQUATE(CURLINFO_SLIST  + 27)
+CURLINFO_COOKIELIST           EQUATE(CURLINFO_SLIST  + 28)
+CURLINFO_LASTSOCKET           EQUATE(CURLINFO_LONG   + 29)
+CURLINFO_FTP_ENTRY_PATH       EQUATE(CURLINFO_STRING + 30)
+CURLINFO_REDIRECT_URL         EQUATE(CURLINFO_STRING + 31)
+CURLINFO_PRIMARY_IP           EQUATE(CURLINFO_STRING + 32)
+CURLINFO_APPCONNECT_TIME      EQUATE(CURLINFO_DOUBLE + 33)
+CURLINFO_CERTINFO             EQUATE(CURLINFO_SLIST  + 34)
+CURLINFO_CONDITION_UNMET      EQUATE(CURLINFO_LONG   + 35)
+CURLINFO_RTSP_SESSION_ID      EQUATE(CURLINFO_STRING + 36)
+CURLINFO_RTSP_CLIENT_CSEQ     EQUATE(CURLINFO_LONG   + 37)
+CURLINFO_RTSP_SERVER_CSEQ     EQUATE(CURLINFO_LONG   + 38)
+CURLINFO_RTSP_CSEQ_RECV       EQUATE(CURLINFO_LONG   + 39)
+CURLINFO_PRIMARY_PORT         EQUATE(CURLINFO_LONG   + 40)
+CURLINFO_LOCAL_IP             EQUATE(CURLINFO_STRING + 41)
+CURLINFO_LOCAL_PORT           EQUATE(CURLINFO_LONG   + 42)
+CURLINFO_TLS_SESSION          EQUATE(CURLINFO_SLIST  + 43)
 
 !#define CURL_GLOBAL_SSL (1<<0)
 !#define CURL_GLOBAL_WIN32 (1<<1)
@@ -196,8 +222,9 @@ CURLOPTTYPE_OBJECTPOINT       EQUATE(10000)
 CURLOPTTYPE_FUNCTIONPOINT     EQUATE(20000)
 CURLOPTTYPE_OFF_T             EQUATE(30000)
 
-CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_OBJECTPOINT)
+CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_OBJECTPOINT)       !The full URL to get/put
 CURLOPT_FOLLOWLOCATION        EQUATE(52 + CURLOPTTYPE_LONG)
+CURLOPT_POSTFIELDS            EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)      !POST static input fields.
 
 CURLOPT_WRITEFUNCTION         EQUATE(11 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_WRITEDATA             EQUATE(1 + CURLOPTTYPE_OBJECTPOINT)
@@ -222,6 +249,31 @@ CURLOPT_SSH_KNOWNHOSTS        EQUATE(183 + CURLOPTTYPE_OBJECTPOINT)     !set the
 CURLOPT_SSH_KEYFUNCTION       EQUATE(184 + CURLOPTTYPE_FUNCTIONPOINT)   !set the SSH host key callback, must point to a curl_sshkeycallback function
 CURLOPT_SSH_KEYDATA           EQUATE(185 + CURLOPTTYPE_OBJECTPOINT)     !set the SSH host key callback custom pointer
 
+CURLOPT_HTTPHEADER            EQUATE(23 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of headers, struct curl_slist kind. This list is also used for RTSP (in spite of its name)
+CURLOPT_HTTPGET               EQUATE(80 + CURLOPTTYPE_LONG)             !Set this to force the HTTP request to get back to GET. Only really usable if POST, PUT or a custom request have been used first.
+
+!Set if we should verify the Common name from the peer certificate in ssl 
+!handshake, set 1 to check existence, 2 to ensure that it matches the 
+!provided hostname.
+CURLOPT_SSL_VERIFYHOST        EQUATE(81 + CURLOPTTYPE_LONG)
+!Set if we should verify the peer in ssl handshake, set 1 to verify.
+CURLOPT_SSL_VERIFYPEER        EQUATE(64 + CURLOPTTYPE_LONG)
+
+CURL_SSLVERSION_ENUM          EQUATE(LONG)
+CURL_SSLVERSION_DEFAULT       EQUATE(0)
+CURL_SSLVERSION_TLSv1         EQUATE(1) !/* TLS 1.x */
+CURL_SSLVERSION_SSLv2         EQUATE(2)
+CURL_SSLVERSION_SSLv3         EQUATE(3)
+CURL_SSLVERSION_TLSv1_0       EQUATE(4)
+CURL_SSLVERSION_TLSv1_1       EQUATE(5)
+CURL_SSLVERSION_TLSv1_2       EQUATE(6)
+
+CURLOPT_SSLVERSION            EQUATE(32 + CURLOPTTYPE_LONG)             !What version to specifically try to use. 
+
+!The CApath or CAfile used to validate the peer certificate
+!this option is used only if SSL_VERIFYPEER is true
+CURLOPT_CAINFO                EQUATE(65 + CURLOPTTYPE_OBJECTPOINT)
+
 CURLSSH_AUTH_ANY              EQUATE(-1)          !~0     !/* all types supported by the server */
 CURLSSH_AUTH_NONE             EQUATE(0)                   !/* none allowed, silly but complete */
 CURLSSH_AUTH_PUBLICKEY        EQUATE(00001b)      !(1<<0) !/* public/private key files */
@@ -233,16 +285,23 @@ CURLSSH_AUTH_DEFAULT          EQUATE(CURLSSH_AUTH_ANY)
 
   INCLUDE('svapi.inc')
 
-curl::FileStruct              GROUP, TYPE
+!structure to pass a file to callbacks
+TCurlFileStruct              CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
+Destruct                        PROCEDURE(), VIRTUAL  !closes file handle
 filename                        STRING(256)
 fhandle                         HANDLE
+                              END
+
+TCurlStringStruct             GROUP, TYPE
+buffer                          LONG  !address of the string
+bufsize                         LONG  !declared size of the string
+filled                          LONG  !bytes written
                               END
 
 
   MAP
     ! CURL callback procedure prototypes
-    curl::CapWriteProcType(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C, TYPE
-    curl::CapReadProcType(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C, TYPE
+    curl::ReadWriteProcType(LONG buffer, size_t bufsize, size_t nmemb, LONG pData), size_t, C, TYPE
 
     ! This is the CURLOPT_PROGRESSFUNCTION callback proto. It is now considered deprecated but was the only choice up until 7.31.0
     curl::ProgressDataProcType(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C, TYPE
@@ -251,8 +310,14 @@ fhandle                         HANDLE
 
     MODULE('libcurl')
       curl::DebugInfo(STRING s)
-      curl::CapWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
-      curl::CapRead(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
+
+      !writes to a file
+      curl::FileWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
+      !reads from a file
+      curl::FileRead(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
+      !writes
+      curl::StringWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pStringStruct), size_t, C
+      !progress function
       curl::XFerInfo(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C
     END
 
@@ -263,6 +328,13 @@ fhandle                         HANDLE
 TCurlClass                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
 curl                            CURL, PROTECTED
 
+!linked list of headers
+headers                         LONG, PROTECTED
+
+SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG pData), CURLcode, PROC, PRIVATE
+SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC, PRIVATE
+SetXFerCallback                 PROCEDURE(<curl::ProgressDataProcType xferproc>), CURLcode, PROC, PRIVATE
+
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), VIRTUAL
 
@@ -270,8 +342,8 @@ Init                            PROCEDURE()
 Cleanup                         PROCEDURE()
 
 SetOpt                          PROCEDURE(CURLoption option, LONG param), CURLcode, PROC
-SetOpt                          PROCEDURE(CURLoption option, curl::CapWriteProcType cbproc), CURLcode, PROC
-SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataProcType cbproc), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, curl::ReadWriteProcType xferproc), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataProcType xferproc), CURLcode, PROC
 !SetOpt                          PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, PROC
 
 Perform                         PROCEDURE(), CURLcode
@@ -282,10 +354,26 @@ StrError                        PROCEDURE(CURLcode errcode), STRING
 !set user and password in form "user:password"
 SetUserPwd                      PROCEDURE(STRING pUser, STRING pPwd), CURLcode, PROC
 !download file
-ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>), CURLcode, PROC
+ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 !upload file
-WriteFile                       PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType cbproc>), CURLcode, PROC
+WriteFile                       PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+!GET/POST, saves server response in pResponseFile
+SendRequest                     PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+!GET/POST, saves server response in pResponseBuf string
+SendRequestStr                  PROCEDURE(STRING pUrl, <STRING pPostFields>, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 
 !derive XFerInfo to display prgress info
 XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, VIRTUAL
+
+AddHttpHeader                   PROCEDURE(STRING pHeader)
+FreeHttpHeaders                     PROCEDURE()
+
+SetHttpHeaders                  PROCEDURE(), CURLcode, PROC
+SetHttpGET                      PROCEDURE(BOOL pValue = TRUE), CURLcode, PROC
+SetSSLVerifyHost                PROCEDURE(BOOL pValue), CURLcode, PROC
+SetSSLVerifyPeer                PROCEDURE(BOOL pValue), CURLcode, PROC
+SetCAInfo                       PROCEDURE(STRING pCert), CURLcode, PROC
+SetSSLVersion                   PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion), CURLcode, PROC
+
+GetContentType                  PROCEDURE(), STRING
                               END

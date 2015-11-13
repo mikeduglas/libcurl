@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.00 
-!** 12.11.2015
+!** libcurl for Clarion v1.01
+!** 13.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -223,18 +223,35 @@ CURLOPTTYPE_FUNCTIONPOINT     EQUATE(20000)
 CURLOPTTYPE_OFF_T             EQUATE(30000)
 
 CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_OBJECTPOINT)       !The full URL to get/put
-CURLOPT_FOLLOWLOCATION        EQUATE(52 + CURLOPTTYPE_LONG)
 CURLOPT_POSTFIELDS            EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)      !POST static input fields.
 
+CURLOPT_VERBOSE               EQUATE(41 + CURLOPTTYPE_LONG)             !talk a lot
+CURLOPT_HEADER                EQUATE(42 + CURLOPTTYPE_LONG)             !throw the header out too
+CURLOPT_NOPROGRESS            EQUATE(43 + CURLOPTTYPE_LONG)             !shut off the progress meter
+CURLOPT_NOBODY                EQUATE(44 + CURLOPTTYPE_LONG)             !use HEAD to get http document
+CURLOPT_FAILONERROR           EQUATE(45 + CURLOPTTYPE_LONG)             !no output on http error codes >= 400
+CURLOPT_UPLOAD                EQUATE(46 + CURLOPTTYPE_LONG)             !this is an upload
+CURLOPT_POST                  EQUATE(47 + CURLOPTTYPE_LONG)             !HTTP POST method
+CURLOPT_DIRLISTONLY           EQUATE(48 + CURLOPTTYPE_LONG)             !bare names when listing directories
+CURLOPT_FTPLISTONLY           EQUATE(CURLOPT_DIRLISTONLY)
+CURLOPT_APPEND                EQUATE(50 + CURLOPTTYPE_LONG)             !Append instead of overwrite on upload!
+
+!Specify whether to read the user+password from the .netrc or the URL.
+!This must be one of the CURL_NETRC_* enums below.
+CURLOPT_NETRC                 EQUATE(51 + CURLOPTTYPE_LONG)
+
+CURLOPT_FOLLOWLOCATION        EQUATE(52 + CURLOPTTYPE_LONG)
+
+CURLOPT_TRANSFERTEXT          EQUATE(53 + CURLOPTTYPE_LONG)             !transfer data in text/ASCII format
+CURLOPT_PUT                   EQUATE(54 + CURLOPTTYPE_LONG)             !HTTP PUT
+    
 CURLOPT_WRITEFUNCTION         EQUATE(11 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_WRITEDATA             EQUATE(1 + CURLOPTTYPE_OBJECTPOINT)
 
 CURLOPT_READFUNCTION          EQUATE(12 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_READDATA              EQUATE(9 + CURLOPTTYPE_OBJECTPOINT)
-CURLOPT_UPLOAD                EQUATE(46 + CURLOPTTYPE_LONG)
 
 CURLOPT_PROGRESSFUNCTION      EQUATE(56 + CURLOPTTYPE_FUNCTIONPOINT)
-CURLOPT_NOPROGRESS            EQUATE(43 + CURLOPTTYPE_LONG)
 CURLOPT_XFERINFOFUNCTION      EQUATE(219 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_PROGRESSDATA          EQUATE(57 + CURLOPTTYPE_OBJECTPOINT)
 CURLOPT_XFERINFODATA          EQUATE(CURLOPT_PROGRESSDATA)
@@ -251,6 +268,8 @@ CURLOPT_SSH_KEYDATA           EQUATE(185 + CURLOPTTYPE_OBJECTPOINT)     !set the
 
 CURLOPT_HTTPHEADER            EQUATE(23 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of headers, struct curl_slist kind. This list is also used for RTSP (in spite of its name)
 CURLOPT_HTTPGET               EQUATE(80 + CURLOPTTYPE_LONG)             !Set this to force the HTTP request to get back to GET. Only really usable if POST, PUT or a custom request have been used first.
+
+CURLOPT_CUSTOMREQUEST         EQUATE(36 + CURLOPTTYPE_OBJECTPOINT)      !Custom request, for customizing the get command like HTTP: DELETE, TRACE and others, FTP: to use a different list command 
 
 !Set if we should verify the Common name from the peer certificate in ssl 
 !handshake, set 1 to check existence, 2 to ensure that it matches the 
@@ -366,14 +385,18 @@ SendRequestStr                  PROCEDURE(STRING pUrl, <STRING pPostFields>, <*S
 XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, VIRTUAL
 
 AddHttpHeader                   PROCEDURE(STRING pHeader)
-FreeHttpHeaders                     PROCEDURE()
-
+FreeHttpHeaders                 PROCEDURE()
 SetHttpHeaders                  PROCEDURE(), CURLcode, PROC
+
+SetCustomRequest                PROCEDURE(STRING pCustomRequest), CURLcode, PROC
+
 SetHttpGET                      PROCEDURE(BOOL pValue = TRUE), CURLcode, PROC
+
 SetSSLVerifyHost                PROCEDURE(BOOL pValue), CURLcode, PROC
 SetSSLVerifyPeer                PROCEDURE(BOOL pValue), CURLcode, PROC
 SetCAInfo                       PROCEDURE(STRING pCert), CURLcode, PROC
 SetSSLVersion                   PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion), CURLcode, PROC
 
 GetContentType                  PROCEDURE(), STRING
+GetResponseCode                 PROCEDURE(), LONG ! returns the last received HTTP or FTP code
                               END

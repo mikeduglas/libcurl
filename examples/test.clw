@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.00 
-!** 12.11.2015
+!** libcurl for Clarion v1.01
+!** 13.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -16,6 +16,7 @@ Filename                        STRING(256)
 User                            STRING(20)
 Pwd                             STRING(20)
 PostParams                      STRING(256)
+CustomRequest                   STRING(256)
                               END
 
 THttpHeaders                   QUEUE, TYPE
@@ -93,15 +94,17 @@ Window                        WINDOW('libcurl demo'),AT(,,425,278),CENTER,GRAY,F
                                         PROMPT('Password:'),AT(166,94),USE(?PROMPT12)
                                         ENTRY(@s20),AT(211,92),USE(Send:Pwd),PASSWORD
                                         CHECK(' Show password'),AT(312,94),USE(bShowHttpPwd)
-                                        PROMPT('Http header:'),AT(17,118),USE(?PROMPT13)
-                                        ENTRY(@s255),AT(63,118),USE(HttpHeader)
-                                        BUTTON('Add'),AT(214,118),USE(?bAddHttpHeader)
-                                        BUTTON('Delete all'),AT(259,118),USE(?bFreeHttpHeaders)
-                                        CHECK(' Use SSL'),AT(17,143),USE(SSLInfo:bUseSSL)
-                                        CHECK(' Get server response'),AT(17,162),USE(bGetServerResponse)
-                                        PROMPT('File:'),AT(124,185),USE(?PROMPT15)
-                                        ENTRY(@s255),AT(142,183,254),USE(Send:Filename)
-                                        CHECK(' Save response to File'),AT(17,185),USE(bSaveServerResponseToFile)
+                                        PROMPT('Http header:'),AT(17,113),USE(?PROMPT13)
+                                        ENTRY(@s255),AT(62,112),USE(HttpHeader)
+                                        BUTTON('Add'),AT(213,111),USE(?bAddHttpHeader)
+                                        BUTTON('Delete all'),AT(258,111),USE(?bFreeHttpHeaders)
+                                        PROMPT('Custom request (PUT, DELETE etc):'),AT(17,132),USE(?PROMPT17)
+                                        ENTRY(@s255),AT(142,130,254),USE(Send:CustomRequest)
+                                        CHECK(' Use SSL'),AT(17,148),USE(SSLInfo:bUseSSL)
+                                        CHECK(' Get server response'),AT(17,167),USE(bGetServerResponse)
+                                        PROMPT('File:'),AT(124,190),USE(?PROMPT15)
+                                        ENTRY(@s255),AT(142,188,254),USE(Send:Filename)
+                                        CHECK(' Save response to File'),AT(17,190),USE(bSaveServerResponseToFile)
                                       END
                                       TAB('SSL'),USE(?tabSSL)
                                         ENTRY(@s255),AT(79,110,316),USE(SSLInfo:Certificate)
@@ -138,15 +141,16 @@ XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal
   Upload:User = 'username'
   Upload:Pwd = 'password'
 
-  Send:Url = 'https://127.0.0.1/wsearch'
-  Send:PostParams = 'ztoken=VIV0M53N369AUXZ6&tagno=928'
+  Send:Url = 'http://jsonplaceholder.typicode.com/posts/1'
+  Send:PostParams = ''  ! 'name1=value1&name2=value2'
   Send:Filename = 'response.txt'
+  Send:CustomRequest = 'PUT'
   
+  SSLInfo:bUseSSL = FALSE
   SSLInfo:bVerifyHost = FALSE
   SSLInfo:bVerifyPeer = FALSE
   SSLInfo:Certificate = '.\certificates\mycert.crt'
   SSLInfo:Version = CURL_SSLVERSION_DEFAULT
-  SSLInfo:bUseSSL = TRUE
   
   bGetServerResponse = TRUE
   
@@ -264,8 +268,18 @@ respBuffer                      STRING(32768) !big enuff to hold received respon
     curl.SetHttpHeaders()
   END
   
+  IF xferinfo.CustomRequest
+    res = CURL.SetCustomRequest(xferinfo.CustomRequest)
+    IF res <> CURLE_OK
+      MESSAGE('SetCustomRequest failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+    END
+  END
+  
   IF pGetResponse
     res = curl.SetHttpGET(TRUE)
+    IF res <> CURLE_OK
+      MESSAGE('SetHttpGET failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+    END
   END
 
   res = curl.SetUserPwd(xferinfo.User, xferinfo.Pwd)
@@ -297,6 +311,8 @@ respBuffer                      STRING(32768) !big enuff to hold received respon
     END
   END
   
+!  res = curl.SetOpt(CURLOPT_FTPLISTONLY, 1)
+  
   IF pSaveToFile
     res = curl.SendRequest(xferinfo.Url, xferinfo.PostParams, xferinfo.Filename)
   ELSE
@@ -304,7 +320,7 @@ respBuffer                      STRING(32768) !big enuff to hold received respon
   END
   
   IF res = CURLE_OK
-    MESSAGE('Request sent.', 'libcurl', ICON:Asterisk)
+    MESSAGE('Request sent. Response code '& curl.GetResponseCode(), 'libcurl', ICON:Asterisk)
     
     IF NOT pSaveToFile
       ?txtHttpResponse{PROP:Text} = CLIP(respBuffer)

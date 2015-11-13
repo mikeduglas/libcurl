@@ -56,6 +56,9 @@ respBuffer  STRING(32768) !big enuff to hold received response
   curl.AddHttpHeader('Accept-Charset: utf-8')
     
   curl.SetHttpHeaders()
+
+  !if custom request req'd (for example REST commands like PUT, DELETE etc)
+  curl.SetCustomRequest('DELETE')
   
   ! if server response req'd
   curl.SetHttpGET(TRUE)
@@ -73,6 +76,33 @@ respBuffer  STRING(32768) !big enuff to hold received response
   ! if certificate req'd
   curl.SetCAInfo('.\certificates\mycert.crt')
   
+  IF pSaveToFile
+    res = curl.SendRequest(Url, PostParams, Filename)
+  ELSE  ! save response to string variable
+    res = curl.SendRequestStr(Url, PostParams, respBuffer)
+  END
+  
+  IF res = CURLE_OK
+    ! OK
+  ELSIF res = -1 
+    MESSAGE('Cannot open local file', 'libcurl', ICON:Exclamation)
+  ELSE
+    MESSAGE('SendRequest failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+  END
+
+4. FTP
+
+curl        TCurlClass
+res         CURLcode, AUTO
+respBuffer  STRING(32768) !big enuff to hold received response
+
+  !if login/password req'd
+  curl.SetUserPwd(username, password)
+
+  !if file listing req'd
+  curl.SetOpt(CURLOPT_FTPLISTONLY, 1)
+
+  !url like 'sftp://user@99.200.300.100/var/www/user/data/'
   IF pSaveToFile
     res = curl.SendRequest(Url, PostParams, Filename)
   ELSE  ! save response to string variable

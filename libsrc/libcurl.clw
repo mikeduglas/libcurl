@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.00 
-!** 12.11.2015
+!** libcurl for Clarion v1.01
+!** 13.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -590,6 +590,12 @@ TCurlClass.SetHttpHeaders     PROCEDURE()
   CODE
   RETURN SELF.SetOpt(CURLOPT_HTTPHEADER, SELF.headers)
   
+TCurlClass.SetCustomRequest   PROCEDURE(STRING pCustomRequest)
+szreq                           CSTRING(LEN(pCustomRequest) + 1)
+  CODE
+  szreq = CLIP(pCustomRequest)
+  RETURN SELF.SetOpt(CURLOPT_CUSTOMREQUEST, ADDRESS(szreq))
+
 TCurlClass.SetHttpGET         PROCEDURE(BOOL pValue = TRUE)
   CODE
   RETURN SELF.SetOpt(CURLOPT_HTTPGET, pValue)
@@ -626,5 +632,16 @@ res                             CURLcode, AUTO
   END
   
   RETURN ''
+  
+TCurlClass.GetResponseCode    PROCEDURE()
+respcode                        LONG
+res                             CURLcode, AUTO
+  CODE
+  res = curl_easy_getinfo(SELF.curl, CURLINFO_RESPONSE_CODE, ADDRESS(respcode))
+  IF res = CURLE_OK
+    RETURN respcode
+  END
+  
+  RETURN 0
   
 !!!endregion

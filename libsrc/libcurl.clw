@@ -104,8 +104,20 @@
 !                                   int length); 
       curl_escape(CURL handle, *STRING str, LONG length), *CSTRING, C, RAW, NAME('curl_escape')
 
-!      curl_formadd @15
-!      curl_formfree @16
+!     * Pretty advanced function for building multi-part formposts. Each invoke
+!     * adds one part that together construct a full post. Then use
+!     * CURLOPT_HTTPPOST to send it off to libcurl. 
+!CURL_EXTERN CURLFORMcode curl_formadd(struct curl_httppost **httppost,
+!                                      struct curl_httppost **last_post,
+!                                      ...); 
+      curl_formadd(LONG pphttppost, LONG pplast_post, CURLformoption option1, *CSTRING option1name, CURLformoption option2, *CSTRING option2name, CURLformoption endoption), CURLFORMcode, PROC, C, RAW, NAME('curl_formadd')
+
+
+!      * Free a multipart formpost previously built with curl_formadd(). 
+!CURL_EXTERN void curl_formfree(struct curl_httppost *form); 
+      curl_formfree(LONG pform), C, RAW, NAME('curl_formfree')
+
+
 !      curl_formget @17
 !      curl_free @18
 !      curl_getdate @19
@@ -174,6 +186,8 @@
       curl::OutputDebugString(*CSTRING lpOutputString), PASCAL, RAW, NAME('OutputDebugStringA')
       curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
     END
+
+    GetFileContents(STRING pFile), *STRING, PRIVATE
   END
 
 !!!region static functions
@@ -213,6 +227,30 @@ rc                              BOOL
   END
   
   RETURN -1 !error
+  
+GetFileContents               PROCEDURE(STRING pFile)
+OS_INVALID_HANDLE_VALUE         EQUATE(-1)
+szFile                          CSTRING(256)
+sData                           &STRING
+hFile                           HANDLE
+dwFileSize                      LONG
+lpFileSizeHigh                  LONG
+pvData                          LONG
+dwBytesRead                     LONG
+bRead                           BOOL
+  CODE
+  szFile=CLIP(pFile)
+  hFile = CreateFile(szFile,GENERIC_READ,0,0,OPEN_EXISTING,0,0)
+  IF hFile <> OS_INVALID_HANDLE_VALUE
+    dwFileSize = GetFileSize(hFile,lpFileSizeHigh)
+    IF dwFileSize > 0
+      sData &= NEW STRING(dwFileSize)
+      bRead = ReadFile(hFile,ADDRESS(sData),dwFileSize,dwBytesRead,0)
+    END
+    CloseHandle(hFile)
+  END
+
+  RETURN sData
   
 curl::FileRead                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
 fs                              &TCurlFileStruct
@@ -297,14 +335,43 @@ TCurlFileStruct.Destruct      PROCEDURE()
   
 !!!endregion
   
+!!!region TCurlSList
+TCurlSList.Construct          PROCEDURE()
+  CODE
+  SELF.plist = 0
+
+TCurlSList.Destruct           PROCEDURE()
+  CODE
+  SELF.Free()
+  
+TCurlSList.Append             PROCEDURE(STRING pData)
+szData                          CSTRING(256)
+  CODE
+  szData = CLIP(pData)
+  curl_slist_append(SELF.plist, szData)
+
+TCurlSList.Free               PROCEDURE()
+  CODE
+  IF SELF.plist <> 0
+    curl_slist_free_all(SELF.plist)
+    SELF.plist = 0
+  END
+  
+TCurlSList.GetList            PROCEDURE()
+  CODE
+  RETURN SELF.plist
+
+!!!endregion
+  
 !!!region TCurlClass
 TCurlClass.Construct          PROCEDURE()
   CODE
-  SELF.headers = 0
+  SELF.headers &= NEW TCurlSList
   
 TCurlClass.Destruct           PROCEDURE()
   CODE
   SELF.Cleanup()
+  DISPOSE(SELF.headers)
   
 TCurlClass.Init               PROCEDURE()
   CODE
@@ -332,6 +399,10 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ProgressDataPro
 !TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc)
 !  CODE
 !  RETURN curl_easy_setopt(SELF.curl, option, cbproc)
+
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
+  CODE
+  RETURN curl_easy_setopt(SELF.curl, option, plist.GetList())
 
 TCurlClass.Perform            PROCEDURE()
   CODE
@@ -570,21 +641,75 @@ url                             CSTRING(256)
   ! perform request
   RETURN SELF.Perform()
 
+TCurlClass.PostFile           PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
+formpost                        LONG(0)
+lastptr                         LONG(0)
+szarg                           CSTRING(LEN(pArgname) + 1)
+szfilename                      CSTRING(LEN(pFilename) + 1)
+res                             CURLcode, AUTO
+cfres                           CURLFORMcode, AUTO
+  CODE
+  
+  szarg = CLIP(pArgname)
+  szfilename = CLIP(pFilename)
+  
+  cfres = curl_formadd(ADDRESS(formpost), ADDRESS(lastptr), CURLFORM_COPYNAME, szarg, CURLFORM_FILE, szfilename, CURLFORM_END)
+  IF cfres <> CURL_FORMADD_OK
+    RETURN -1
+  END
+  
+  res = SELF.SetOpt(CURLOPT_HTTPPOST, formpost)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! perform request
+  res = SELF.SendRequest(pUrl, '', pResponseFile, xferproc)
+  
+  curl_formfree(formpost)
+
+  RETURN res
+
+TCurlClass.PostFileStr        PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>)
+formpost                        LONG(0)
+lastptr                         LONG(0)
+szarg                           CSTRING(LEN(pArgname) + 1)
+szfilename                      CSTRING(LEN(pFilename) + 1)
+res                             CURLcode, AUTO
+cfres                           CURLFORMcode, AUTO
+  CODE
+  
+  szarg = CLIP(pArgname)
+  szfilename = CLIP(pFilename)
+  
+  cfres = curl_formadd(ADDRESS(formpost), ADDRESS(lastptr), CURLFORM_COPYNAME, szarg, CURLFORM_FILE, szfilename, CURLFORM_END)
+  IF cfres <> CURL_FORMADD_OK
+    RETURN -1
+  END
+  
+  res = SELF.SetOpt(CURLOPT_HTTPPOST, formpost)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! perform request
+  res = SELF.SendRequestStr(pUrl, '', pResponseBuf, xferproc)
+  
+  curl_formfree(formpost)
+
+  RETURN res
+
 TCurlClass.XFerInfo           PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow)
   CODE
   RETURN 0
   
 TCurlClass.AddHttpHeader      PROCEDURE(STRING pHeader)
-szheader                        CSTRING(256)
   CODE
-  szheader = CLIP(pHeader)
-  curl_slist_append(SELF.headers, szheader)
+  SELF.headers.Append(pHeader)
   
 TCurlClass.FreeHttpHeaders    PROCEDURE()
   CODE
-  IF SELF.headers <> 0
-    curl_slist_free_all(SELF.headers)
-  END
+  SELF.headers.Free()
   
 TCurlClass.SetHttpHeaders     PROCEDURE()
   CODE
@@ -625,7 +750,6 @@ TCurlClass.GetContentType     PROCEDURE()
 szct                            CSTRING(256)
 res                             CURLcode, AUTO
   CODE
-!  res = curl_easy_getinfo(SELF.curl, CURLINFO_CONTENT_TYPE, ADDRESS(szct))
   res = curl_easy_getinfo(SELF.curl, CURLINFO_CONTENT_TYPE, szct)
   IF res = CURLE_OK
     RETURN szct
@@ -643,5 +767,17 @@ res                             CURLcode, AUTO
   END
   
   RETURN 0
+  
+TCurlClass.SetQuote           PROCEDURE(TCurlSList plist)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_QUOTE, plist)
+  
+TCurlClass.PreQuote           PROCEDURE(TCurlSList plist)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_PREQUOTE, plist)
+  
+TCurlClass.PostQuote          PROCEDURE(TCurlSList plist)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_POSTQUOTE, plist)
   
 !!!endregion

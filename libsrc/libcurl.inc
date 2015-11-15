@@ -59,7 +59,7 @@ CURLE_OK                      EQUATE(0)
 !CURLE_WRITE_ERROR,             /* 23 */
 !CURLE_OBSOLETE24,              /* 24 - NOT USED */
 !CURLE_UPLOAD_FAILED,           /* 25 - failed upload "command" */
-!CURLE_READ_ERROR,              /* 26 - couldn't open/read from file */
+CURLE_READ_ERROR              EQUATE(26)              !/* 26 - couldn't open/read from file */
 !CURLE_OUT_OF_MEMORY,           /* 27 */
 !/* Note: CURLE_OUT_OF_MEMORY may sometimes indicate a conversion error
 !         instead of a memory allocation error if CURL_DOES_CONVERSIONS
@@ -225,6 +225,12 @@ CURLOPTTYPE_OFF_T             EQUATE(30000)
 CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_OBJECTPOINT)       !The full URL to get/put
 CURLOPT_POSTFIELDS            EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)      !POST static input fields.
 
+CURLOPT_HTTPPOST              EQUATE(24 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of post entries, struct curl_httppost
+
+CURLOPT_QUOTE                 EQUATE(28 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of QUOTE commands
+CURLOPT_PREQUOTE              EQUATE(93 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of pre-transfer QUOTE commands
+CURLOPT_POSTQUOTE             EQUATE(39 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of post-transfer QUOTE commands
+
 CURLOPT_VERBOSE               EQUATE(41 + CURLOPTTYPE_LONG)             !talk a lot
 CURLOPT_HEADER                EQUATE(42 + CURLOPTTYPE_LONG)             !throw the header out too
 CURLOPT_NOPROGRESS            EQUATE(43 + CURLOPTTYPE_LONG)             !shut off the progress meter
@@ -302,6 +308,52 @@ CURLSSH_AUTH_KEYBOARD         EQUATE(01000b)      !(1<<3) !/* keyboard interacti
 CURLSSH_AUTH_AGENT            EQUATE(10000b)      !(1<<4) !/* agent (ssh-agent, pageant...) */
 CURLSSH_AUTH_DEFAULT          EQUATE(CURLSSH_AUTH_ANY)
 
+CURLformoption                EQUATE(LONG)
+                              ITEMIZE
+CURLFORM_NOTHING                EQUATE(0)           !the first one is unused
+
+CURLFORM_COPYNAME               EQUATE
+CURLFORM_PTRNAME                EQUATE
+CURLFORM_NAMELENGTH             EQUATE
+CURLFORM_COPYCONTENTS           EQUATE
+CURLFORM_PTRCONTENTS            EQUATE
+CURLFORM_CONTENTSLENGTH         EQUATE
+CURLFORM_FILECONTENT            EQUATE
+CURLFORM_ARRAY                  EQUATE
+CURLFORM_OBSOLETE               EQUATE
+CURLFORM_FILE                   EQUATE
+
+CURLFORM_BUFFER                 EQUATE
+CURLFORM_BUFFERPTR              EQUATE
+CURLFORM_BUFFERLENGTH           EQUATE
+
+CURLFORM_CONTENTTYPE            EQUATE
+CURLFORM_CONTENTHEADER          EQUATE
+CURLFORM_FILENAME               EQUATE
+CURLFORM_END                    EQUATE
+CURLFORM_OBSOLETE2              EQUATE
+
+CURLFORM_STREAM                 EQUATE
+
+CURLFORM_LASTENTRY              EQUATE              !the last unused
+                              END
+
+CURLFORMcode                  EQUATE(LONG)
+                              ITEMIZE
+CURL_FORMADD_OK                 EQUATE(0)           !first, no error */
+
+CURL_FORMADD_MEMORY             EQUATE
+CURL_FORMADD_OPTION_TWICE       EQUATE
+CURL_FORMADD_NULL               EQUATE
+CURL_FORMADD_UNKNOWN_OPTION     EQUATE
+CURL_FORMADD_INCOMPLETE         EQUATE
+CURL_FORMADD_ILLEGAL_ARRAY      EQUATE
+CURL_FORMADD_DISABLED           EQUATE              !libcurl was built with this disabled */
+
+CURL_FORMADD_LAST               EQUATE              !last
+                              END
+
+
   INCLUDE('svapi.inc')
 
 !structure to pass a file to callbacks
@@ -344,11 +396,23 @@ filled                          LONG  !bytes written
     INCLUDE('svapifnc.inc')
   END
 
+TCurlSList                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
+plist                           LONG, PRIVATE
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), VIRTUAL
+
+Append                          PROCEDURE(STRING pData)
+Free                            PROCEDURE()
+GetList                         PROCEDURE(), LONG
+                              END
+
+
 TCurlClass                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
 curl                            CURL, PROTECTED
 
-!linked list of headers
-headers                         LONG, PROTECTED
+!linked list of http headers
+headers                         &TCurlSList, PROTECTED
 
 SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG pData), CURLcode, PROC, PRIVATE
 SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC, PRIVATE
@@ -364,6 +428,7 @@ SetOpt                          PROCEDURE(CURLoption option, LONG param), CURLco
 SetOpt                          PROCEDURE(CURLoption option, curl::ReadWriteProcType xferproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataProcType xferproc), CURLcode, PROC
 !SetOpt                          PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, TCurlSList plist), CURLcode, PROC
 
 Perform                         PROCEDURE(), CURLcode
 
@@ -380,6 +445,9 @@ WriteFile                       PROCEDURE(STRING pRemoteFile, STRING pLocalFile,
 SendRequest                     PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 !GET/POST, saves server response in pResponseBuf string
 SendRequestStr                  PROCEDURE(STRING pUrl, <STRING pPostFields>, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+!send a file using POST
+PostFile                        PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+PostFileStr                     PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 
 !derive XFerInfo to display prgress info
 XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, VIRTUAL
@@ -399,4 +467,8 @@ SetSSLVersion                   PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion), CUR
 
 GetContentType                  PROCEDURE(), STRING
 GetResponseCode                 PROCEDURE(), LONG ! returns the last received HTTP or FTP code
+
+SetQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
+PreQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
+PostQuote                       PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
                               END

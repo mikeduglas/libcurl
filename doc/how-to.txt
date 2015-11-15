@@ -22,7 +22,7 @@ res   CURLcode, AUTO
     MESSAGE('Download failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
   END
 
-2. Upload file
+2a. Upload file to FTP
 
 curl  TCurlClass
 res   CURLcode, AUTO
@@ -40,6 +40,23 @@ res   CURLcode, AUTO
     MESSAGE('Cannot open local file', 'libcurl', ICON:Exclamation)
   ELSE
     MESSAGE('Upload failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+  END
+
+2b. Upload file to HTTP (POST request)
+
+curl                          TCurlClass
+res                           CURLcode
+
+  CODE
+  curl.Init()
+  
+  res = curl.PostFile(url, 'sendfile', 'client.xml', respfile)
+  IF res = CURLE_OK
+    MESSAGE('Success, see file '& CLIP(respfile) &' for details', 'Post test', ICON:Asterisk)
+  ELSIF res = -1
+    MESSAGE('curl_formadd failed: errcode '& res, 'Post test', ICON:Asterisk)
+  ELSE
+    MESSAGE('SetCustomRequest failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
   END
 
 3. Http GET/POST

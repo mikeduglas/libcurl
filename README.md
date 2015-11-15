@@ -1,6 +1,11 @@
 # libcurl
 libcurl for Clarion
 
+v1.02
+
+- .PostFile and .PostFileStr methods similar to .SendRequest and .SendRequestStr, but upload file to http server using POST form method.
+- FTM Manager demo app
+
 v1.01
 
 - .SetCustomRequest method, for customizing the get command like HTTP: DELETE, TRACE and others

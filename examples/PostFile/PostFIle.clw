@@ -31,5 +31,5 @@ respfile                      STRING(256)
   ELSIF res = -1
     MESSAGE('curl_formadd failed: errcode '& res, 'Post test', ICON:Asterisk)
   ELSE
-    MESSAGE('SetCustomRequest failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
+    MESSAGE('PostFile failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
   END

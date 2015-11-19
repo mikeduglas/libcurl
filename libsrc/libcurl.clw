@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.01
-!** 13.11.2015
+!** libcurl for Clarion v1.03
+!** 19.11.2015
 !** mikeduglas66@gmail.com
 
 

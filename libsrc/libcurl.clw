@@ -75,9 +75,11 @@
 
 !CURL_EXTERN   CURLcode curl_easy_setopt(CURL *curl, CURLoption option, ...);       
       curl_easy_setopt(CURL curl, CURLoption option, LONG param), CURLcode, C, RAW, NAME('curl_easy_setopt')
+      curl_easy_setopt(CURL curl, CURLoption option, *CSTRING param), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ReadWriteProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ProgressDataProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
 !      curl_easy_setopt(CURL curl, CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
+      curl_easy_setopt(CURL curl, CURLoption option, curl::DebugProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
 
 !      * The curl_easy_strerror function may be used to turn a CURLcode value
 !      * into the equivalent human readable error string.  This is useful
@@ -124,15 +126,15 @@
 !      curl_getenv @20
 
 
-!      * curl_global_cleanup() should be invoked exactly once for each application
-!      * that uses libcurl       
-      curl_global_cleanup(), C, NAME('curl_global_cleanup')
-
 !      * curl_global_init() should be invoked exactly once for each application that
 !      * uses libcurl and before any call of other libcurl functions.       
 !      *
 !      * This function is not thread-safe!     
-      curl_global_init(LONG flags), CURLcode, C, RAW, NAME('curl_global_init')
+      curl_global_init(LONG flags), CURLcode, C, PROC, RAW, NAME('curl_global_init')
+
+!      * curl_global_cleanup() should be invoked exactly once for each application
+!      * that uses libcurl       
+      curl_global_cleanup(), C, NAME('curl_global_cleanup')
 
 !      curl_global_init_mem @23
 !      curl_maprintf @24
@@ -185,9 +187,9 @@
     MODULE('WinAPI')
       curl::OutputDebugString(*CSTRING lpOutputString), PASCAL, RAW, NAME('OutputDebugStringA')
       curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
+!      curl::realloc(LONG lpmemblock,LONG size), LONG, PROC, NAME('_realloc')
     END
 
-    GetFileContents(STRING pFile), *STRING, PRIVATE
   END
 
 !!!region static functions
@@ -197,6 +199,41 @@ cs                              CSTRING(LEN(s) + LEN(prefix) + 1)
   CODE
   cs = prefix & s
   curl::OutputDebugString(cs)
+  
+GetFileContents               PROCEDURE(STRING pFile)
+OS_INVALID_HANDLE_VALUE         EQUATE(-1)
+szFile                          CSTRING(256)
+sData                           &STRING
+hFile                           HANDLE
+dwFileSize                      LONG
+lpFileSizeHigh                  LONG
+pvData                          LONG
+dwBytesRead                     LONG
+bRead                           BOOL
+  CODE
+  szFile=CLIP(pFile)
+  hFile = CreateFile(szFile,GENERIC_READ,0,0,OPEN_EXISTING,0,0)
+  IF hFile <> OS_INVALID_HANDLE_VALUE
+    dwFileSize = GetFileSize(hFile,lpFileSizeHigh)
+    IF dwFileSize > 0
+      sData &= NEW STRING(dwFileSize)
+      bRead = ReadFile(hFile,ADDRESS(sData),dwFileSize,dwBytesRead,0)
+    END
+    CloseHandle(hFile)
+  END
+
+  RETURN sData
+!!!endregion
+  
+!!!region curl global functions
+curl::GlobalInit              PROCEDURE(CURL_GLOBAL_ENUM pFlag = CURL_GLOBAL_DEFAULT)
+  CODE
+  RETURN curl_global_init(pFlag)
+  
+curl::GlobalCleanup           PROCEDURE()
+  CODE
+  curl_global_cleanup()
+
 !!!endregion
 
 !!!region callbacks
@@ -227,30 +264,6 @@ rc                              BOOL
   END
   
   RETURN -1 !error
-  
-GetFileContents               PROCEDURE(STRING pFile)
-OS_INVALID_HANDLE_VALUE         EQUATE(-1)
-szFile                          CSTRING(256)
-sData                           &STRING
-hFile                           HANDLE
-dwFileSize                      LONG
-lpFileSizeHigh                  LONG
-pvData                          LONG
-dwBytesRead                     LONG
-bRead                           BOOL
-  CODE
-  szFile=CLIP(pFile)
-  hFile = CreateFile(szFile,GENERIC_READ,0,0,OPEN_EXISTING,0,0)
-  IF hFile <> OS_INVALID_HANDLE_VALUE
-    dwFileSize = GetFileSize(hFile,lpFileSizeHigh)
-    IF dwFileSize > 0
-      sData &= NEW STRING(dwFileSize)
-      bRead = ReadFile(hFile,ADDRESS(sData),dwFileSize,dwBytesRead,0)
-    END
-    CloseHandle(hFile)
-  END
-
-  RETURN sData
   
 curl::FileRead                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
 fs                              &TCurlFileStruct
@@ -300,7 +313,8 @@ rc                              BOOL
     bytesWritten = bytesReceived
   ELSE
 !    bytesWritten = ss.bufsize - ss.filled
-    RETURN -1
+!    RETURN 0
+    RETURN -1 ! raise error
   END
   
   IF bytesWritten
@@ -322,6 +336,38 @@ curl                            &TCurlClass
   
   RETURN 0
 
+curl::DebugCallback           PROCEDURE(LONG phandle, CURL_INFOTYPE ptype, LONG pdata, size_t psize, LONG userptr)
+curl                            &TCurlClass
+txt                             STRING(psize)
+infotype                        STRING(20)
+  CODE
+  IF userptr
+    CASE ptype
+    OF CURLINFO_TEXT
+      infotype = 'TEXT'
+    OF CURLINFO_HEADER_IN
+      infotype = 'HEADER_IN'
+    OF CURLINFO_HEADER_OUT
+      infotype = 'HEADER_OUT'
+    OF CURLINFO_DATA_IN
+      infotype = 'DATA_IN'
+    OF CURLINFO_DATA_OUT
+      infotype = 'DATA_OUT'
+    OF CURLINFO_SSL_DATA_IN
+      infotype = 'SSL_DATA_IN'
+    OF CURLINFO_SSL_DATA_OUT
+      infotype = 'SSL_DATA_OUT'
+    ELSE
+      infotype = 'Unknown info type'
+    END
+  
+    curl &= (userptr)
+    curl::memcpy(ADDRESS(txt), pdata, psize)
+    curl.DebugCallback(ptype, infotype, txt)
+  END
+  
+  RETURN 0
+
 !!!endregion
 
 !!!region TCurlFileStruct
@@ -332,6 +378,24 @@ TCurlFileStruct.Destruct      PROCEDURE()
       curl::DebugInfo('CloseHandle failed, win error '& GetLastError())
     END
   END
+  
+!!!endregion
+  
+!!!region TCurlMailStruct
+TCurlMailStruct.Construct     PROCEDURE()
+  CODE
+  SELF.buf &= NEW TFileBufContent
+  
+TCurlMailStruct.Destruct      PROCEDURE()
+qIndex                          LONG, AUTO
+  CODE
+  LOOP qIndex = 1 TO RECORDS(SELF.buf)
+    GET(SELF.buf, qIndex)
+    DISPOSE(SELF.buf.fdata)
+    SELF.buf.fdata &= NULL
+  END
+  FREE(SELF.buf)
+  DISPOSE(SELF.buf)
   
 !!!endregion
   
@@ -348,14 +412,39 @@ TCurlSList.Append             PROCEDURE(STRING pData)
 szData                          CSTRING(256)
   CODE
   szData = CLIP(pData)
-  curl_slist_append(SELF.plist, szData)
-
+  SELF.plist = curl_slist_append(SELF.plist, szData)
+  RETURN
+  
 TCurlSList.Free               PROCEDURE()
   CODE
   IF SELF.plist <> 0
     curl_slist_free_all(SELF.plist)
     SELF.plist = 0
   END
+!TCurlSList.Free               PROCEDURE()
+!lst                             &curl_slist
+!szdata                          &CSTRING
+!i                               LONG, AUTO
+!  CODE
+!  IF SELF.plist <> 0
+!    
+!    lst &= (SELF.plist)
+!    i = 1
+!    LOOP
+!      szdata &= (lst.pdata)
+!      curl::DebugInfo('slist['& i &']='& CLIP(szdata))
+!      IF lst.pnext = 0
+!        BREAK
+!      END
+!      
+!      i+=1
+!      lst &= (lst.pnext)
+!    END
+!      
+!    
+!    curl_slist_free_all(SELF.plist)
+!    SELF.plist = 0
+!  END
   
 TCurlSList.GetList            PROCEDURE()
   CODE
@@ -388,6 +477,16 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, LONG param)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, param)
   
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, *STRING param)
+szparam                         CSTRING(LEN(param) + 1)
+  CODE
+  szparam = CLIP(param)
+  RETURN SELF.SetOpt(option, szparam)
+  
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, *CSTRING param)
+  CODE
+  RETURN curl_easy_setopt(SELF.curl, option, param)
+  
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ReadWriteProcType cbproc)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, cbproc)
@@ -396,6 +495,10 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ProgressDataPro
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, cbproc)
   
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::DebugProcType debugproc)
+  CODE
+  RETURN curl_easy_setopt(SELF.curl, option, debugproc)
+
 !TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc)
 !  CODE
 !  RETURN curl_easy_setopt(SELF.curl, option, cbproc)
@@ -405,7 +508,9 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
   RETURN curl_easy_setopt(SELF.curl, option, plist.GetList())
 
 TCurlClass.Perform            PROCEDURE()
+res                             CURLcode, AUTO
   CODE
+  res = SELF.SetDebugCallback(curl::DebugCallback)
   RETURN curl_easy_perform(SELF.curl)
   
 TCurlClass.StrError           PROCEDURE(CURLcode errcode)
@@ -481,6 +586,26 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
+  RETURN CURLE_OK
+
+TCurlClass.SetDebugCallback   PROCEDURE(curl::DebugProcType debugproc)
+res                             CURLcode, AUTO
+  CODE
+  res = SELF.SetOpt(CURLOPT_DEBUGFUNCTION, debugproc)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.SetOpt(CURLOPT_DEBUGDATA, ADDRESS(SELF))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.SetOpt(CURLOPT_VERBOSE, 1)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+    
   RETURN CURLE_OK
 
 TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
@@ -703,6 +828,10 @@ TCurlClass.XFerInfo           PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, 
   CODE
   RETURN 0
   
+TCurlClass.DebugCallback      PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext)
+  CODE
+  curl::DebugInfo(CLIP(ptypetxt) &': '& CLIP(ptext))
+  
 TCurlClass.AddHttpHeader      PROCEDURE(STRING pHeader)
   CODE
   SELF.headers.Append(pHeader)
@@ -781,3 +910,4 @@ TCurlClass.PostQuote          PROCEDURE(TCurlSList plist)
   RETURN SELF.SetOpt(CURLOPT_POSTQUOTE, plist)
   
 !!!endregion
+  

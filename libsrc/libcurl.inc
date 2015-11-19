@@ -17,8 +17,8 @@ CURLcode                      EQUATE(LONG)
 !  struct curl_slist *next;
 !}; 
 curl_slist                    GROUP, TYPE
-pdata                           &CSTRING
-pnext                           &curl_list
+pdata                           LONG  !&CSTRING
+pnext                           LONG  !&curl_slist
                               END
 
 
@@ -208,6 +208,8 @@ CURLINFO_TLS_SESSION          EQUATE(CURLINFO_SLIST  + 43)
 !#define CURL_GLOBAL_NOTHING 0
 !#define CURL_GLOBAL_DEFAULT CURL_GLOBAL_ALL
 !#define CURL_GLOBAL_ACK_EINTR (1<<2)
+
+CURL_GLOBAL_ENUM              EQUATE(LONG)
 CURL_GLOBAL_SSL               EQUATE(0001b)
 CURL_GLOBAL_WIN32             EQUATE(0010b)
 CURL_GLOBAL_ALL               EQUATE(BOR(CURL_GLOBAL_SSL, CURL_GLOBAL_WIN32))
@@ -216,6 +218,16 @@ CURL_GLOBAL_DEFAULT           EQUATE(CURL_GLOBAL_ALL)
 CURL_GLOBAL_ACK_EINTR         EQUATE(0100b)
 
 
+!/* parameter for the CURLOPT_USE_SSL option */
+CURL_USESSL                   EQUATE(LONG)
+                              ITEMIZE
+CURLUSESSL_NONE                 EQUATE(0) !/* do not attempt to use SSL */
+CURLUSESSL_TRY                  EQUATE    !/* try using SSL, proceed anyway otherwise */
+CURLUSESSL_CONTROL              EQUATE    !/* SSL for the control connection or fail */
+CURLUSESSL_ALL                  EQUATE    !/* SSL for all communication or fail */
+CURLUSESSL_LAST                 EQUATE    !/* not an option, never use */
+                              END
+
 CURLoption                    EQUATE(LONG)
 CURLOPTTYPE_LONG              EQUATE(0)
 CURLOPTTYPE_OBJECTPOINT       EQUATE(10000)
@@ -223,13 +235,38 @@ CURLOPTTYPE_FUNCTIONPOINT     EQUATE(20000)
 CURLOPTTYPE_OFF_T             EQUATE(30000)
 
 CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_OBJECTPOINT)       !The full URL to get/put
+CURLOPT_PORT                  EQUATE(3 + CURLOPTTYPE_LONG)              !Port number to connect to, if other than default
+CURLOPT_PROXY                 EQUATE(4 + CURLOPTTYPE_OBJECTPOINT)       !Name of proxy to use
+CURLOPT_USERPWD               EQUATE(5 + CURLOPTTYPE_OBJECTPOINT)       !"user:password;options" to use when fetching
+CURLOPT_PROXYUSERPWD          EQUATE(6 + CURLOPTTYPE_OBJECTPOINT)       !"user:password" to use with proxy
+
+CURLOPT_TIMEOUT               EQUATE(13 + CURLOPTTYPE_LONG)             !Time-out the read operation after this amount of seconds
+CURLOPT_CONNECTTIMEOUT        EQUATE(78 + CURLOPTTYPE_LONG)             !Time-out connect operations after this amount of seconds, if connects are OK within this time, then fine... This only aborts the connect phase
+CURLOPT_TIMEOUT_MS            EQUATE(155 + CURLOPTTYPE_LONG)            !Same as TIMEOUT, but with ms resolution
+CURLOPT_CONNECTTIMEOUT_MS     EQUATE(156 + CURLOPTTYPE_LONG)            !Same as CONNECTTIMEOUT, but with ms resolution
+
+!  /* FTP option that changes the timeout, in seconds, associated with
+!     getting a response.  This is different from transfer timeout time and
+!     essentially places a demand on the FTP server to acknowledge commands
+!     in a timely manner. */ 
+CURLOPT_FTP_RESPONSE_TIMEOUT  EQUATE(112 + CURLOPTTYPE_LONG)
+CURLOPT_SERVER_RESPONSE_TIMEOUT   EQUATE(CURLOPT_FTP_RESPONSE_TIMEOUT)
+
+CURLOPT_ACCEPTTIMEOUT_MS      EQUATE(212 + CURLOPTTYPE_LONG)            !Time-out accept operations (currently for FTP only) after this amount of miliseconds
+
 CURLOPT_POSTFIELDS            EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)      !POST static input fields.
 
 CURLOPT_HTTPPOST              EQUATE(24 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of post entries, struct curl_httppost
 
+CURLOPT_SSLCERT               EQUATE(25 + CURLOPTTYPE_OBJECTPOINT)      !name of the file keeping your private SSL-certificate
+CURLOPT_KEYPASSWD             EQUATE(26 + CURLOPTTYPE_OBJECTPOINT)      !password for the SSL or SSH private key
+
 CURLOPT_QUOTE                 EQUATE(28 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of QUOTE commands
 CURLOPT_PREQUOTE              EQUATE(93 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of pre-transfer QUOTE commands
 CURLOPT_POSTQUOTE             EQUATE(39 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of post-transfer QUOTE commands
+
+CURLOPT_DEBUGFUNCTION         EQUATE(94 + CURLOPTTYPE_FUNCTIONPOINT)    !set the debug function
+CURLOPT_DEBUGDATA             EQUATE(95 + CURLOPTTYPE_OBJECTPOINT)      !set the data for the debug function
 
 CURLOPT_VERBOSE               EQUATE(41 + CURLOPTTYPE_LONG)             !talk a lot
 CURLOPT_HEADER                EQUATE(42 + CURLOPTTYPE_LONG)             !throw the header out too
@@ -262,7 +299,6 @@ CURLOPT_XFERINFOFUNCTION      EQUATE(219 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_PROGRESSDATA          EQUATE(57 + CURLOPTTYPE_OBJECTPOINT)
 CURLOPT_XFERINFODATA          EQUATE(CURLOPT_PROGRESSDATA)
 
-CURLOPT_USERPWD               EQUATE(5 + CURLOPTTYPE_OBJECTPOINT)       !"user:password;options" to use when fetching.
 CURLOPT_SSH_AUTH_TYPES        EQUATE(151 + CURLOPTTYPE_LONG)            !allowed SSH authentication methods
 
 CURLOPT_SSH_PUBLIC_KEYFILE    EQUATE(152 + CURLOPTTYPE_OBJECTPOINT)     !Used by scp/sftp to do public/private key authentication
@@ -284,6 +320,34 @@ CURLOPT_SSL_VERIFYHOST        EQUATE(81 + CURLOPTTYPE_LONG)
 !Set if we should verify the peer in ssl handshake, set 1 to verify.
 CURLOPT_SSL_VERIFYPEER        EQUATE(64 + CURLOPTTYPE_LONG)
 
+!  /* Enable SSL/TLS for FTP, pick one of:
+!  CURLUSESSL_TRY     - try using SSL, proceed anyway otherwise
+!  CURLUSESSL_CONTROL - SSL for the control connection or fail
+!  CURLUSESSL_ALL     - SSL for all communication or fail
+!  */
+CURLOPT_USE_SSL               EQUATE(119 + CURLOPTTYPE_LONG)
+
+
+!"name" and "pwd" to use when fetching.
+CURLOPT_USERNAME              EQUATE(173 + CURLOPTTYPE_OBJECTPOINT)
+CURLOPT_PASSWORD              EQUATE(174 + CURLOPTTYPE_OBJECTPOINT)
+
+!  /* set the SMTP mail originator */
+CURLOPT_MAIL_FROM             EQUATE(186 + CURLOPTTYPE_OBJECTPOINT)
+!  /* set the SMTP mail receiver(s) */
+CURLOPT_MAIL_RCPT             EQUATE(187 + CURLOPTTYPE_OBJECTPOINT)
+
+!  /* If the CURLOPT_INFILE is used, this can be used to inform libcurl about
+!  * how large the file being sent really is. That allows better error
+!  * checking and better verifies that the upload was successful. -1 means
+!  * unknown size.
+!  *
+!  * For large file support, there is also a _LARGE version of the key
+!  * which takes an off_t type, allowing platforms with larger off_t
+!  * sizes to handle larger files.  See below for INFILESIZE_LARGE.
+!  */
+CURLOPT_INFILESIZE            EQUATE(14 + CURLOPTTYPE_LONG)
+ 
 CURL_SSLVERSION_ENUM          EQUATE(LONG)
 CURL_SSLVERSION_DEFAULT       EQUATE(0)
 CURL_SSLVERSION_TLSv1         EQUATE(1) !/* TLS 1.x */
@@ -295,18 +359,40 @@ CURL_SSLVERSION_TLSv1_2       EQUATE(6)
 
 CURLOPT_SSLVERSION            EQUATE(32 + CURLOPTTYPE_LONG)             !What version to specifically try to use. 
 
+!/* When FTP over SSL/TLS is selected (with CURLOPT_USE_SSL), this option
+!   can be used to change libcurl's default action which is to first try
+!   "AUTH SSL" and then "AUTH TLS" in this order, and proceed when a OK
+!   response has been received.
+!
+!   Available parameters are:
+!   CURLFTPAUTH_DEFAULT - let libcurl decide
+!   CURLFTPAUTH_SSL     - try "AUTH SSL" first, then TLS
+!   CURLFTPAUTH_TLS     - try "AUTH TLS" first, then SSL
+!*/ 
+CURLOPT_FTPSSLAUTH            EQUATE(129 + CURLOPTTYPE_LONG)
+
+!/* parameter for the CURLOPT_FTPSSLAUTH option */
+CURLFTPAUTH                   EQUATE(LONG)
+CURLFTPAUTH_DEFAULT           EQUATE(0)       !let libcurl decide
+CURLFTPAUTH_SSL               EQUATE(1)       !use "AUTH SSL"
+CURLFTPAUTH_TLS               EQUATE(2)       !use "AUTH TLS"
+CURLFTPAUTH_LAST              EQUATE(3)       !not an option, never use
+
 !The CApath or CAfile used to validate the peer certificate
 !this option is used only if SSL_VERIFYPEER is true
 CURLOPT_CAINFO                EQUATE(65 + CURLOPTTYPE_OBJECTPOINT)
 
-CURLSSH_AUTH_ANY              EQUATE(-1)          !~0     !/* all types supported by the server */
-CURLSSH_AUTH_NONE             EQUATE(0)                   !/* none allowed, silly but complete */
-CURLSSH_AUTH_PUBLICKEY        EQUATE(00001b)      !(1<<0) !/* public/private key files */
-CURLSSH_AUTH_PASSWORD         EQUATE(00010b)      !(1<<1) !/* password */
-CURLSSH_AUTH_HOST             EQUATE(00100b)      !(1<<2) !/* host key files */
-CURLSSH_AUTH_KEYBOARD         EQUATE(01000b)      !(1<<3) !/* keyboard interactive */
-CURLSSH_AUTH_AGENT            EQUATE(10000b)      !(1<<4) !/* agent (ssh-agent, pageant...) */
-CURLSSH_AUTH_DEFAULT          EQUATE(CURLSSH_AUTH_ANY)
+CURLSSH_AUTH_ENUM             EQUATE(LONG)
+                              ITEMIZE
+CURLSSH_AUTH_ANY                EQUATE(-1)          !~0     !/* all types supported by the server */
+CURLSSH_AUTH_NONE               EQUATE(0)                   !/* none allowed, silly but complete */
+CURLSSH_AUTH_PUBLICKEY          EQUATE(00001b)      !(1<<0) !/* public/private key files */
+CURLSSH_AUTH_PASSWORD           EQUATE(00010b)      !(1<<1) !/* password */
+CURLSSH_AUTH_HOST               EQUATE(00100b)      !(1<<2) !/* host key files */
+CURLSSH_AUTH_KEYBOARD           EQUATE(01000b)      !(1<<3) !/* keyboard interactive */
+CURLSSH_AUTH_AGENT              EQUATE(10000b)      !(1<<4) !/* agent (ssh-agent, pageant...) */
+CURLSSH_AUTH_DEFAULT            EQUATE(CURLSSH_AUTH_ANY)
+                              END
 
 CURLformoption                EQUATE(LONG)
                               ITEMIZE
@@ -353,6 +439,19 @@ CURL_FORMADD_DISABLED           EQUATE              !libcurl was built with this
 CURL_FORMADD_LAST               EQUATE              !last
                               END
 
+!/* the kind of data that is passed to information_callback*/
+CURL_INFOTYPE                 EQUATE(LONG)
+                              ITEMIZE
+CURLINFO_TEXT                   EQUATE(0)
+CURLINFO_HEADER_IN              EQUATE      !1 
+CURLINFO_HEADER_OUT             EQUATE      !2
+CURLINFO_DATA_IN                EQUATE      !3
+CURLINFO_DATA_OUT               EQUATE      !4
+CURLINFO_SSL_DATA_IN            EQUATE      !5
+CURLINFO_SSL_DATA_OUT           EQUATE      !6
+CURLINFO_END                    EQUATE
+                              END
+
 
   INCLUDE('svapi.inc')
 
@@ -369,6 +468,16 @@ bufsize                         LONG  !declared size of the string
 filled                          LONG  !bytes written
                               END
 
+TFileBufContent               QUEUE, TYPE
+fdata                           &STRING
+                              END
+
+TCurlMailStruct               CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), VIRTUAL
+lines_read                      LONG
+buf                             &TFileBufContent
+                              END
 
   MAP
     ! CURL callback procedure prototypes
@@ -379,17 +488,25 @@ filled                          LONG  !bytes written
 !    ! This is the CURLOPT_XFERINFOFUNCTION callback proto. It was introduced in 7.32.0, it avoids floating point and provides more detailed information.
 !    curl::XFerInfoProcType(LONG ptr, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow), LONG, C, TYPE
 
+    curl::DebugProcType(LONG phandle, CURL_INFOTYPE ptype, LONG pdata, size_t psize, LONG userptr), LONG, C, TYPE
+
     MODULE('libcurl')
       curl::DebugInfo(STRING s)
+      GetFileContents(STRING pFile), *STRING
 
       !writes to a file
       curl::FileWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
       !reads from a file
       curl::FileRead(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
-      !writes
+      !writes to a string
       curl::StringWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pStringStruct), size_t, C
       !progress function
       curl::XFerInfo(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C
+      !debug function
+      curl::DebugCallback(LONG phandle, CURL_INFOTYPE ptype, LONG pdata, size_t psize, LONG userptr), LONG, C
+
+      curl::GlobalInit(CURL_GLOBAL_ENUM pFlag = CURL_GLOBAL_DEFAULT), CURLcode, PROC 
+      curl::GlobalCleanup()
     END
 
     ! CreateFile, WriteFile, CloseHandle etc
@@ -417,6 +534,7 @@ headers                         &TCurlSList, PROTECTED
 SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG pData), CURLcode, PROC, PRIVATE
 SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC, PRIVATE
 SetXFerCallback                 PROCEDURE(<curl::ProgressDataProcType xferproc>), CURLcode, PROC, PRIVATE
+SetDebugCallback                PROCEDURE(curl::DebugProcType debugproc), CURLcode, PROC, PRIVATE
 
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), VIRTUAL
@@ -425,9 +543,12 @@ Init                            PROCEDURE()
 Cleanup                         PROCEDURE()
 
 SetOpt                          PROCEDURE(CURLoption option, LONG param), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, *STRING param), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, *CSTRING param), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ReadWriteProcType xferproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataProcType xferproc), CURLcode, PROC
 !SetOpt                          PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, curl::DebugProcType debugproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, TCurlSList plist), CURLcode, PROC
 
 Perform                         PROCEDURE(), CURLcode
@@ -450,7 +571,10 @@ PostFile                        PROCEDURE(STRING pUrl, STRING pArgname, STRING p
 PostFileStr                     PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 
 !derive XFerInfo to display prgress info
-XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, VIRTUAL
+XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, PROC, VIRTUAL
+
+!derive Debug to display debug info
+DebugCallback                   PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext), VIRTUAL
 
 AddHttpHeader                   PROCEDURE(STRING pHeader)
 FreeHttpHeaders                 PROCEDURE()
@@ -472,3 +596,83 @@ SetQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !cal
 PreQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
 PostQuote                       PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
                               END
+
+!---------------------------- TCurlFtpClass -----------------------------!
+TFtpFileInfo                  GROUP, TYPE, PRE(TFtpFileInfo) !FTP files and folders info
+DisplayName                     STRING(255)
+LastModified                    STRING(20)
+FileSize                        STRING(20)
+fileMask                        STRING(10)
+Name                            STRING(255)
+SortName                        STRING(255)
+IsFolder                        BYTE
+                              END
+
+TFtpFilesInfo                 QUEUE(TFtpFileInfo), TYPE, PRE(TFtpFilesInfo)
+                              END
+
+TSSHSettings                  GROUP, TYPE, PRE(TSSHSettings)
+AuthMethod                      CURLSSH_AUTH_ENUM
+PublicKeyFile                   STRING(256)
+PrivateKeyFile                  STRING(256)
+KnownHosts                      STRING(256)
+KeyPassword                     STRING(40)
+                              END
+
+!sFTP commands (using in QUOTE)
+!http://www.tecmint.com/sftp-command-examples/
+
+TCurlFtpClass                 CLASS(TCurlClass), TYPE, MODULE('libcurlftp.clw'), LINK('libcurlftp.clw')
+AuthMethod                      CURLSSH_AUTH_ENUM, PROTECTED
+
+SSHAuth                         PROCEDURE(TSSHSettings pSSH), CURLcode, PROC !sets CURLSSH_AUTH_ANY
+                                  
+LoadDir                         PROCEDURE(STRING pUrl, *TFtpFilesInfo dirlist), CURLcode, PROC
+CreateDir                       PROCEDURE(STRING pUrl, STRING pDirname), CURLcode, PROC   !pUrl is ftp://user@95.96.97.98, pDirname is /home/files/temp
+DeleteFile                      PROCEDURE(STRING pUrl, STRING pFilename), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pFilename is /home/files/testfile.txt
+RenameFile                      PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
+RenameDir                       PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
+                              END
+
+!---------------------------- TCurlMailClass ----------------------------!
+!TCurlMailAttachment           GROUP, TYPE
+!filename                        STRING(256)
+!                              END
+!
+!TCurlMailAttachments          QUEUE(TCurlMailAttachment), TYPE
+!                              END
+!
+!TCurlMailClass                CLASS(TCurlClass), TYPE, MODULE('libcurlmail.clw'), LINK('libcurlmail.clw')
+!url                             STRING(256), PRIVATE !smtp://smtp.gmail.com:587
+!username                        STRING(128), PRIVATE
+!pwd                             STRING(32), PRIVATE  
+!!url                             STRING(256), PRIVATE  
+!ssl                             CURL_USESSL, PRIVATE
+!cert                            STRING(256), PRIVATE
+!mailfrom                        STRING(256), PRIVATE  
+!!mailto                          &TCurlMailRecipients, PRIVATE
+!mailto                          &TCurlSList, PRIVATE         !*curl_slist
+!mailtostr                       STRING(256), PRIVATE
+!mailcc                          &TCurlSList, PRIVATE         !*curl_slist
+!mailbcc                         &TCurlSList, PRIVATE         !*curl_slist
+!attachments                     &TCurlMailAttachments, PRIVATE
+!mailsubject                     &STRING, PRIVATE
+!mailbody                        &STRING, PRIVATE
+!
+!Construct                       PROCEDURE()
+!Destruct                        PROCEDURE(), DERIVED
+!
+!Server                          PROCEDURE(STRING pServer, LONG pPort)           !smtp.gmail.com, 587
+!Account                         PROCEDURE(STRING pUsername, STRING pPwd)        !username: username@gmail.com
+!SSL                             PROCEDURE(CURL_USESSL pSSL)                     !see CURL_USESSL enum
+!Certificate                     PROCEDURE(STRING pCert)                         !google.pem
+!From                            PROCEDURE(STRING pFrom)                         !<xxxxx@gmail.com>
+!AddTo                           PROCEDURE(STRING pRecipient)
+!!AddCC                           PROCEDURE(STRING pRecipient)
+!!AddBCC                          PROCEDURE(STRING pRecipient)
+!AddAttachment                   PROCEDURE(STRING pFilename)
+!Subject                         PROCEDURE(STRING pSubject)
+!Body                            PROCEDURE(STRING pBody)
+!
+!Send                            PROCEDURE(), CURLcode, PROC
+!                              END

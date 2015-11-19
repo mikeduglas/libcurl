@@ -1,10 +1,19 @@
 # libcurl
 libcurl for Clarion
 
+v1.03
+
+- FIX: TCurlSList.Append() bug
+- NEW: TCurlFtpClass class
+- FTP Manager app:
+  - Context menu
+  - SSH settings
+  - Logging 
+
 v1.02
 
 - .PostFile and .PostFileStr methods similar to .SendRequest and .SendRequestStr, but upload file to http server using POST form method.
-- FTM Manager demo app
+- FTP Manager demo app
 
 v1.01
 

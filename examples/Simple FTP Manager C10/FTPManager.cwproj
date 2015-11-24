@@ -1,14 +1,16 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectGuid>{5EA7B61C-93D5-49A7-82E8-2D5A82240F90}</ProjectGuid>
+    <ProjectGuid>{7FFFF109-7696-4575-98F2-467C3E36898B}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">Win32</Platform>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>FTPManager</RootNamespace>
     <AssemblyName>FTPManager</AssemblyName>
     <OutputName>FTPManager</OutputName>
-    <ApplicationIcon>ftp.ico</ApplicationIcon>
+    <CWOutputType>Exe</CWOutputType>
     <DefineConstants>_ABCDllMode_=&gt;0%3b_ABCLinkMode_=&gt;1</DefineConstants>
-    <Model>Dll</Model>
+    <Model>Lib</Model>
+    <ApplicationIcon>ftp.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>True</DebugSymbols>
@@ -49,12 +51,45 @@
     <Compile Include="FTPManager007.clw">
       <Generated>true</Generated>
     </Compile>
+    <Compile Include="FTPManager008.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager009.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager010.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager011.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager012.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager013.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager014.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager015.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager016.clw">
+      <Generated>true</Generated>
+    </Compile>
+    <Compile Include="FTPManager017.clw">
+      <Generated>true</Generated>
+    </Compile>
     <Compile Include="FTPMANAGER_BC.CLW">
       <Generated>true</Generated>
     </Compile>
     <Compile Include="FTPManager_BC0.CLW">
       <Generated>true</Generated>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="ftp.ico" />
   </ItemGroup>
   <Import Project="$(ClarionBinPath)\SoftVelocity.Build.Clarion.targets" />
 </Project>

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.03
-!** 19.11.2015
+!** libcurl for Clarion v1.04
+!** 24.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -20,13 +20,14 @@ Filename                        STRING(255)
                               END
 
   MAP
-    ParseResponse(STRING pSrc, *QUEUE pQ), PRIVATE
-    ParseItem(STRING pSrc, *TFtpDirListItem pItem), PRIVATE
+    ParseFullListResponse(STRING pSrc, *QUEUE pQ), PRIVATE
+    ParseFullListItem(STRING pSrc, *TFtpDirListItem pItem), PRIVATE
+    ParseBareListResponse(STRING pSrc, *QUEUE pQ), PRIVATE
     FtpDateToClaDate(STRING pMonth, STRING pDay, STRING pYearOrTime), STRING, PRIVATE
   END
 
 !!!region static functions
-ParseResponse                 PROCEDURE(STRING pSrc, *QUEUE pQ)
+ParseFullListResponse         PROCEDURE(STRING pSrc, *QUEUE pQ)
 BufLen                          LONG, AUTO
 StartPos                        LONG, AUTO
 EndPos                          LONG, AUTO
@@ -70,7 +71,7 @@ aFld1                           ANY
     END
   END
   
-ParseItem                     PROCEDURE(STRING pSrc, *TFtpDirListItem pItem)
+ParseFullListItem             PROCEDURE(STRING pSrc, *TFtpDirListItem pItem)
 BufLen                          LONG, AUTO
 StartPos                        LONG, AUTO
 EndPos                          LONG, AUTO
@@ -120,6 +121,53 @@ aFld                            ANY
     END
   END
   
+ParseBareListResponse         PROCEDURE(STRING pSrc, *QUEUE pQ)
+BufLen                          LONG, AUTO
+StartPos                        LONG, AUTO
+EndPos                          LONG, AUTO
+MatchPos                        LONG, AUTO
+StrIndex                        LONG, AUTO
+aFld1                           ANY
+
+  CODE
+  FREE(pQ)
+  
+  IF NOT pSrc
+    RETURN
+  END
+  
+  !pSrc contains items separated by <13> or <10> or <13,10>
+  
+  BufLen = LEN(CLIP(pSrc))
+  StartPos = 1
+
+  LOOP StrIndex = 1 TO BufLen
+    IF INLIST(pSrc[StrIndex], '<13>', '<10>')
+      ! new line separator found
+      
+      aFld1 &= WHAT(pQ, 1)
+      aFld1 = pSrc[StartPos : StrIndex - 1]
+      
+      IF CLIP(aFld1) <> '.' AND CLIP(aFld1) <> '..'
+        ADD(pQ)
+      END
+      
+      ! search for next non-new line char
+      LOOP
+        StrIndex += 1
+        IF StrIndex > BufLen
+          BREAK
+        END
+        
+        IF NOT INLIST(pSrc[StrIndex], '<13>', '<10>')
+          BREAK
+        END
+      END
+      
+      StartPos = StrIndex
+    END
+  END
+  
 FtpDateToClaDate              PROCEDURE(STRING pMonth, STRING pDay, STRING pYearOrTime)
 iMonth                          LONG, AUTO
 iDay                            LONG, AUTO
@@ -157,7 +205,6 @@ res                             CURLcode, AUTO
   CODE
   !http://curl.haxx.se/mail/lib-2013-07/0102.html
   
-!  res = SELF.SetOpt(CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PUBLICKEY)
   res = SELF.SetOpt(CURLOPT_SSH_AUTH_TYPES, pSSH.AuthMethod)
   IF res <> CURLE_OK
     RETURN res
@@ -208,6 +255,11 @@ DirItem                         GROUP(TFtpDirListItem), PRE(DirItem)
                                 END
 qIndex                          LONG, AUTO
   CODE
+  res = SELF.SetOpt(CURLOPT_FTPLISTONLY, 0)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
 !  res = SELF.SendRequestStr(pUrl, , respBuffer)
   res = SELF.SendRequest(pUrl, , respfile)
   IF res <> CURLE_OK
@@ -216,7 +268,7 @@ qIndex                          LONG, AUTO
 
 !  ParseResponse(respBuffer, RespQ)
   respdata &= GetFileContents(respfile)
-  ParseResponse(respdata, RespQ)
+  ParseFullListResponse(respdata, RespQ)
   DISPOSE(respdata)
   REMOVE(respfile)
   
@@ -238,7 +290,7 @@ qIndex                          LONG, AUTO
   
   LOOP qIndex = 1 TO RECORDS(RespQ)
     GET(RespQ, qIndex)
-    ParseItem(RespQ.Item, DirItem)
+    ParseFullListItem(RespQ.Item, DirItem)
     
     IF DirItem.Filename <> '.'  ! don't include '.' folder
       CLEAR(dirlist)
@@ -278,6 +330,32 @@ qIndex                          LONG, AUTO
   END
   
   RETURN CURLE_OK
+
+TCurlFtpClass.LoadDirListOnly PROCEDURE(STRING pUrl, *TFtpDirList barelist)
+respfile                        STRING('$$$ftpdir$$$.txt')
+respdata                        &STRING
+res                             CURLcode, AUTO
+  CODE
+  res = SELF.SetOpt(CURLOPT_FTPLISTONLY, 1)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+!  res = SELF.SendRequestStr(pUrl, , respBuffer)
+  res = SELF.SendRequest(pUrl, , respfile)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  FREE(barelist)
+
+!  ParseResponse(respBuffer, RespQ)
+  respdata &= GetFileContents(respfile)
+  ParseBareListResponse(respdata, barelist)
+  DISPOSE(respdata)
+  REMOVE(respfile)
+  
+  RETURN CURLE_OK
   
 !pUrl is ftp://user@95.96.97.98, pFilename is /home/files/testfile.txt
 TCurlFtpClass.DeleteFile      PROCEDURE(STRING pUrl, STRING pFilename)
@@ -302,7 +380,19 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
-  RETURN SELF.Perform()
+  ! set WriteFile callback, otherwise libcure could fail with CURLE_WRITE_ERROR
+  ! http://stackoverflow.com/questions/31900862/curl-simple-example-returning-curle-write-error
+  res = SELF.SetWriteCallback(curl::FileWrite, 0)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.Perform()
+  IF res <> CURLE_OK
+    curl::DebugInfo('DeleteFile failed: '& SELF.StrError(res))
+  END
+  
+  RETURN res
 
 !pUrl is ftp://user@95.96.97.98, pDirname is /home/files/temp  
 TCurlFtpClass.CreateDir       PROCEDURE(STRING pUrl, STRING pDirname)
@@ -327,7 +417,19 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
-  RETURN SELF.Perform()
+  ! set WriteFile callback, otherwise libcure could fail with CURLE_WRITE_ERROR
+  ! http://stackoverflow.com/questions/31900862/curl-simple-example-returning-curle-write-error
+  res = SELF.SetWriteCallback(curl::FileWrite, 0)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.Perform()
+  IF res <> CURLE_OK
+    curl::DebugInfo('CreateDir failed: '& SELF.StrError(res))
+  END
+  
+  RETURN res
   
 TCurlFtpClass.RenameFile      PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname)
 ftpcmd                          TCurlSList
@@ -377,4 +479,16 @@ res                             CURLcode, AUTO
   
   RETURN SELF.Perform()
 
+TCurlFtpClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
+res                                 CURLcode, AUTO
+  CODE
+  !turn on wildcard matching
+  !this also turns on curl::ChunkBgnCallback() and curl::ChunkEndCallback()
+  res = SELF.SetOpt(CURLOPT_WILDCARDMATCH, 1)  
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  RETURN PARENT.ReadFile(pRemoteFile, pLocalFile, xferproc)
+  
 !!!endregion

@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 # Clarion 2.1.0.2447
-Project("{12B76EC0-1D7B-4FA7-A7D0-C524288B48A1}") = "FTPManager", "FTPManager.cwproj", "{5EA7B61C-93D5-49A7-82E8-2D5A82240F90}"
+Project("{12B76EC0-1D7B-4FA7-A7D0-C524288B48A1}") = "FTPManager", "FTPManager.cwproj", "{7FFFF109-7696-4575-98F2-467C3E36898B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{{2150E333-8FDC-42A3-9474-1A3956D46DE8}}"
 	ProjectSection(SolutionItems) = postProject
@@ -15,9 +15,9 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5EA7B61C-93D5-49A7-82E8-2D5A82240F90}.Debug|Win32.Build.0 = Debug|Win32
-		{5EA7B61C-93D5-49A7-82E8-2D5A82240F90}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5EA7B61C-93D5-49A7-82E8-2D5A82240F90}.Release|Win32.Build.0 = Release|Win32
-		{5EA7B61C-93D5-49A7-82E8-2D5A82240F90}.Release|Win32.ActiveCfg = Release|Win32
+		{7FFFF109-7696-4575-98F2-467C3E36898B}.Debug|Win32.Build.0 = Debug|Win32
+		{7FFFF109-7696-4575-98F2-467C3E36898B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7FFFF109-7696-4575-98F2-467C3E36898B}.Release|Win32.Build.0 = Release|Win32
+		{7FFFF109-7696-4575-98F2-467C3E36898B}.Release|Win32.ActiveCfg = Release|Win32
 	EndGlobalSection
 EndGlobal

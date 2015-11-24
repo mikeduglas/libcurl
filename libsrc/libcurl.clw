@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.03
-!** 19.11.2015
+!** libcurl for Clarion v1.04
+!** 24.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -80,6 +80,8 @@
       curl_easy_setopt(CURL curl, CURLoption option, curl::ProgressDataProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
 !      curl_easy_setopt(CURL curl, CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::DebugProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
+      curl_easy_setopt(CURL curl, CURLoption option, curl::ChunkBgnProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
+      curl_easy_setopt(CURL curl, CURLoption option, curl::ChunkEndProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
 
 !      * The curl_easy_strerror function may be used to turn a CURLcode value
 !      * into the equivalent human readable error string.  This is useful
@@ -239,37 +241,31 @@ curl::GlobalCleanup           PROCEDURE()
 !!!region callbacks
 curl::FileWrite               PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
 fs                              &TCurlFileStruct
-filename                        CSTRING(256)
 bytesWritten                    size_t
-rc                              BOOL
   CODE
   IF pFileStruct = 0
-    RETURN -1
+    ! tell curl how many bytes we handled
+    RETURN bufsize * nmemb
   END
   
   fs &= (pFileStruct)
   
-  IF fs.fhandle = 0
-    ! create file
-    filename = CLIP(fs.filename)
-    fs.fhandle = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0)
-    IF fs.fhandle = 0
-      RETURN -1
-    END
+  ! create file
+  IF NOT fs.CreateFile()
+    curl::DebugInfo('CreateFile('& fs.GetFileName() &' error')
+    RETURN -1
   END
   
-  rc = WriteFile(fs.fhandle, buffer, bufsize * nmemb, bytesWritten, 0)
-  IF rc
+  IF fs.WriteFile(buffer, bufsize * nmemb, bytesWritten)
     RETURN bytesWritten
   END
   
+  curl::DebugInfo('WriteFile('& fs.GetFileName() &' error')
   RETURN -1 !error
   
 curl::FileRead                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
 fs                              &TCurlFileStruct
-filename                        CSTRING(256)
 bytesRead                       size_t
-rc                              BOOL
   CODE
   IF pFileStruct = 0
     RETURN -1
@@ -277,20 +273,17 @@ rc                              BOOL
   
   fs &= (pFileStruct)
   
-  IF fs.fhandle = 0
-    ! open file
-    filename = CLIP(fs.filename)
-    fs.fhandle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)
-    IF fs.fhandle = 0
-      RETURN -1
-    END
+  ! open file
+  IF NOT fs.OpenFile()
+    curl::DebugInfo('OpenFile('& fs.GetFileName() &' error')
+    RETURN -1
   END
   
-  rc = ReadFile(fs.fhandle, buffer, bufsize * nmemb, bytesRead, 0)
-  IF rc
+  IF fs.ReadFile(buffer, bufsize * nmemb, bytesRead)
     RETURN bytesRead
   END
   
+  curl::DebugInfo('ReadFile('& fs.GetFileName() &' error')
   RETURN -1 !error
 
 curl::StringWrite             PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pStringStruct)
@@ -368,17 +361,120 @@ infotype                        STRING(20)
   
   RETURN 0
 
+curl::ChunkBgnCallback        PROCEDURE(LONG transfer_info, LONG ptr, LONG remains)
+fs                              &TCurlFileStruct
+finfo                           &curl_fileinfo
+fname                           &CSTRING
+  CODE
+  IF NOT transfer_info
+    RETURN CURL_CHUNK_BGN_FUNC_SKIP
+  END
+
+  finfo &= (transfer_info)
+
+  IF NOT finfo.pfilename
+    RETURN CURL_CHUNK_BGN_FUNC_SKIP
+  END
+
+  fname &= (finfo.pfilename)
+
+  CASE finfo.filetype
+  OF CURLFILETYPE_DIRECTORY
+    curl::DebugInfo('Coming: DIR '& fname)
+  OF CURLFILETYPE_FILE
+    curl::DebugInfo('Coming: FILE '& fname)
+  ELSE
+    curl::DebugInfo('Coming: object of type '& finfo.filetype &' '& fname)
+  END
+  
+  IF NOT ptr
+    RETURN CURL_CHUNK_BGN_FUNC_SKIP
+  END
+  
+  fs &= (ptr)
+
+  IF finfo.filetype = CURLFILETYPE_FILE
+    !do not transfer files >= 50b
+!    IF finfo.size.lo > 50
+!      RETURN CURL_CHUNK_BGN_FUNC_SKIP
+!    END
+    
+    ! open file
+    IF NOT fs.CreateFile()
+      curl::DebugInfo('CreateFile('& fs.GetFileName() &' error')
+      RETURN CURL_CHUNK_BGN_FUNC_SKIP
+    END
+  END
+  
+  RETURN CURL_CHUNK_BGN_FUNC_OK
+  
+curl::ChunkEndCallback        PROCEDURE(LONG ptr)
+fs                              &TCurlFileStruct
+  CODE
+  IF ptr
+    fs &= (ptr)
+    curl::DebugInfo('Downloaded: '& fs.GetFileName())
+    fs.Close()
+  END
+  
+  RETURN CURL_CHUNK_END_FUNC_OK
+  
 !!!endregion
 
 !!!region TCurlFileStruct
 TCurlFileStruct.Destruct      PROCEDURE()
   CODE
+  SELF.Close()
+  
+TCurlFileStruct.Init          PROCEDURE(STRING pFilename)
+  CODE
+  SELF.filename = CLIP(pFilename)
+  SELF.fhandle = 0
+
+TCurlFileStruct.Close         PROCEDURE()
+ret                             BOOL, AUTO
+  CODE
   IF SELF.fhandle
-    IF CloseHandle(SELF.fhandle) = 0
+    ret = CloseHandle(SELF.fhandle)
+    IF ret
+      SELF.fhandle = 0
+    ELSE
       curl::DebugInfo('CloseHandle failed, win error '& GetLastError())
     END
+    
+    RETURN ret
   END
   
+  RETURN TRUE
+
+TCurlFileStruct.CreateFile    PROCEDURE(LONG dwDesiredAccess = GENERIC_WRITE, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = CREATE_ALWAYS, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL)
+  CODE
+  IF NOT SELF.fhandle
+    SELF.fhandle = CreateFile(SELF.filename, dwDesiredAccess, dwShareMode, 0, dwCreationDisposition, dwFlagsAndAttributes, 0)
+  END
+  
+  RETURN CHOOSE(SELF.fhandle <> 0)
+
+TCurlFileStruct.OpenFile                      PROCEDURE(LONG dwDesiredAccess = GENERIC_READ, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = OPEN_EXISTING, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL)
+  CODE
+  IF NOT SELF.fhandle
+    SELF.fhandle = CreateFile(SELF.filename, dwDesiredAccess, dwShareMode, 0, dwCreationDisposition, dwFlagsAndAttributes, 0)
+  END
+  
+  RETURN CHOOSE(SELF.fhandle <> 0)
+
+TCurlFileStruct.ReadFile      PROCEDURE(LONG lpBuffer, LONG dwBytes, *LONG dwBytesRead)
+  CODE
+  RETURN ReadFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesRead, 0)
+  
+TCurlFileStruct.WriteFile     PROCEDURE(long lpBuffer, long dwBytes, *long dwBytesWritten)
+  CODE
+  RETURN WriteFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesWritten, 0)
+  
+TCurlFileStruct.GetFileName   PROCEDURE()
+  CODE
+  RETURN CLIP(SELF.filename)
+
 !!!endregion
   
 !!!region TCurlMailStruct
@@ -471,6 +567,14 @@ TCurlClass.Cleanup            PROCEDURE()
   SELF.FreeHttpHeaders()
   IF SELF.curl
     curl_easy_cleanup(SELF.curl)
+    SELF.curl = 0
+  END
+
+TCurlClass.Reset              PROCEDURE()
+  CODE
+  SELF.FreeHttpHeaders()
+  IF SELF.curl
+    curl_easy_reset(SELF.curl)
   END
 
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, LONG param)
@@ -498,6 +602,14 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ProgressDataPro
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::DebugProcType debugproc)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, debugproc)
+
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ChunkBgnProcType chunkbgnproc)
+  CODE
+  RETURN curl_easy_setopt(SELF.curl, option, chunkbgnproc)
+
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ChunkEndProcType chunkendproc)
+  CODE
+  RETURN curl_easy_setopt(SELF.curl, option, chunkendproc)
 
 !TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc)
 !  CODE
@@ -614,8 +726,7 @@ fs                              LIKE(TCurlFileStruct)
 url                             CSTRING(256)
   CODE
   ! set WriteFile callback
-  fs.filename = pLocalFile
-  fs.fhandle = 0
+  fs.Init(pLocalFile)
   res = SELF.SetWriteCallback(curl::FileWrite, ADDRESS(fs))
   IF res <> CURLE_OK
     RETURN res
@@ -634,6 +745,24 @@ url                             CSTRING(256)
     RETURN res
   END
   
+  !callback is called before download of concrete file started
+  res = SELF.SetOpt(CURLOPT_CHUNK_BGN_FUNCTION, curl::ChunkBgnCallback)  
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  !callback is called after data from the file have been transferred 
+  res = SELF.SetOpt(CURLOPT_CHUNK_END_FUNCTION, curl::ChunkEndCallback)  
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  !put transfer data into callbacks
+  res = SELF.SetOpt(CURLOPT_CHUNK_DATA, ADDRESS(fs))  
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
   ! perform request
   res = SELF.Perform()
   IF res <> CURLE_OK
@@ -649,8 +778,7 @@ fs                              LIKE(TCurlFileStruct)
 url                             CSTRING(256)
   CODE
   ! set ReadFile callback
-  fs.filename = pLocalFile
-  fs.fhandle = 0
+  fs.Init(pLocalFile)
   res = SELF.SetReadCallback(curl::FileRead, ADDRESS(fs))
   IF res <> CURLE_OK
     RETURN res
@@ -690,8 +818,7 @@ pf                              CSTRING(LEN(pPostFields) + 1)
 url                             CSTRING(256)
   CODE
   IF pResponseFile <> ''
-    fs.filename = pResponseFile
-    fs.fhandle = 0
+    fs.Init(pResponseFile)
     res = SELF.SetWriteCallback(curl::FileWrite, ADDRESS(fs))
     IF res <> CURLE_OK
       RETURN res

@@ -1,12 +1,18 @@
-!** libcurl for Clarion v1.03
-!** 19.11.2015
+!** libcurl for Clarion v1.04
+!** 24.11.2015
 !** mikeduglas66@gmail.com
 
 
 CURL                          EQUATE(LONG)
 
 size_t                        EQUATE(UNSIGNED)
-!curl_off_t                    EQUATE(INT64)
+
+LONGLONG                      GROUP,  TYPE  !INT64
+lo                              LONG
+hi                              LONG
+                              END
+
+curl_off_t                    EQUATE(LONGLONG)
 
 CURLcode                      EQUATE(LONG)
 
@@ -327,6 +333,7 @@ CURLOPT_SSL_VERIFYPEER        EQUATE(64 + CURLOPTTYPE_LONG)
 !  */
 CURLOPT_USE_SSL               EQUATE(119 + CURLOPTTYPE_LONG)
 
+CURLOPT_CONNECT_ONLY          EQUATE(141 + CURLOPTTYPE_LONG)            !no transfer, set up connection and let application use the socket by extracting it with CURLINFO_LASTSOCKET
 
 !"name" and "pwd" to use when fetching.
 CURLOPT_USERNAME              EQUATE(173 + CURLOPTTYPE_OBJECTPOINT)
@@ -394,6 +401,91 @@ CURLSSH_AUTH_AGENT              EQUATE(10000b)      !(1<<4) !/* agent (ssh-agent
 CURLSSH_AUTH_DEFAULT            EQUATE(CURLSSH_AUTH_ANY)
                               END
 
+CURLOPT_WILDCARDMATCH         EQUATE(197 + CURLOPTTYPE_LONG)    !Turn on wildcard matching
+
+!Directory matching callback called before downloading of an individual file (chunk) started
+CURLOPT_CHUNK_BGN_FUNCTION    EQUATE(198 + CURLOPTTYPE_FUNCTIONPOINT)
+!Directory matching callback called after the file (chunk) was downloaded, or skipped
+CURLOPT_CHUNK_END_FUNCTION    EQUATE(199 + CURLOPTTYPE_FUNCTIONPOINT)
+!Change match (fnmatch-like) callback for wildcard matching
+CURLOPT_FNMATCH_FUNCTION      EQUATE(200 + CURLOPTTYPE_FUNCTIONPOINT)
+!Let the application define custom chunk data pointer
+CURLOPT_CHUNK_DATA            EQUATE(201 + CURLOPTTYPE_OBJECTPOINT)
+!FNMATCH_FUNCTION user pointer
+CURLOPT_FNMATCH_DATA          EQUATE(202 + CURLOPTTYPE_OBJECTPOINT)
+
+!return codes for CURLOPT_CHUNK_BGN_FUNCTION
+CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)
+CURL_CHUNK_BGN_FUNC_FAIL      EQUATE(1)             !tell the lib to end the task
+CURL_CHUNK_BGN_FUNC_SKIP      EQUATE(2)             !skip this chunk over
+
+!return codes for CURLOPT_CHUNK_END_FUNCTION
+CURL_CHUNK_END_FUNC_OK        EQUATE(0)
+CURL_CHUNK_END_FUNC_FAIL      EQUATE(1)             !tell the lib to end the task
+
+!return codes for FNMATCHFUNCTION
+CURL_FNMATCHFUNC_MATCH        EQUATE(0)             !string corresponds to the pattern
+CURL_FNMATCHFUNC_NOMATCH      EQUATE(1)             !pattern doesn't match the string
+CURL_FNMATCHFUNC_FAIL         EQUATE(2)             !an error occurred
+
+
+!enumeration of file types
+CURLFILETYPE                  EQUATE(LONG)
+                              ITEMIZE
+CURLFILETYPE_FILE               EQUATE(0)
+CURLFILETYPE_DIRECTORY          EQUATE
+CURLFILETYPE_SYMLINK            EQUATE
+CURLFILETYPE_DEVICE_BLOCK       EQUATE
+CURLFILETYPE_DEVICE_CHAR        EQUATE
+CURLFILETYPE_NAMEDPIPE          EQUATE
+CURLFILETYPE_SOCKET             EQUATE
+CURLFILETYPE_DOOR               EQUATE              !is possible only on Sun Solaris now
+
+CURLFILETYPE_UNKNOWN            EQUATE              !should never occur
+                              END
+
+CURLFINFOFLAG_KNOWN_FILENAME  EQUATE(1)           !(1<<0)
+CURLFINFOFLAG_KNOWN_FILETYPE  EQUATE(2)           !(1<<1)
+CURLFINFOFLAG_KNOWN_TIME      EQUATE(4)           !(1<<2)
+CURLFINFOFLAG_KNOWN_PERM      EQUATE(8)           !(1<<3)
+CURLFINFOFLAG_KNOWN_UID       EQUATE(16)          !(1<<4)
+CURLFINFOFLAG_KNOWN_GID       EQUATE(32)          !(1<<5)
+CURLFINFOFLAG_KNOWN_SIZE      EQUATE(64)          !(1<<6)
+CURLFINFOFLAG_KNOWN_HLINKCOUNT    EQUATE(128)         !(1<<7)
+ 
+
+!/* Content of this structure depends on information which is known and is
+!   achievable (e.g. by FTP LIST parsing). Please see the url_easy_setopt(3) man
+!   page for callbacks returning this structure -- some fields are mandatory,
+!   some others are optional. The FLAG field has special meaning. */
+curl_fileinfo                 GROUP, TYPE
+pfilename                       LONG      !char *filename;
+filetype                        CURLFILETYPE
+ptime                           LONG      !time_t time;
+perm                            UNSIGNED
+uid                             LONG
+gid                             LONG
+size                            LIKE(curl_off_t)
+hardlinks                       LONG
+
+!  struct {
+!   If some of these fields is not NULL, it is a pointer to b_data.
+string_time                     LONG      !char *time;
+string_perm                     LONG      !char *perm;
+string_user                     LONG      !char *user;
+string_group                    LONG      !char *group;
+string_target                   LONG      !char *target; /* pointer to the target filename of a symlink */
+!  } strings;
+
+flags                           UNSIGNED
+
+! used internally
+b_data                          LONG      !char * b_data;
+b_size                          size_t
+b_used                          size_t
+                              END
+
+
 CURLformoption                EQUATE(LONG)
                               ITEMIZE
 CURLFORM_NOTHING                EQUATE(0)           !the first one is unused
@@ -457,9 +549,17 @@ CURLINFO_END                    EQUATE
 
 !structure to pass a file to callbacks
 TCurlFileStruct              CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
+filename                        CSTRING(256), PROTECTED
+fhandle                         HANDLE, PROTECTED
+
 Destruct                        PROCEDURE(), VIRTUAL  !closes file handle
-filename                        STRING(256)
-fhandle                         HANDLE
+Init                            PROCEDURE(STRING pFilename)
+Close                           PROCEDURE(), BOOL, VIRTUAL, PROC
+CreateFile                      PROCEDURE(LONG dwDesiredAccess = GENERIC_WRITE, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = CREATE_ALWAYS, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL), BOOL
+OpenFile                        PROCEDURE(LONG dwDesiredAccess = GENERIC_READ, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = OPEN_EXISTING, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL), BOOL
+ReadFile                        PROCEDURE(LONG lpBuffer, LONG dwBytes, *LONG dwBytesRead), BOOL
+WriteFile                       PROCEDURE(long lpBuffer, long dwBytes, *long dwBytesWritten), BOOL
+GetFileName                     PROCEDURE(), STRING
                               END
 
 TCurlStringStruct             GROUP, TYPE
@@ -490,6 +590,23 @@ buf                             &TFileBufContent
 
     curl::DebugProcType(LONG phandle, CURL_INFOTYPE ptype, LONG pdata, size_t psize, LONG userptr), LONG, C, TYPE
 
+!/* if splitting of data transfer is enabled, this callback is called before
+!   download of an individual chunk started. Note that parameter "remains" works
+!   only for FTP wildcard downloading (for now), otherwise is not used */     
+    curl::ChunkBgnProcType(LONG transfer_info, LONG ptr, LONG remains), LONG, C, TYPE
+
+!/* If splitting of data transfer is enabled this callback is called after
+!   download of an individual chunk finished.
+!   Note! After this callback was set then it have to be called FOR ALL chunks.
+!   Even if downloading of this chunk was skipped in CHUNK_BGN_FUNC.
+!   This is the reason why we don't need "transfer_info" parameter in this
+!   callback and we are not interested in "remains" parameter too. */     
+    curl::ChunkEndProcType(LONG ptr), LONG, C, TYPE
+
+!/* callback type for wildcard downloading pattern matching. If the
+!   string matches the pattern, return CURL_FNMATCHFUNC_MATCH value, etc. */ 
+    curl::FnMatchProc(LONG ptr, *CSTRING pattern, *CSTRING string), LONG, C, TYPE
+
     MODULE('libcurl')
       curl::DebugInfo(STRING s)
       GetFileContents(STRING pFile), *STRING
@@ -504,6 +621,13 @@ buf                             &TFileBufContent
       curl::XFerInfo(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C
       !debug function
       curl::DebugCallback(LONG phandle, CURL_INFOTYPE ptype, LONG pdata, size_t psize, LONG userptr), LONG, C
+      !curl_chunk_bgn_callback
+      curl::ChunkBgnCallback(LONG transfer_info, LONG ptr, LONG remains), LONG, C
+      !curl_chunk_end_callback
+      curl::ChunkEndCallback(LONG ptr), LONG, C
+      !curl_fnmatch_callback
+!      curl::FnMatchCallback(LONG ptr, *CSTRING pattern, *CSTRING string), LONG, C
+
 
       curl::GlobalInit(CURL_GLOBAL_ENUM pFlag = CURL_GLOBAL_DEFAULT), CURLcode, PROC 
       curl::GlobalCleanup()
@@ -525,22 +649,24 @@ GetList                         PROCEDURE(), LONG
                               END
 
 
+!---------------------------- TCurlClass---- -----------------------------!
 TCurlClass                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
 curl                            CURL, PROTECTED
 
 !linked list of http headers
 headers                         &TCurlSList, PROTECTED
 
-SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG pData), CURLcode, PROC, PRIVATE
-SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC, PRIVATE
-SetXFerCallback                 PROCEDURE(<curl::ProgressDataProcType xferproc>), CURLcode, PROC, PRIVATE
-SetDebugCallback                PROCEDURE(curl::DebugProcType debugproc), CURLcode, PROC, PRIVATE
+SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG pData), CURLcode, PROC
+SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC
+SetXFerCallback                 PROCEDURE(<curl::ProgressDataProcType xferproc>), CURLcode, PROC
+SetDebugCallback                PROCEDURE(curl::DebugProcType debugproc), CURLcode, PROC
 
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), VIRTUAL
 
-Init                            PROCEDURE()
-Cleanup                         PROCEDURE()
+Init                            PROCEDURE(), VIRTUAL
+Cleanup                         PROCEDURE(), VIRTUAL
+Reset                           PROCEDURE(), VIRTUAL
 
 SetOpt                          PROCEDURE(CURLoption option, LONG param), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, *STRING param), CURLcode, PROC
@@ -549,6 +675,8 @@ SetOpt                          PROCEDURE(CURLoption option, curl::ReadWriteProc
 SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataProcType xferproc), CURLcode, PROC
 !SetOpt                          PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::DebugProcType debugproc), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, curl::ChunkBgnProcType chunkbgnproc), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, curl::ChunkEndProcType chunkendproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, TCurlSList plist), CURLcode, PROC
 
 Perform                         PROCEDURE(), CURLcode
@@ -559,7 +687,7 @@ StrError                        PROCEDURE(CURLcode errcode), STRING
 !set user and password in form "user:password"
 SetUserPwd                      PROCEDURE(STRING pUser, STRING pPwd), CURLcode, PROC
 !download file
-ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
 !upload file
 WriteFile                       PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 !GET/POST, saves server response in pResponseFile
@@ -611,6 +739,10 @@ IsFolder                        BYTE
 TFtpFilesInfo                 QUEUE(TFtpFileInfo), TYPE, PRE(TFtpFilesInfo)
                               END
 
+TFtpDirList                   QUEUE, TYPE, PRE(TFtpDirList)   !bare names when listing directories
+Name                            STRING(255)
+                              END
+
 TSSHSettings                  GROUP, TYPE, PRE(TSSHSettings)
 AuthMethod                      CURLSSH_AUTH_ENUM
 PublicKeyFile                   STRING(256)
@@ -619,19 +751,27 @@ KnownHosts                      STRING(256)
 KeyPassword                     STRING(40)
                               END
 
-!sFTP commands (using in QUOTE)
+!*** Important ***!
+!FTP commands (using in QUOTE)
+!http://muff.kiev.ua/content/ftp-osnovnye-komandy
+!
+!SFTP commands (using in QUOTE)
 !http://www.tecmint.com/sftp-command-examples/
 
 TCurlFtpClass                 CLASS(TCurlClass), TYPE, MODULE('libcurlftp.clw'), LINK('libcurlftp.clw')
 AuthMethod                      CURLSSH_AUTH_ENUM, PROTECTED
 
-SSHAuth                         PROCEDURE(TSSHSettings pSSH), CURLcode, PROC !sets CURLSSH_AUTH_ANY
+SSHAuth                         PROCEDURE(TSSHSettings pSSH), CURLcode, PROC
                                   
 LoadDir                         PROCEDURE(STRING pUrl, *TFtpFilesInfo dirlist), CURLcode, PROC
+LoadDirListOnly                 PROCEDURE(STRING pUrl, *TFtpDirList barelist), CURLcode, PROC
 CreateDir                       PROCEDURE(STRING pUrl, STRING pDirname), CURLcode, PROC   !pUrl is ftp://user@95.96.97.98, pDirname is /home/files/temp
+! delete file or empty dir
 DeleteFile                      PROCEDURE(STRING pUrl, STRING pFilename), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pFilename is /home/files/testfile.txt
 RenameFile                      PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
 RenameDir                       PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
+
+ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, DERIVED, PROC
                               END
 
 !---------------------------- TCurlMailClass ----------------------------!

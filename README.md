@@ -1,6 +1,11 @@
 # libcurl
 libcurl for Clarion
 
+v1.04
+
+- CHG: TCurlFtpClass class -- some internal enhancements and bug fixes
+- CHG: FTP Manager demo app -- recursive directory upload/download/delete; some gui changes
+
 v1.03
 
 - FIX: TCurlSList.Append() bug

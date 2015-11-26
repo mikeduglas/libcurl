@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.04
-!** 24.11.2015
+!** libcurl for Clarion v1.05
+!** 26.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -478,20 +478,20 @@ TCurlFileStruct.GetFileName   PROCEDURE()
 !!!endregion
   
 !!!region TCurlMailStruct
-TCurlMailStruct.Construct     PROCEDURE()
-  CODE
-  SELF.buf &= NEW TFileBufContent
-  
-TCurlMailStruct.Destruct      PROCEDURE()
-qIndex                          LONG, AUTO
-  CODE
-  LOOP qIndex = 1 TO RECORDS(SELF.buf)
-    GET(SELF.buf, qIndex)
-    DISPOSE(SELF.buf.fdata)
-    SELF.buf.fdata &= NULL
-  END
-  FREE(SELF.buf)
-  DISPOSE(SELF.buf)
+!TCurlMailStruct.Construct     PROCEDURE()
+!  CODE
+!  SELF.buf &= NEW TFileBufContent
+!  
+!TCurlMailStruct.Destruct      PROCEDURE()
+!qIndex                          LONG, AUTO
+!  CODE
+!  LOOP qIndex = 1 TO RECORDS(SELF.buf)
+!    GET(SELF.buf, qIndex)
+!    DISPOSE(SELF.buf.fdata)
+!    SELF.buf.fdata &= NULL
+!  END
+!  FREE(SELF.buf)
+!  DISPOSE(SELF.buf)
   
 !!!endregion
   
@@ -980,6 +980,10 @@ szreq                           CSTRING(LEN(pCustomRequest) + 1)
 TCurlClass.SetHttpGET         PROCEDURE(BOOL pValue = TRUE)
   CODE
   RETURN SELF.SetOpt(CURLOPT_HTTPGET, pValue)
+
+TCurlClass.UseSSL             PROCEDURE(CURL_USESSL pSSL)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_USE_SSL, pSSL)
 
 TCurlClass.SetSSLVerifyHost   PROCEDURE(BOOL pValue)
   CODE

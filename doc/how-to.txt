@@ -133,3 +133,34 @@ respBuffer  STRING(32768) !big enuff to hold received response
   ELSE
     MESSAGE('SendRequest failed: '& curl.StrError(res), 'libcurl', ICON:Exclamation)
   END
+
+5. Send mail
+
+curl                          TCurlMailClass
+res                           CURLcode
+
+  CODE
+
+  curl.Init()
+
+  curl.Server('smtp.gmail.com', 587)
+  curl.Account('username@gmail.com', '12345')
+  curl.From('username@gmail.com')
+  curl.AddRecipient('username@yandex.ru') !to/cc/bcc
+  
+  curl.UseSSL(CURLUSESSL_ALL)   !ssl enabled
+  curl.SetSSLVerifyPeer(FALSE)  !curl --insecure
+
+  curl.Subject('Test email')
+  curl.Body('Test email using libcurl')
+  curl.AddAttachment('.\doc\how-to.txt')
+  curl.AddAttachment('c:\images\logo.jpg')
+  
+  curl.SetOpt(CURLOPT_CONNECTTIMEOUT, 30)  !connection timeout (seconds)
+
+  res = curl.Send()
+  IF res = CURLE_OK
+    MESSAGE('Email sent', 'SendMail', ICON:Asterisk)
+  ELSE
+    MESSAGE('Send failed: '& curl.StrError(res), 'SendMail', ICON:Exclamation)
+  END

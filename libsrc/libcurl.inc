@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.04
-!** 24.11.2015
+!** libcurl for Clarion v1.05
+!** 26.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -251,6 +251,8 @@ CURLOPT_CONNECTTIMEOUT        EQUATE(78 + CURLOPTTYPE_LONG)             !Time-ou
 CURLOPT_TIMEOUT_MS            EQUATE(155 + CURLOPTTYPE_LONG)            !Same as TIMEOUT, but with ms resolution
 CURLOPT_CONNECTTIMEOUT_MS     EQUATE(156 + CURLOPTTYPE_LONG)            !Same as CONNECTTIMEOUT, but with ms resolution
 
+CURLOPT_USERAGENT             EQUATE(18 + CURLOPTTYPE_OBJECTPOINT)      !Set the User-Agent string (examined by some CGIs)
+
 !  /* FTP option that changes the timeout, in seconds, associated with
 !     getting a response.  This is different from transfer timeout time and
 !     essentially places a demand on the FTP server to acknowledge commands
@@ -325,6 +327,8 @@ CURLOPT_CUSTOMREQUEST         EQUATE(36 + CURLOPTTYPE_OBJECTPOINT)      !Custom 
 CURLOPT_SSL_VERIFYHOST        EQUATE(81 + CURLOPTTYPE_LONG)
 !Set if we should verify the peer in ssl handshake, set 1 to verify.
 CURLOPT_SSL_VERIFYPEER        EQUATE(64 + CURLOPTTYPE_LONG)
+
+CURLOPT_MAXREDIRS             EQUATE(68 + CURLOPTTYPE_LONG)             !Maximum number of http redirects to follow
 
 !  /* Enable SSL/TLS for FTP, pick one of:
 !  CURLUSESSL_TRY     - try using SSL, proceed anyway otherwise
@@ -413,6 +417,9 @@ CURLOPT_FNMATCH_FUNCTION      EQUATE(200 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_CHUNK_DATA            EQUATE(201 + CURLOPTTYPE_OBJECTPOINT)
 !FNMATCH_FUNCTION user pointer
 CURLOPT_FNMATCH_DATA          EQUATE(202 + CURLOPTTYPE_OBJECTPOINT)
+
+CURLOPT_TCP_KEEPALIVE         EQUATE(213 + CURLOPTTYPE_LONG)    !Set TCP keepalive
+
 
 !return codes for CURLOPT_CHUNK_BGN_FUNCTION
 CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)
@@ -568,17 +575,6 @@ bufsize                         LONG  !declared size of the string
 filled                          LONG  !bytes written
                               END
 
-TFileBufContent               QUEUE, TYPE
-fdata                           &STRING
-                              END
-
-TCurlMailStruct               CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
-Construct                       PROCEDURE()
-Destruct                        PROCEDURE(), VIRTUAL
-lines_read                      LONG
-buf                             &TFileBufContent
-                              END
-
   MAP
     ! CURL callback procedure prototypes
     curl::ReadWriteProcType(LONG buffer, size_t bufsize, size_t nmemb, LONG pData), size_t, C, TYPE
@@ -712,6 +708,8 @@ SetCustomRequest                PROCEDURE(STRING pCustomRequest), CURLcode, PROC
 
 SetHttpGET                      PROCEDURE(BOOL pValue = TRUE), CURLcode, PROC
 
+UseSSL                          PROCEDURE(CURL_USESSL pSSL), CURLcode, PROC  !default CURLUSESSL_NONE 
+
 SetSSLVerifyHost                PROCEDURE(BOOL pValue), CURLcode, PROC
 SetSSLVerifyPeer                PROCEDURE(BOOL pValue), CURLcode, PROC
 SetCAInfo                       PROCEDURE(STRING pCert), CURLcode, PROC
@@ -775,44 +773,49 @@ ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile,
                               END
 
 !---------------------------- TCurlMailClass ----------------------------!
-!TCurlMailAttachment           GROUP, TYPE
-!filename                        STRING(256)
-!                              END
-!
-!TCurlMailAttachments          QUEUE(TCurlMailAttachment), TYPE
-!                              END
-!
-!TCurlMailClass                CLASS(TCurlClass), TYPE, MODULE('libcurlmail.clw'), LINK('libcurlmail.clw')
-!url                             STRING(256), PRIVATE !smtp://smtp.gmail.com:587
-!username                        STRING(128), PRIVATE
-!pwd                             STRING(32), PRIVATE  
-!!url                             STRING(256), PRIVATE  
-!ssl                             CURL_USESSL, PRIVATE
-!cert                            STRING(256), PRIVATE
-!mailfrom                        STRING(256), PRIVATE  
-!!mailto                          &TCurlMailRecipients, PRIVATE
-!mailto                          &TCurlSList, PRIVATE         !*curl_slist
-!mailtostr                       STRING(256), PRIVATE
-!mailcc                          &TCurlSList, PRIVATE         !*curl_slist
-!mailbcc                         &TCurlSList, PRIVATE         !*curl_slist
-!attachments                     &TCurlMailAttachments, PRIVATE
-!mailsubject                     &STRING, PRIVATE
-!mailbody                        &STRING, PRIVATE
-!
-!Construct                       PROCEDURE()
-!Destruct                        PROCEDURE(), DERIVED
-!
-!Server                          PROCEDURE(STRING pServer, LONG pPort)           !smtp.gmail.com, 587
-!Account                         PROCEDURE(STRING pUsername, STRING pPwd)        !username: username@gmail.com
-!SSL                             PROCEDURE(CURL_USESSL pSSL)                     !see CURL_USESSL enum
-!Certificate                     PROCEDURE(STRING pCert)                         !google.pem
-!From                            PROCEDURE(STRING pFrom)                         !<xxxxx@gmail.com>
-!AddTo                           PROCEDURE(STRING pRecipient)
-!!AddCC                           PROCEDURE(STRING pRecipient)
-!!AddBCC                          PROCEDURE(STRING pRecipient)
-!AddAttachment                   PROCEDURE(STRING pFilename)
-!Subject                         PROCEDURE(STRING pSubject)
-!Body                            PROCEDURE(STRING pBody)
-!
-!Send                            PROCEDURE(), CURLcode, PROC
-!                              END
+TCurlMailClass                CLASS(TCurlClass), TYPE, MODULE('libcurlmail.clw'), LINK('libcurlmail.clw')
+url                             STRING(256), PRIVATE        !smtp.gmail.com:587
+username                        STRING(128), PRIVATE
+pwd                             STRING(32), PRIVATE  
+mailfrom                        STRING(256), PRIVATE  
+mailto                          &TCurlSList, PRIVATE
+mailsubject                     &STRING, PRIVATE
+mailbody                        &STRING, PRIVATE
+attachments                     &TCurlMailAttachments, PRIVATE
+boundary                        STRING(28), PRIVATE
+
+!body's property
+bodyContentType                 CSTRING(256), PRIVATE
+!body's property
+bodyCharset                     CSTRING(33), PRIVATE
+
+ToStr                           STRING(256), PRIVATE
+CCStr                           STRING(256), PRIVATE
+BCCStr                          STRING(256), PRIVATE
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), DERIVED
+
+SetOptions                      PROCEDURE(), CURLcode, PROC, VIRTUAL, PROTECTED
+
+CreateHeader                    PROCEDURE(*TCurlMailData mail), PRIVATE
+CreateBody                      PROCEDURE(*TCurlMailData mail), PRIVATE
+CreateAttachments               PROCEDURE(*TCurlMailData mail), PRIVATE
+
+Server                          PROCEDURE(STRING pServer, LONG pPort)           !smtp.gmail.com, 587
+Account                         PROCEDURE(STRING pUsername, STRING pPwd)        !username: username@gmail.com
+From                            PROCEDURE(STRING pFrom)                         !<username@gmail.com>
+AddRecipient                    PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING pBCC>)
+Subject                         PROCEDURE(STRING pSubject)
+
+!Default content type: "text/plain"
+Body                            PROCEDURE(STRING pBody)
+ContentType                     PROCEDURE(STRING pContentType)
+Charset                         PROCEDURE(STRING pCharset)
+
+!Examples of content types include "text/plain", "text/html", "text/css", "image/png", "image/gif", "image/jpeg", "video/mpeg", "audio/basic"
+!See GetMIMETypeFromFileExt()
+AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
+
+Send                            PROCEDURE(), CURLcode, PROC
+                              END

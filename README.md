@@ -1,6 +1,11 @@
 # libcurl
 libcurl for Clarion
 
+v1.05
+
+- NEW: TCurlMailClass class
+- NEW: SendMail example
+
 v1.04
 
 - CHG: TCurlFtpClass class -- some internal enhancements and bug fixes

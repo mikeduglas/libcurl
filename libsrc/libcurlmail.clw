@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.05
-!** 26.11.2015
+!** libcurl for Clarion v1.06
+!** 27.11.2015
 !** mikeduglas66@gmail.com
 
 
@@ -14,6 +14,9 @@
 
     ConvertToCodePage(STRING pStr, SIGNED pCodePage = CP_UTF8), STRING, PRIVATE  ! convert ASCII to UTF8
     GetMIMETypeFromFileExt(STRING pFilename), STRING, PRIVATE
+    ExtractMailAddress(STRING pMailAddress), STRING, PRIVATE  !extracts 'user@gmail.com' from 'Joe Doe <user@gmail.com>'
+    ExtractName(STRING pMailAddress), STRING, PRIVATE  !extracts 'Joe Doe' from 'Joe Doe <user@gmail.com>'
+    EncodeHeaderPart(STRING pText), STRING  !subject, from, to, cc, bcc
 
     Base64::EncodeBlock(STRING in, *STRING out, LONG len), PRIVATE
     Base64::Encode(STRING input_buf), STRING, PRIVATE
@@ -27,7 +30,7 @@ qData                           &TCurlMailDataQueue, PRIVATE
 
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE()
-AddLine                         PROCEDURE(<STRING pText>)
+AddLine                         PROCEDURE(<STRING pText>, BOOL pAddCRLF = TRUE)
 ReadNext                        PROCEDURE(LONG pBuffer), LONG   !pBuffer is buffer address (from curl::EmailRead callback); returns buffer length
                               END
 
@@ -379,6 +382,38 @@ dotpos                          LONG, AUTO
   
   RETURN 'application/octet-stream'
 
+ExtractMailAddress            PROCEDURE(STRING pMailAddress)
+startAngleBrPos                 LONG, AUTO
+endAngleBrPos                   LONG, AUTO
+  CODE
+  startAngleBrPos = INSTRING('<', pMailAddress, 1, 1)
+  IF NOT startAngleBrPos
+    RETURN CLIP(pMailAddress)
+  END
+  
+  endAngleBrPos = INSTRING('>', pMailAddress, -1, LEN(CLIP(pMailAddress)))
+  IF endAngleBrPos > startAngleBrPos
+    RETURN CLIP(LEFT(SUB(pMailAddress, startAngleBrPos + 1, endAngleBrPos - startAngleBrPos - 1)))
+  END
+
+  !recover if no closing bracket found or >...< found
+  RETURN pMailAddress[startAngleBrPos + 1 : LEN(CLIP(pMailAddress))]
+  
+ExtractName                   PROCEDURE(STRING pMailAddress)
+startAngleBrPos                 LONG, AUTO
+  CODE
+  startAngleBrPos = INSTRING('<', pMailAddress, 1, 1)
+  IF startAngleBrPos < 2
+    RETURN ''
+  END
+  
+  RETURN CLIP(pMailAddress[1 : startAngleBrPos - 1])
+
+!http://ncona.com/2011/06/using-utf-8-characters-on-an-e-mail-subject/
+EncodeHeaderPart              PROCEDURE(STRING pText)
+  CODE
+  RETURN '=?utf-8?B?'& Base64::Encode(ConvertToCodePage(CLIP(pText))) &'?='
+
 Base64::EncodeBlock           PROCEDURE(STRING in, *STRING out, LONG len)
   CODE
 !  {
@@ -434,7 +469,7 @@ n_block                         LONG, AUTO    !block number
     END
   END
   
-  RETURN output_buf
+  RETURN CLIP(output_buf)
 !!!endregion
   
 !!!region callbacks
@@ -469,10 +504,16 @@ qIndex                          LONG, AUTO
   FREE(SELF.qData)
   SELF.qData &= NULL
   
-TCurlMailData.AddLine         PROCEDURE(<STRING pText>)
+TCurlMailData.AddLine         PROCEDURE(<STRING pText>, BOOL pAddCRLF = TRUE)
   CODE
-  SELF.qData.line &= NEW STRING(LEN(CLIP(pText)) + 2) ! extra 2 for \r\n
-  SELF.qData.line = CLIP(pText) &'<13,10>'
+  IF pAddCRLF
+    SELF.qData.line &= NEW STRING(LEN(CLIP(pText)) + 2) ! extra 2 for \r\n
+    SELF.qData.line = CLIP(pText) &'<13,10>'
+  ELSE
+    SELF.qData.line &= NEW STRING(LEN(CLIP(pText)))
+    SELF.qData.line = CLIP(pText)
+  END
+  
   ADD(SELF.qData)
   
 TCurlMailData.ReadNext        PROCEDURE(LONG pBuffer)
@@ -505,6 +546,7 @@ TCurlMailClass.Construct      PROCEDURE()
   SELF.mailbody = ' '
 
   SELF.bodyContentType = 'text/plain'
+  SELF.bodyCharset = 'UTF-8'
   
   SELF.boundary = '001a11444b948e1888052560b246'
 
@@ -530,14 +572,17 @@ TCurlMailClass.From           PROCEDURE(STRING pFrom)
   
 TCurlMailClass.AddRecipient   PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING pBCC>)
   CODE
-  SELF.mailto.Append(pRecipient)
+!  SELF.mailto.Append(pRecipient)
+  SELF.mailto.Append(ExtractMailAddress(pRecipient))
 
   IF pCC
-    SELF.mailto.Append(pCC)
+!    SELF.mailto.Append(pCC)
+    SELF.mailto.Append(ExtractMailAddress(pCC))
   END
   
   IF pBCC
-    SELF.mailto.Append(pBCC)
+!    SELF.mailto.Append(pBCC)
+    SELF.mailto.Append(ExtractMailAddress(pBCC))
   END
     
   IF SELF.ToStr
@@ -597,6 +642,7 @@ TCurlMailClass.Charset        PROCEDURE(STRING pCharset)
   SELF.bodyCharset = CLIP(pCharset)
 
 TCurlMailClass.SetOptions     PROCEDURE()
+mailfrom                        CSTRING(256)
 res                             CURLcode, AUTO
   CODE
   res = SELF.SetOpt(CURLOPT_URL, SELF.url);
@@ -629,7 +675,9 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
-  res = SELF.SetOpt(CURLOPT_MAIL_FROM, SELF.mailfrom)
+!  res = SELF.SetOpt(CURLOPT_MAIL_FROM, SELF.mailfrom)
+  mailfrom = ExtractMailAddress(SELF.mailfrom)
+  res = SELF.SetOpt(CURLOPT_MAIL_FROM, mailfrom)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -646,29 +694,49 @@ res                             CURLcode, AUTO
 
   RETURN CURLE_OK
 
+!with utf-8 encoding of from/to/cc/bcc/subject
+!http://ncona.com/2011/06/using-utf-8-characters-on-an-e-mail-subject/
 TCurlMailClass.CreateHeader   PROCEDURE(*TCurlMailData mail)
+sname                           STRING(256)
   CODE
-  !MIME-Version
-  mail.AddLine('MIME-Version: '& '1.0')
-
   !TO
-  mail.AddLine('To: '& CLIP(SELF.ToStr))
+  sname = ExtractName(SELF.ToStr)
+  IF NOT sname
+    mail.AddLine('To: '& CLIP(SELF.ToStr))
+  ELSE
+    mail.AddLine('To: '& EncodeHeaderPart(sname) &' <'& ExtractMailAddress(SELF.ToStr) &'>')
+  END
   
   !CC
   IF SELF.CCStr
-    mail.AddLine('CC: '& CLIP(SELF.CCStr))
+    sname = ExtractName(SELF.CCStr)
+    IF NOT sname
+      mail.AddLine('CC: '& CLIP(SELF.CCStr))
+    ELSE
+      mail.AddLine('CC: '& EncodeHeaderPart(sname) &' <'& ExtractMailAddress(SELF.CCStr) &'>')
+    END
   END
   
   !BCC
   IF SELF.BCCStr
-    mail.AddLine('BCC: '& CLIP(SELF.BCCStr))
+    sname = ExtractName(SELF.BCCStr)
+    IF NOT sname
+      mail.AddLine('BCC: '& CLIP(SELF.BCCStr))
+    ELSE
+      mail.AddLine('BCC: '& EncodeHeaderPart(sname) &' <'& ExtractMailAddress(SELF.BCCStr) &'>')
+    END
   END
 
   !FROM
-  mail.AddLine('From: '& CLIP(SELF.mailfrom))
-  
+  sname = ExtractName(SELF.mailfrom)
+  IF NOT sname
+    mail.AddLine('From: '& CLIP(SELF.mailfrom))
+  ELSE
+    mail.AddLine('From: '& EncodeHeaderPart(sname) &' <'& ExtractMailAddress(SELF.mailfrom) &'>')
+  END
+ 
   !SUBJECT
-  mail.AddLine('Subject: '& CLIP(SELF.mailsubject))
+  mail.AddLine('Subject: '& EncodeHeaderPart(SELF.mailsubject))
   
 TCurlMailClass.CreateBody     PROCEDURE(*TCurlMailData mail)
   CODE
@@ -696,6 +764,9 @@ encdata                             &STRING
   LOOP qIndex = 1 TO RECORDS(SELF.attachments)
     GET(SELF.attachments, qIndex)
     IF EXISTS(SELF.attachments.filename)
+
+!      !boundary to divide attachments from body or another attachment
+!      mail.AddLine('--'& SELF.boundary)
 
       mail.AddLine('Content-Type: '& SELF.attachments.contentType &''& CHOOSE(SELF.attachments.charset <> '', '; charset='& SELF.attachments.charset &'', '') &'; name="'& SELF.attachments.shortname &'"')
       mail.AddLine('Content-Disposition: attachment; filename="'& SELF.attachments.shortname &'"')
@@ -733,6 +804,9 @@ res                             CURLcode, AUTO
   IF res <> CURLE_OK
     RETURN res
   END
+  
+  !MIME-Version
+  mail.AddLine('MIME-Version: '& '1.0')
 
   !header
   SELF.CreateHeader(mail)
@@ -752,7 +826,7 @@ res                             CURLcode, AUTO
     SELF.CreateAttachments(mail)
   END
   
-  mail.AddLine()
+  mail.AddLine(, FALSE)
   
   !pass mail to callback
   res = SELF.SetOpt(CURLOPT_READFUNCTION, curl::EmailRead)

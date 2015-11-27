@@ -3,9 +3,9 @@ libcurl for Clarion
 
 v1.06
 
--FIX: TCurlMailClass -- possible redundant 'noname.txt' attachment
--FIX: TCurlMailClass -- allows 'Jimmy Page <jpage@yahoo.com>' in From, To, CC and BCC fields
--FIX: TCurlMailClass -- From, To, CC, BCC and Subject fields are utf-8 encoded to allow non-English characters
+- FIX: TCurlMailClass -- possible redundant 'noname.txt' attachment
+- FIX: TCurlMailClass -- allows 'Jimmy Page <jpage@yahoo.com>' in From, To, CC and BCC fields
+- FIX: TCurlMailClass -- From, To, CC, BCC and Subject fields are utf-8 encoded to allow non-English characters
 
 v1.05
 

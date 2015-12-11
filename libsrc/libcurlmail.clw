@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.06
-!** 27.11.2015
+!** libcurl for Clarion v1.06.1
+!** 09.12.2015
 !** mikeduglas66@gmail.com
 
 
@@ -507,14 +507,14 @@ qIndex                          LONG, AUTO
 TCurlMailData.AddLine         PROCEDURE(<STRING pText>, BOOL pAddCRLF = TRUE)
   CODE
   IF pAddCRLF
-    SELF.qData.line &= NEW STRING(LEN(CLIP(pText)) + 2) ! extra 2 for \r\n
+    SELF.qData.line &= NEW STRING(LEN(CLIP(pText)) + 2) ! 2 extra bytes for \r\n
     SELF.qData.line = CLIP(pText) &'<13,10>'
-  ELSE
+    ADD(SELF.qData)
+  ELSIF LEN(CLIP(pText)) > 0
     SELF.qData.line &= NEW STRING(LEN(CLIP(pText)))
     SELF.qData.line = CLIP(pText)
-  END
-  
-  ADD(SELF.qData)
+    ADD(SELF.qData)
+  END  
   
 TCurlMailData.ReadNext        PROCEDURE(LONG pBuffer)
 nextLine                        LONG, AUTO
@@ -572,33 +572,32 @@ TCurlMailClass.From           PROCEDURE(STRING pFrom)
   
 TCurlMailClass.AddRecipient   PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING pBCC>)
   CODE
-!  SELF.mailto.Append(pRecipient)
-  SELF.mailto.Append(ExtractMailAddress(pRecipient))
-
+  IF pRecipient
+    SELF.mailto.Append(ExtractMailAddress(pRecipient))
+      
+    IF SELF.ToStr
+      SELF.ToStr = CLIP(SELF.ToStr) &';'
+    END
+    SELF.ToStr = CLIP(SELF.ToStr) & pRecipient
+  END
+  
   IF pCC
-!    SELF.mailto.Append(pCC)
     SELF.mailto.Append(ExtractMailAddress(pCC))
+  
+    IF SELF.CCStr
+      SELF.CCStr = CLIP(SELF.CCStr) &';'
+    END
+    SELF.CCStr = CLIP(SELF.CCStr) & pCC
   END
   
   IF pBCC
-!    SELF.mailto.Append(pBCC)
     SELF.mailto.Append(ExtractMailAddress(pBCC))
+ 
+    IF SELF.BCCStr
+      SELF.BCCStr = CLIP(SELF.BCCStr) &';'
+    END
+    SELF.BCCStr = CLIP(SELF.BCCStr) & pBCC
   END
-    
-  IF SELF.ToStr
-    SELF.ToStr = CLIP(SELF.ToStr) &';'
-  END
-  SELF.ToStr = CLIP(SELF.ToStr) & pRecipient
-
-  IF SELF.CCStr
-    SELF.CCStr = CLIP(SELF.CCStr) &';'
-  END
-  SELF.CCStr = CLIP(SELF.CCStr) & pCC
-
-  IF SELF.BCCStr
-    SELF.BCCStr = CLIP(SELF.BCCStr) &';'
-  END
-  SELF.BCCStr = CLIP(SELF.BCCStr) & pCC
 
 TCurlMailClass.AddAttachment  PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
 trailingSlashPos                LONG, AUTO
@@ -759,14 +758,14 @@ filedata                            &STRING
 encdata                             &STRING
   CODE
   !boundary to divide attachments from body
-  mail.AddLine('--'& SELF.boundary)
+!  mail.AddLine('--'& SELF.boundary)
 
   LOOP qIndex = 1 TO RECORDS(SELF.attachments)
     GET(SELF.attachments, qIndex)
     IF EXISTS(SELF.attachments.filename)
 
-!      !boundary to divide attachments from body or another attachment
-!      mail.AddLine('--'& SELF.boundary)
+      !boundary to divide attachments from body or another attachment
+      mail.AddLine('--'& SELF.boundary)
 
       mail.AddLine('Content-Type: '& SELF.attachments.contentType &''& CHOOSE(SELF.attachments.charset <> '', '; charset='& SELF.attachments.charset &'', '') &'; name="'& SELF.attachments.shortname &'"')
       mail.AddLine('Content-Disposition: attachment; filename="'& SELF.attachments.shortname &'"')
@@ -790,8 +789,8 @@ encdata                             &STRING
         DISPOSE(filedata)
         filedata &= NULL
 
-        !boundary to divide one attachment from another
-        mail.AddLine('--'& SELF.boundary)
+!        !boundary to divide one attachment from another
+!        mail.AddLine('--'& SELF.boundary)
       END
     END
   END
@@ -826,7 +825,7 @@ res                             CURLcode, AUTO
     SELF.CreateAttachments(mail)
   END
   
-  mail.AddLine(, FALSE)
+!  mail.AddLine(, FALSE)
   
   !pass mail to callback
   res = SELF.SetOpt(CURLOPT_READFUNCTION, curl::EmailRead)

@@ -1,11 +1,12 @@
-!** libcurl for Clarion v1.06
-!** 27.11.2015
+!** libcurl for Clarion v1.07
+!** 26.12.2015
 !** mikeduglas66@gmail.com
 
 
   MEMBER
 
   INCLUDE('libcurl.inc')
+  INCLUDE('libcurl.trn')
 
   MAP
     MODULE('libcurl API')
@@ -214,14 +215,14 @@ dwBytesRead                     LONG
 bRead                           BOOL
   CODE
   szFile=CLIP(pFile)
-  hFile = CreateFile(szFile,GENERIC_READ,0,0,OPEN_EXISTING,0,0)
+  hFile = winapi::CreateFile(szFile,GENERIC_READ,0,0,OPEN_EXISTING,0,0)
   IF hFile <> OS_INVALID_HANDLE_VALUE
-    dwFileSize = GetFileSize(hFile,lpFileSizeHigh)
+    dwFileSize = winapi::GetFileSize(hFile,lpFileSizeHigh)
     IF dwFileSize > 0
       sData &= NEW STRING(dwFileSize)
-      bRead = ReadFile(hFile,ADDRESS(sData),dwFileSize,dwBytesRead,0)
+      bRead = winapi::ReadFile(hFile,ADDRESS(sData),dwFileSize,dwBytesRead,0)
     END
-    CloseHandle(hFile)
+    winapi::CloseHandle(hFile)
   END
 
   RETURN sData
@@ -435,11 +436,11 @@ TCurlFileStruct.Close         PROCEDURE()
 ret                             BOOL, AUTO
   CODE
   IF SELF.fhandle
-    ret = CloseHandle(SELF.fhandle)
+    ret = winapi::CloseHandle(SELF.fhandle)
     IF ret
       SELF.fhandle = 0
     ELSE
-      curl::DebugInfo('CloseHandle failed, win error '& GetLastError())
+      curl::DebugInfo('CloseHandle failed, win error '& winapi::GetLastError())
     END
     
     RETURN ret
@@ -450,7 +451,7 @@ ret                             BOOL, AUTO
 TCurlFileStruct.CreateFile    PROCEDURE(LONG dwDesiredAccess = GENERIC_WRITE, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = CREATE_ALWAYS, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL)
   CODE
   IF NOT SELF.fhandle
-    SELF.fhandle = CreateFile(SELF.filename, dwDesiredAccess, dwShareMode, 0, dwCreationDisposition, dwFlagsAndAttributes, 0)
+    SELF.fhandle = winapi::CreateFile(SELF.filename, dwDesiredAccess, dwShareMode, 0, dwCreationDisposition, dwFlagsAndAttributes, 0)
   END
   
   RETURN CHOOSE(SELF.fhandle <> 0)
@@ -458,18 +459,18 @@ TCurlFileStruct.CreateFile    PROCEDURE(LONG dwDesiredAccess = GENERIC_WRITE, LO
 TCurlFileStruct.OpenFile                      PROCEDURE(LONG dwDesiredAccess = GENERIC_READ, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = OPEN_EXISTING, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL)
   CODE
   IF NOT SELF.fhandle
-    SELF.fhandle = CreateFile(SELF.filename, dwDesiredAccess, dwShareMode, 0, dwCreationDisposition, dwFlagsAndAttributes, 0)
+    SELF.fhandle = winapi::CreateFile(SELF.filename, dwDesiredAccess, dwShareMode, 0, dwCreationDisposition, dwFlagsAndAttributes, 0)
   END
   
   RETURN CHOOSE(SELF.fhandle <> 0)
 
 TCurlFileStruct.ReadFile      PROCEDURE(LONG lpBuffer, LONG dwBytes, *LONG dwBytesRead)
   CODE
-  RETURN ReadFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesRead, 0)
+  RETURN winapi::ReadFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesRead, 0)
   
 TCurlFileStruct.WriteFile     PROCEDURE(long lpBuffer, long dwBytes, *long dwBytesWritten)
   CODE
-  RETURN WriteFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesWritten, 0)
+  RETURN winapi::WriteFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesWritten, 0)
   
 TCurlFileStruct.GetFileName   PROCEDURE()
   CODE
@@ -503,6 +504,10 @@ TCurlSList.Construct          PROCEDURE()
 TCurlSList.Destruct           PROCEDURE()
   CODE
   SELF.Free()
+  
+TCurlSList.AssignPtr          PROCEDURE(LONG pListPtr)
+  CODE
+  SELF.plist = pListPtr
   
 TCurlSList.Append             PROCEDURE(STRING pData)
 szData                          CSTRING(256)
@@ -546,21 +551,49 @@ TCurlSList.GetList            PROCEDURE()
   CODE
   RETURN SELF.plist
 
+TCurlSList.GetQueue           PROCEDURE(*TCurlSQueue pQ)
+lst                             &curl_slist
+szdata                          &CSTRING
+i                               LONG, AUTO
+  CODE
+  IF SELF.plist <> 0
+    lst &= (SELF.plist)
+    i = 1
+    LOOP
+      szdata &= (lst.pdata)
+!      curl::DebugInfo('slist['& i &']='& CLIP(szdata))
+      CLEAR(pQ)
+      ASSERT(SIZE(pQ.item) >= SIZE(szdata), 'TCurlSList.GetQueue: data truncation')
+      pQ.item = szdata
+      ADD(pQ)
+      
+      IF lst.pnext = 0
+        BREAK
+      END
+      
+      i+=1
+      lst &= (lst.pnext)
+    END
+  END
+
 !!!endregion
   
 !!!region TCurlClass
 TCurlClass.Construct          PROCEDURE()
   CODE
   SELF.headers &= NEW TCurlSList
+  SELF.Errors &= NEW curl::ErrorEntry
   
 TCurlClass.Destruct           PROCEDURE()
   CODE
   SELF.Cleanup()
+  DISPOSE(SELF.Errors)
   DISPOSE(SELF.headers)
   
 TCurlClass.Init               PROCEDURE()
   CODE
   SELF.curl = curl_easy_init()
+  SELF.AddErrors(curl::DefaultErrors)
   
 TCurlClass.Cleanup            PROCEDURE()
   CODE
@@ -575,6 +608,35 @@ TCurlClass.Reset              PROCEDURE()
   SELF.FreeHttpHeaders()
   IF SELF.curl
     curl_easy_reset(SELF.curl)
+  END
+
+TCurlClass.AddError           PROCEDURE(CURLE Id, *STRING Message)
+!critProc                        CriticalProcedure
+  CODE
+!  critProc.init(SELF.critSect)
+? ASSERT(NOT SELF.Errors &= NULL,'TCurlClass.Errors incorrectly initialized.')
+  SELF.Errors.Id = Id
+  SELF.Errors.Message &= Message
+  ADD(SELF.Errors)
+? ASSERT(~ERRORCODE(),'Unable to add new error message to queue.')
+
+TCurlClass.AddErrors          PROCEDURE(curl::ErrorBlock ErrsIn)
+Follow                          USHORT(3)
+Slen                            BYTE,AUTO
+Errs                            &STRING
+!critProc                        CriticalProcedure
+  CODE
+!  critProc.init(SELF.critSect)
+  Errs &= ErrsIn
+? ASSERT(NOT SELF.Errors &= NULL,'TCurlClass.Errors incorrectly initialized.')
+  LOOP ErrsIn.Number TIMES
+    SELF.Errors.Id = VAL(Errs[Follow])+256 * VAL(Errs[Follow+1])      ! Id is a little-endian binary 16 bit word
+    Follow += 4
+    Slen = VAL(Errs[Follow])
+    Follow += 1
+    SELF.Errors.Message &= Errs[Follow :Follow+Slen-1]
+    ADD(SELF.Errors)
+?   ASSERT(~ERRORCODE(),'Unable to add new error message to queue.')
   END
 
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, LONG param)
@@ -619,6 +681,12 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, plist.GetList())
 
+TCurlClass.SetUrl             PROCEDURE(STRING pUrl)
+url                             CSTRING(256)
+  CODE
+  url = CLIP(pUrl)
+  RETURN SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+
 TCurlClass.Perform            PROCEDURE()
 res                             CURLcode, AUTO
   CODE
@@ -627,6 +695,14 @@ res                             CURLcode, AUTO
   
 TCurlClass.StrError           PROCEDURE(CURLcode errcode)
   CODE
+  IF NOT SELF.Errors &= NULL
+    SELF.Errors.Id = errcode
+    GET(SELF.Errors, SELF.Errors.Id)
+    IF NOT ERRORCODE()
+      RETURN SELF.Errors.Message
+    END
+  END
+  
   RETURN curl_easy_strerror(errcode)
   
 TCurlClass.SetUserPwd         PROCEDURE(STRING pUser, STRING pPwd)
@@ -723,7 +799,6 @@ res                             CURLcode, AUTO
 TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
 res                             CURLcode, AUTO
 fs                              LIKE(TCurlFileStruct)
-url                             CSTRING(256)
   CODE
   ! set WriteFile callback
   fs.Init(pLocalFile)
@@ -739,8 +814,7 @@ url                             CSTRING(256)
   END
 
   ! remote file
-  url = CLIP(pRemoteFile)    
-  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  res = SELF.SetUrl(pRemoteFile)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -775,7 +849,6 @@ url                             CSTRING(256)
 TCurlClass.WriteFile          PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
 res                             CURLcode, AUTO
 fs                              LIKE(TCurlFileStruct)
-url                             CSTRING(256)
   CODE
   ! set ReadFile callback
   fs.Init(pLocalFile)
@@ -797,8 +870,7 @@ url                             CSTRING(256)
   END
 
   ! remote file
-  url = CLIP(pRemoteFile)
-  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  res = SELF.SetUrl(pRemoteFile)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -815,7 +887,6 @@ TCurlClass.SendRequest        PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRI
 res                             CURLcode, AUTO
 fs                              LIKE(TCurlFileStruct)
 pf                              CSTRING(LEN(pPostFields) + 1)
-url                             CSTRING(256)
   CODE
   IF pResponseFile <> ''
     fs.Init(pResponseFile)
@@ -833,8 +904,7 @@ url                             CSTRING(256)
 !  /* First set the URL that is about to receive our POST. This URL can
 !     just as well be a https:// URL if that is what should receive the
 !     data. */ 
-  url = CLIP(pUrl)
-  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  res = SELF.SetUrl(pUrl)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -855,7 +925,6 @@ TCurlClass.SendRequestStr     PROCEDURE(STRING pUrl, <STRING pPostFields>, <*STR
 res                             CURLcode, AUTO
 ss                              LIKE(TCurlStringStruct)
 pf                              CSTRING(LEN(pPostFields) + 1)
-url                             CSTRING(256)
   CODE
   IF NOT OMITTED(pResponseBuf)
     ss.buffer = ADDRESS(pResponseBuf)
@@ -875,8 +944,7 @@ url                             CSTRING(256)
 !  /* First set the URL that is about to receive our POST. This URL can
 !     just as well be a https:// URL if that is what should receive the
 !     data. */ 
-  url = CLIP(pUrl)
-  res = SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  res = SELF.SetUrl(pUrl)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -1006,6 +1074,55 @@ TCurlClass.SetSSLVersion      PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion)
   CODE
   RETURN SELF.SetOpt(CURLOPT_SSLVERSION, pSSLVersion)
 
+TCurlClass.GetInfo            PROCEDURE(CURLINFO info, *LONG value)
+refval                          LONG, AUTO
+res                             CURLcode, AUTO
+  CODE
+  res = curl_easy_getinfo(SELF.curl, info, ADDRESS(refval))
+  IF res = CURLE_OK
+    value = refval
+  END
+  
+  RETURN res
+  
+TCurlClass.GetInfo::LONG      PROCEDURE(CURLINFO info)
+lVal                            LONG, AUTO
+  CODE
+  ASSERT(BAND(info, CURLINFO_TYPEMASK) = CURLINFO_LONG)
+  SELF.GetInfo(info, lVal)
+  RETURN lVal
+  
+TCurlClass.GetInfo::SLIST     PROCEDURE(CURLINFO info)
+lVal                            LONG, AUTO
+  CODE
+  ASSERT(BAND(info, CURLINFO_TYPEMASK) = CURLINFO_SLIST)
+  SELF.GetInfo(info, lVal)
+  RETURN lVal
+
+TCurlClass.GetInfo::STRING    PROCEDURE(CURLINFO info)
+lVal                            LONG, AUTO
+sVal                            &CSTRING
+  CODE
+  ASSERT(BAND(info, CURLINFO_TYPEMASK) = CURLINFO_STRING)
+  IF SELF.GetInfo(info, lVal) = CURLE_OK
+    sVal &= (lVal)
+    RETURN CLIP(sVal)
+  END
+  
+  RETURN ''
+
+TCurlClass.GetInfo::DOUBLE    PROCEDURE(CURLINFO info)
+lVal                            LONG, AUTO
+rVal                            &REAL
+  CODE
+  ASSERT(BAND(info, CURLINFO_TYPEMASK) = CURLINFO_DOUBLE)
+  IF SELF.GetInfo(info, lVal) = CURLE_OK
+    rVal &= (lVal)
+    RETURN rVal
+  END
+  
+  RETURN 0.0
+
 TCurlClass.GetContentType     PROCEDURE()
 szct                            CSTRING(256)
 res                             CURLcode, AUTO
@@ -1017,17 +1134,20 @@ res                             CURLcode, AUTO
   
   RETURN ''
   
+!TCurlClass.GetResponseCode    PROCEDURE()
+!respcode                        LONG
+!res                             CURLcode, AUTO
+!  CODE
+!  res = curl_easy_getinfo(SELF.curl, CURLINFO_RESPONSE_CODE, ADDRESS(respcode))
+!  IF res = CURLE_OK
+!    RETURN respcode
+!  END
+!  
+!  RETURN 0
 TCurlClass.GetResponseCode    PROCEDURE()
-respcode                        LONG
-res                             CURLcode, AUTO
   CODE
-  res = curl_easy_getinfo(SELF.curl, CURLINFO_RESPONSE_CODE, ADDRESS(respcode))
-  IF res = CURLE_OK
-    RETURN respcode
-  END
-  
-  RETURN 0
-  
+  RETURN SELF.GetInfo::LONG(CURLINFO_RESPONSE_CODE)
+
 TCurlClass.SetQuote           PROCEDURE(TCurlSList plist)
   CODE
   RETURN SELF.SetOpt(CURLOPT_QUOTE, plist)

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.06
-!** 27.11.2015
+!** libcurl for Clarion v1.07
+!** 26.12.2015
 !** mikeduglas66@gmail.com
 
 
@@ -28,131 +28,102 @@ pnext                           LONG  !&curl_slist
                               END
 
 
-
+CURLE                         EQUATE(CURLcode)
 CURLE_OK                      EQUATE(0)
-
-!CURLE_OK = 0,
-!CURLE_UNSUPPORTED_PROTOCOL,    /* 1 */
-!CURLE_FAILED_INIT,             /* 2 */
-!CURLE_URL_MALFORMAT,           /* 3 */
-!CURLE_NOT_BUILT_IN,            /* 4 - [was obsoleted in August 2007 for
-!                                  7.17.0, reused in April 2011 for 7.21.5] */
-!CURLE_COULDNT_RESOLVE_PROXY,   /* 5 */
-!CURLE_COULDNT_RESOLVE_HOST,    /* 6 */
-!CURLE_COULDNT_CONNECT,         /* 7 */
-!CURLE_FTP_WEIRD_SERVER_REPLY,  /* 8 */
-!CURLE_REMOTE_ACCESS_DENIED,    /* 9 a service was denied by the server
-!                                  due to lack of access - when login fails
-!                                  this is not returned. */
-!CURLE_FTP_ACCEPT_FAILED,       /* 10 - [was obsoleted in April 2006 for
-!                                  7.15.4, reused in Dec 2011 for 7.24.0]*/
-!CURLE_FTP_WEIRD_PASS_REPLY,    /* 11 */
-!CURLE_FTP_ACCEPT_TIMEOUT,      /* 12 - timeout occurred accepting server
-!                                  [was obsoleted in August 2007 for 7.17.0,
-!                                  reused in Dec 2011 for 7.24.0]*/
-!CURLE_FTP_WEIRD_PASV_REPLY,    /* 13 */
-!CURLE_FTP_WEIRD_227_FORMAT,    /* 14 */
-!CURLE_FTP_CANT_GET_HOST,       /* 15 */
-!CURLE_HTTP2,                   /* 16 - A problem in the http2 framing layer.
-!                                  [was obsoleted in August 2007 for 7.17.0,
-!                                  reused in July 2014 for 7.38.0] */
-!CURLE_FTP_COULDNT_SET_TYPE,    /* 17 */
-!CURLE_PARTIAL_FILE,            /* 18 */
-!CURLE_FTP_COULDNT_RETR_FILE,   /* 19 */
-!CURLE_OBSOLETE20,              /* 20 - NOT USED */
-!CURLE_QUOTE_ERROR,             /* 21 - quote command failure */
-!CURLE_HTTP_RETURNED_ERROR,     /* 22 */
-!CURLE_WRITE_ERROR,             /* 23 */
-!CURLE_OBSOLETE24,              /* 24 - NOT USED */
-!CURLE_UPLOAD_FAILED,           /* 25 - failed upload "command" */
-CURLE_READ_ERROR              EQUATE(26)              !/* 26 - couldn't open/read from file */
-!CURLE_OUT_OF_MEMORY,           /* 27 */
+CURLE_UNSUPPORTED_PROTOCOL    EQUATE(1)
+CURLE_FAILED_INIT             EQUATE(2)
+CURLE_URL_MALFORMAT           EQUATE(3)
+CURLE_NOT_BUILT_IN            EQUATE(4)   ![was obsoleted in August 2007 for 7.17.0, reused in April 2011 for 7.21.5]
+CURLE_COULDNT_RESOLVE_PROXY   EQUATE(5)
+CURLE_COULDNT_RESOLVE_HOST    EQUATE(6)
+CURLE_COULDNT_CONNECT         EQUATE(7)
+CURLE_FTP_WEIRD_SERVER_REPLY  EQUATE(8)
+CURLE_REMOTE_ACCESS_DENIED    EQUATE(9)   !a service was denied by the server due to lack of access - when login fails this is not returned.
+CURLE_FTP_ACCEPT_FAILED       EQUATE(10)  ![was obsoleted in April 2006 for 7.15.4, reused in Dec 2011 for 7.24.0]
+CURLE_FTP_WEIRD_PASS_REPLY    EQUATE(11)
+CURLE_FTP_ACCEPT_TIMEOUT      EQUATE(12)  !timeout occurred accepting server [was obsoleted in August 2007 for 7.17.0, reused in Dec 2011 for 7.24.0]
+CURLE_FTP_WEIRD_PASV_REPLY    EQUATE(13)
+CURLE_FTP_WEIRD_227_FORMAT    EQUATE(14)
+CURLE_FTP_CANT_GET_HOST       EQUATE(15)
+CURLE_HTTP2                   EQUATE(16)  !A problem in the http2 framing layer. [was obsoleted in August 2007 for 7.17.0, reused in July 2014 for 7.38.0]
+CURLE_FTP_COULDNT_SET_TYPE    EQUATE(17)
+CURLE_PARTIAL_FILE            EQUATE(18)
+CURLE_FTP_COULDNT_RETR_FILE   EQUATE(19)
+CURLE_OBSOLETE20              EQUATE(20)  !NOT USED
+CURLE_QUOTE_ERROR             EQUATE(21)  !quote command failure
+CURLE_HTTP_RETURNED_ERROR     EQUATE(22)
+CURLE_WRITE_ERROR             EQUATE(23)
+CURLE_OBSOLETE24              EQUATE(24)  !NOT USED
+CURLE_UPLOAD_FAILED           EQUATE(25)  !failed upload "command"
+CURLE_READ_ERROR              EQUATE(26)  !couldn't open/read from file
+CURLE_OUT_OF_MEMORY           EQUATE(27)
 !/* Note: CURLE_OUT_OF_MEMORY may sometimes indicate a conversion error
 !         instead of a memory allocation error if CURL_DOES_CONVERSIONS
 !         is defined
 !*/
-!CURLE_OPERATION_TIMEDOUT,      /* 28 - the timeout time was reached */
-!CURLE_OBSOLETE29,              /* 29 - NOT USED */
-!CURLE_FTP_PORT_FAILED,         /* 30 - FTP PORT operation failed */
-!CURLE_FTP_COULDNT_USE_REST,    /* 31 - the REST command failed */
-!CURLE_OBSOLETE32,              /* 32 - NOT USED */
-!CURLE_RANGE_ERROR,             /* 33 - RANGE "command" didn't work */
-!CURLE_HTTP_POST_ERROR,         /* 34 */
-!CURLE_SSL_CONNECT_ERROR,       /* 35 - wrong when connecting with SSL */
-!CURLE_BAD_DOWNLOAD_RESUME,     /* 36 - couldn't resume download */
-!CURLE_FILE_COULDNT_READ_FILE,  /* 37 */
-!CURLE_LDAP_CANNOT_BIND,        /* 38 */
-!CURLE_LDAP_SEARCH_FAILED,      /* 39 */
-!CURLE_OBSOLETE40,              /* 40 - NOT USED */
-!CURLE_FUNCTION_NOT_FOUND,      /* 41 */
-!CURLE_ABORTED_BY_CALLBACK,     /* 42 */
-!CURLE_BAD_FUNCTION_ARGUMENT,   /* 43 */
-!CURLE_OBSOLETE44,              /* 44 - NOT USED */
-!CURLE_INTERFACE_FAILED,        /* 45 - CURLOPT_INTERFACE failed */
-!CURLE_OBSOLETE46,              /* 46 - NOT USED */
-!CURLE_TOO_MANY_REDIRECTS ,     /* 47 - catch endless re-direct loops */
-!CURLE_UNKNOWN_OPTION,          /* 48 - User specified an unknown option */
-!CURLE_TELNET_OPTION_SYNTAX ,   /* 49 - Malformed telnet option */
-!CURLE_OBSOLETE50,              /* 50 - NOT USED */
-!CURLE_PEER_FAILED_VERIFICATION, /* 51 - peer's certificate or fingerprint
-!                                   wasn't verified fine */
-!CURLE_GOT_NOTHING,             /* 52 - when this is a specific error */
-!CURLE_SSL_ENGINE_NOTFOUND,     /* 53 - SSL crypto engine not found */
-!CURLE_SSL_ENGINE_SETFAILED,    /* 54 - can not set SSL crypto engine as
-!                                  default */
-!CURLE_SEND_ERROR,              /* 55 - failed sending network data */
-!CURLE_RECV_ERROR,              /* 56 - failure in receiving network data */
-!CURLE_OBSOLETE57,              /* 57 - NOT IN USE */
-!CURLE_SSL_CERTPROBLEM,         /* 58 - problem with the local certificate */
-!CURLE_SSL_CIPHER,              /* 59 - couldn't use specified cipher */
-!CURLE_SSL_CACERT,              /* 60 - problem with the CA cert (path?) */
-!CURLE_BAD_CONTENT_ENCODING,    /* 61 - Unrecognized/bad encoding */
-!CURLE_LDAP_INVALID_URL,        /* 62 - Invalid LDAP URL */
-!CURLE_FILESIZE_EXCEEDED,       /* 63 - Maximum file size exceeded */
-!CURLE_USE_SSL_FAILED,          /* 64 - Requested FTP SSL level failed */
-!CURLE_SEND_FAIL_REWIND,        /* 65 - Sending the data requires a rewind
-!                                  that failed */
-!CURLE_SSL_ENGINE_INITFAILED,   /* 66 - failed to initialise ENGINE */
-!CURLE_LOGIN_DENIED,            /* 67 - user, password or similar was not
-!                                  accepted and we failed to login */
-!CURLE_TFTP_NOTFOUND,           /* 68 - file not found on server */
-!CURLE_TFTP_PERM,               /* 69 - permission problem on server */
-!CURLE_REMOTE_DISK_FULL,        /* 70 - out of disk space on server */
-!CURLE_TFTP_ILLEGAL,            /* 71 - Illegal TFTP operation */
-!CURLE_TFTP_UNKNOWNID,          /* 72 - Unknown transfer ID */
-!CURLE_REMOTE_FILE_EXISTS,      /* 73 - File already exists */
-!CURLE_TFTP_NOSUCHUSER,         /* 74 - No such user */
-!CURLE_CONV_FAILED,             /* 75 - conversion failed */
-!CURLE_CONV_REQD,               /* 76 - caller must register conversion
-!                                  callbacks using curl_easy_setopt options
-!                                  CURLOPT_CONV_FROM_NETWORK_FUNCTION,
-!                                  CURLOPT_CONV_TO_NETWORK_FUNCTION, and
-!                                  CURLOPT_CONV_FROM_UTF8_FUNCTION */
-!CURLE_SSL_CACERT_BADFILE,      /* 77 - could not load CACERT file, missing
-!                                  or wrong format */
-!CURLE_REMOTE_FILE_NOT_FOUND,   /* 78 - remote file not found */
-!CURLE_SSH,                     /* 79 - error from the SSH layer, somewhat
-!                                  generic so the error message will be of
-!                                  interest when this has happened */
-!
-!CURLE_SSL_SHUTDOWN_FAILED,     /* 80 - Failed to shut down the SSL
-!                                  connection */
-!CURLE_AGAIN,                   /* 81 - socket is not ready for send/recv,
-!                                  wait till it's ready and try again (Added
-!                                  in 7.18.2) */
-!CURLE_SSL_CRL_BADFILE,         /* 82 - could not load CRL file, missing or
-!                                  wrong format (Added in 7.19.0) */
-!CURLE_SSL_ISSUER_ERROR,        /* 83 - Issuer check failed.  (Added in
-!                                  7.19.0) */
-!CURLE_FTP_PRET_FAILED,         /* 84 - a PRET command failed */
-!CURLE_RTSP_CSEQ_ERROR,         /* 85 - mismatch of RTSP CSeq numbers */
-!CURLE_RTSP_SESSION_ERROR,      /* 86 - mismatch of RTSP Session Ids */
-!CURLE_FTP_BAD_FILE_LIST,       /* 87 - unable to parse FTP file list */
-!CURLE_CHUNK_FAILED,            /* 88 - chunk callback reported error */
-!CURLE_NO_CONNECTION_AVAILABLE, /* 89 - No connection available, the
-!                                  session will be queued */
-!CURLE_SSL_PINNEDPUBKEYNOTMATCH, /* 90 - specified pinned public key did not
-!                                   match */
+CURLE_OPERATION_TIMEDOUT      EQUATE(28)  !the timeout time was reached
+CURLE_OBSOLETE29              EQUATE(29)  !NOT USED
+CURLE_FTP_PORT_FAILED         EQUATE(30)  !FTP PORT operation failed
+CURLE_FTP_COULDNT_USE_REST    EQUATE(31)  !the REST command failed
+CURLE_OBSOLETE32              EQUATE(32)  !NOT USED
+CURLE_RANGE_ERROR             EQUATE(33)  !RANGE "command" didn't work
+CURLE_HTTP_POST_ERROR         EQUATE(34)
+CURLE_SSL_CONNECT_ERROR       EQUATE(35)  !wrong when connecting with SSL
+CURLE_BAD_DOWNLOAD_RESUME     EQUATE(36)  !couldn't resume download
+CURLE_FILE_COULDNT_READ_FILE  EQUATE(37)
+CURLE_LDAP_CANNOT_BIND        EQUATE(38)
+CURLE_LDAP_SEARCH_FAILED      EQUATE(39)
+CURLE_OBSOLETE40              EQUATE(40)  !NOT USED
+CURLE_FUNCTION_NOT_FOUND      EQUATE(41)
+CURLE_ABORTED_BY_CALLBACK     EQUATE(42)
+CURLE_BAD_FUNCTION_ARGUMENT   EQUATE(43)
+CURLE_OBSOLETE44              EQUATE(44)  !NOT USED
+CURLE_INTERFACE_FAILED        EQUATE(45)  !CURLOPT_INTERFACE failed
+CURLE_OBSOLETE46              EQUATE(46)  !NOT USED
+CURLE_TOO_MANY_REDIRECTS      EQUATE(47)  !catch endless re-direct loops
+CURLE_UNKNOWN_OPTION          EQUATE(48)  !User specified an unknown option
+CURLE_TELNET_OPTION_SYNTAX    EQUATE(49)  !Malformed telnet option
+CURLE_OBSOLETE50              EQUATE(50)  !NOT USED
+CURLE_PEER_FAILED_VERIFICATION  EQUATE(51)!peer's certificate or fingerprint wasn't verified fine
+CURLE_GOT_NOTHING             EQUATE(52)  !when this is a specific error
+CURLE_SSL_ENGINE_NOTFOUND     EQUATE(53)  !SSL crypto engine not found
+CURLE_SSL_ENGINE_SETFAILED    EQUATE(54)  !can not set SSL crypto engine as default
+CURLE_SEND_ERROR              EQUATE(55)  !failed sending network data
+CURLE_RECV_ERROR              EQUATE(56)  !failure in receiving network data
+CURLE_OBSOLETE57              EQUATE(57)  !NOT IN USE
+CURLE_SSL_CERTPROBLEM         EQUATE(58)  !problem with the local certificate
+CURLE_SSL_CIPHER              EQUATE(59)  !couldn't use specified cipher
+CURLE_SSL_CACERT              EQUATE(60)  !problem with the CA cert (path?)
+CURLE_BAD_CONTENT_ENCODING    EQUATE(61)  !Unrecognized/bad encoding
+CURLE_LDAP_INVALID_URL        EQUATE(62)  !Invalid LDAP URL
+CURLE_FILESIZE_EXCEEDED       EQUATE(63)  !Maximum file size exceeded
+CURLE_USE_SSL_FAILED          EQUATE(64)  !Requested FTP SSL level failed
+CURLE_SEND_FAIL_REWIND        EQUATE(65)  !Sending the data requires a rewind that failed
+CURLE_SSL_ENGINE_INITFAILED   EQUATE(66)  !failed to initialise ENGINE
+CURLE_LOGIN_DENIED            EQUATE(67)  !user, password or similar was not accepted and we failed to login
+CURLE_TFTP_NOTFOUND           EQUATE(68)  !file not found on server
+CURLE_TFTP_PERM               EQUATE(69)  !permission problem on server
+CURLE_REMOTE_DISK_FULL        EQUATE(70)  !out of disk space on server
+CURLE_TFTP_ILLEGAL            EQUATE(71)  !Illegal TFTP operation
+CURLE_TFTP_UNKNOWNID          EQUATE(72)  !Unknown transfer ID
+CURLE_REMOTE_FILE_EXISTS      EQUATE(73)  !File already exists
+CURLE_TFTP_NOSUCHUSER         EQUATE(74)  !No such user
+CURLE_CONV_FAILED             EQUATE(75)  !conversion failed
+CURLE_CONV_REQD               EQUATE(76)  !caller must register conversion callbacks using curl_easy_setopt options CURLOPT_CONV_FROM_NETWORK_FUNCTION, CURLOPT_CONV_TO_NETWORK_FUNCTION, and CURLOPT_CONV_FROM_UTF8_FUNCTION
+CURLE_SSL_CACERT_BADFILE      EQUATE(77)  !could not load CACERT file, missing or wrong format
+CURLE_REMOTE_FILE_NOT_FOUND   EQUATE(78)  !remote file not found
+CURLE_SSH                     EQUATE(79)  !error from the SSH layer, somewhat generic so the error message will be of interest when this has happened
+CURLE_SSL_SHUTDOWN_FAILED     EQUATE(80)  !Failed to shut down the SSL connection
+CURLE_AGAIN                   EQUATE(81)  !socket is not ready for send/recv, wait till it's ready and try again (Added in 7.18.2)
+CURLE_SSL_CRL_BADFILE         EQUATE(82)  !could not load CRL file, missing or wrong format (Added in 7.19.0)
+CURLE_SSL_ISSUER_ERROR        EQUATE(83)  !Issuer check failed.  (Added in 7.19.0)
+CURLE_FTP_PRET_FAILED         EQUATE(84)  !a PRET command failed
+CURLE_RTSP_CSEQ_ERROR         EQUATE(85)  !mismatch of RTSP CSeq numbers
+CURLE_RTSP_SESSION_ERROR      EQUATE(86)  !mismatch of RTSP Session Ids
+CURLE_FTP_BAD_FILE_LIST       EQUATE(87)  !unable to parse FTP file list
+CURLE_CHUNK_FAILED            EQUATE(88)  !chunk callback reported error
+CURLE_NO_CONNECTION_AVAILABLE EQUATE(89)  !No connection available, the session will be queued
+CURLE_SSL_PINNEDPUBKEYNOTMATCH EQUATE(90) !specified pinned public key did not match
 !CURL_LAST /* never use! */ 
 
 CURLINFO_STRING               EQUATE(0100000h)
@@ -263,6 +234,12 @@ CURLOPT_SERVER_RESPONSE_TIMEOUT   EQUATE(CURLOPT_FTP_RESPONSE_TIMEOUT)
 CURLOPT_ACCEPTTIMEOUT_MS      EQUATE(212 + CURLOPTTYPE_LONG)            !Time-out accept operations (currently for FTP only) after this amount of miliseconds
 
 CURLOPT_POSTFIELDS            EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)      !POST static input fields.
+
+CURLOPT_COOKIE                EQUATE(22 + CURLOPTTYPE_OBJECTPOINT)      !Set cookie in request
+CURLOPT_COOKIEFILE            EQUATE(31 + CURLOPTTYPE_OBJECTPOINT)      !point to a file to read the initial cookies from, also enables "cookie awareness"
+CURLOPT_COOKIEJAR             EQUATE(82 + CURLOPTTYPE_OBJECTPOINT)      !Specify which file name to write all known cookies in after completed operation. Set file name to "-" (dash) to make it go to stdout.
+CURLOPT_COOKIESESSION         EQUATE(96 + CURLOPTTYPE_LONG)             !mark this as start of a cookie session
+CURLOPT_COOKIELIST            EQUATE(135 + CURLOPTTYPE_OBJECTPOINT)     !feed cookies into cookie engine
 
 CURLOPT_HTTPPOST              EQUATE(24 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of post entries, struct curl_httppost
 
@@ -630,8 +607,28 @@ filled                          LONG  !bytes written
     END
 
     ! CreateFile, WriteFile, CloseHandle etc
-    INCLUDE('svapifnc.inc')
+!    INCLUDE('svapifnc.inc')
+    MODULE('WIN API')
+      winapi::CreateDirectory(*CString szPathName, *SECURITY_ATTRIBUTES SecurityAttributes),bool,pascal,raw,name('CreateDirectoryA')
+      winapi::GetLastError(),long,pascal,name('GetLastError')
+      winapi::CreateFile(*cstring szFileName, long dwDesiredAccess, long dwShareMode, long lpSecurityAttributes, |
+        long dwCreationDisposition, long dwFlagsAndAttributes, HANDLE hTemplateFile),HANDLE, |
+        name('CreateFileA'),pascal,raw
+      winapi::GetFileSize(HANDLE hFile, *long FileSizeHigh),long,raw,pascal,name('GetFileSize')
+      winapi::ReadFile(HANDLE hFile, long lpBuffer, long dwBytes, *long dwBytesRead, long lpOverlapped),bool,raw,pascal,name('ReadFile')
+      winapi::WriteFile(HANDLE hFile, long lpBuffer, long dwBytes, *long dwBytesWritten, long lpOverlapped),bool,raw,pascal,proc,name('WriteFile')
+      winapi::CloseHandle(HANDLE),bool,raw,pascal,proc,name('CloseHandle')
+      winapi::MultiByteToWideChar(long CodePage, long dwFlags, long lpMultiByteStr, long cbMultiByte, |
+        long lpWideCharStr, long cchWideCharStr),long,pascal,name('MultiByteToWideChar')
+      winapi::WideCharToMultiByte(long CodePage, long dwFlags, long lpWideCharStr, long cchWideChar, |
+        long lpMultiByteStr, long cbMultiByte, long lpDefaultChar, |
+        long lpUsedDefaultChar),long,pascal,name('WideCharToMultiByte')
+    END
   END
+
+TCurlSQueue                   QUEUE, TYPE
+item                            CSTRING(1024)
+                              END
 
 TCurlSList                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
 plist                           LONG, PRIVATE
@@ -639,10 +636,25 @@ plist                           LONG, PRIVATE
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), VIRTUAL
 
+AssignPtr                       PROCEDURE(LONG pListPtr)
 Append                          PROCEDURE(STRING pData)
 Free                            PROCEDURE()
 GetList                         PROCEDURE(), LONG
+GetQueue                        PROCEDURE(*TCurlSQueue pQ)
                               END
+
+
+curl::ErrorBlock              GROUP,TYPE                          ! Parameter to AddErrors procedure
+Number                          USHORT                            ! Current error message identifier
+                              END
+
+curl::ErrorEntryGroup         GROUP, TYPE                         ! List of all translated error messages
+Id                              CURLE                             ! Error message identifier
+Message                         &STRING                           ! Message text
+                              END
+curl::ErrorEntry              QUEUE(curl::ErrorEntryGroup), TYPE  ! List of all translated error messages
+                              END
+
 
 
 !---------------------------- TCurlClass---- -----------------------------!
@@ -651,6 +663,10 @@ curl                            CURL, PROTECTED
 
 !linked list of http headers
 headers                         &TCurlSList, PROTECTED
+Errors                          &curl::ErrorEntry, PROTECTED       ! Queue to hold all translated error messages
+
+AddError                        PROCEDURE(CURLE Id, *STRING Message), VIRTUAL
+AddErrors                       PROCEDURE(curl::ErrorBlock ErrsIn), VIRTUAL
 
 SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG pData), CURLcode, PROC
 SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC
@@ -675,9 +691,11 @@ SetOpt                          PROCEDURE(CURLoption option, curl::ChunkBgnProcT
 SetOpt                          PROCEDURE(CURLoption option, curl::ChunkEndProcType chunkendproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, TCurlSList plist), CURLcode, PROC
 
+SetUrl                          PROCEDURE(STRING pUrl), CURLcode, PROC
+
 Perform                         PROCEDURE(), CURLcode
 
-StrError                        PROCEDURE(CURLcode errcode), STRING
+StrError                        PROCEDURE(CURLcode errcode), STRING, VIRTUAL
 
 
 !set user and password in form "user:password"
@@ -714,6 +732,12 @@ SetSSLVerifyHost                PROCEDURE(BOOL pValue), CURLcode, PROC
 SetSSLVerifyPeer                PROCEDURE(BOOL pValue), CURLcode, PROC
 SetCAInfo                       PROCEDURE(STRING pCert), CURLcode, PROC
 SetSSLVersion                   PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion), CURLcode, PROC
+
+GetInfo                         PROCEDURE(CURLINFO info, *LONG value), CURLcode, PROC
+GetInfo::LONG                   PROCEDURE(CURLINFO info), LONG
+GetInfo::SLIST                  PROCEDURE(CURLINFO info), LONG
+GetInfo::STRING                 PROCEDURE(CURLINFO info), STRING
+GetInfo::DOUBLE                 PROCEDURE(CURLINFO info), REAL
 
 GetContentType                  PROCEDURE(), STRING
 GetResponseCode                 PROCEDURE(), LONG ! returns the last received HTTP or FTP code
@@ -818,4 +842,53 @@ Charset                         PROCEDURE(STRING pCharset)
 AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
 
 Send                            PROCEDURE(), CURLcode, PROC
+                              END
+
+!---------------------------- TCurlHttpClass ----------------------------!
+TCurlHttpClass                CLASS(TCurlClass), TYPE, MODULE('libcurlhttp.clw'), LINK('libcurlhttp.clw')
+FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
+MaxRedirs                       PROCEDURE(LONG pValue), CURLcode, PROC
+GetRedirectUrl                  PROCEDURE(), STRING !if CURLOPT_FOLLOWLOCATION set to 1
+
+!Cookie: see http://curl.haxx.se/libcurl/c/libcurl-tutorial.html  "Cookies Without Chocolate Chips" topic
+
+!http://curl.haxx.se/libcurl/c/CURLOPT_COOKIE.html
+!!!<summary>
+!!!Sets a cookie in the HTTP request. 
+!!!</summary>
+AddHeaderCookie                 PROCEDURE(STRING pCookieString), CURLcode, PROC   !pCookieString like 'name=var' or 'name1=var1; name2=var2;'
+
+!!!<summary>
+!!!The list of cookies in pCookieFile will not be imported until right
+!!!before a transfer is performed. Cookies in the list that have the same
+!!!hostname, path and name as in my_cookie are skipped. That is because
+!!!libcurl has already imported my_cookie and it's considered a "live"
+!!!cookie. A live cookie won't be replaced by one read from a file.
+!!!</summary>
+ImportCookies                   PROCEDURE(<STRING pCookieFile>), CURLcode, PROC   !omit pCookieFile to just enable cookie engine
+
+!!!<summary>
+!!!Cookies are exported after curl_easy_cleanup is called. The server 
+!!!may have added, deleted or modified cookies by then. The cookies that
+!!!were skipped on import are not exported.
+!!!</summary>
+ExportCookies                 PROCEDURE(STRING pCookieFile), CURLcode, PROC
+
+!http://curl.haxx.se/libcurl/c/CURLOPT_COOKIELIST.html
+!!!<summary>
+!!!cookie can be either a single line in Netscape / Mozilla format or just regular HTTP-style header (Set-Cookie: ...) format.
+!!!Additionally, there are commands available that perform actions if you pass in these exact strings:
+!!!'ALL' erases all cookies held in memory, 
+!!!'SESS' erases all session cookies held in memory, 
+!!!'FLUSH' writes all known cookies to the file specified by ImportCookies, 
+!!!'RELOAD' loads all cookies from the files specified by ExportCookies
+!!!</summary>
+AddCookie                       PROCEDURE(STRING pCookie), CURLcode, PROC
+
+!http://curl.haxx.se/libcurl/c/CURLINFO_COOKIELIST.html
+!!!<summary>
+!!!get all known cookies (expired ones, too). 
+!!!Since 7.43.0 cookies that were imported in the Set-Cookie format without a domain name are not exported by this option
+!!!</summary>
+GetCookieList                   PROCEDURE(*TCurlSQueue pQ), BOOL, PROC
                               END

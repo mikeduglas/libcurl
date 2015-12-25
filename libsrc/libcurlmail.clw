@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.06.1
-!** 09.12.2015
+!** libcurl for Clarion v1.07
+!** 26.12.2015
 !** mikeduglas66@gmail.com
 
 
@@ -62,9 +62,9 @@ Len                             LONG, AUTO
 bytesWritten                    LONG, AUTO
   CODE
   Len = LEN(pStr)*2 + 2
-  bytesWritten = MultiByteToWideChar(CP_ACP, 0, ADDRESS(pStr), LEN(pStr), ADDRESS(UnicodeText), Len)
+  bytesWritten = winapi::MultiByteToWideChar(CP_ACP, 0, ADDRESS(pStr), LEN(pStr), ADDRESS(UnicodeText), Len)
   UnicodeText[Len-1 : Len] = '<0><0>'
-  Len = WideCharToMultiByte(pCodePage, 0, ADDRESS(UnicodeText), -1, ADDRESS(UTFText), Len, 0, 0)
+  Len = winapi::WideCharToMultiByte(pCodePage, 0, ADDRESS(UnicodeText), -1, ADDRESS(UTFText), Len, 0, 0)
   LOOP
     IF UtfText[Len] = '<0>'
       Len -= 1

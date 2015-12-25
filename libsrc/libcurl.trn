@@ -1,0 +1,10 @@
+curl::DefaultErrors           GROUP
+Number                          USHORT(0)
+                              END
+
+!** Russian example
+!curl::DefaultErrors           GROUP
+!Number                          USHORT(1)
+!                                CURLE(CURLE_COULDNT_CONNECT)
+!                                PSTRING('Не могу соединиться с сервером')  !Couldn't connect to server
+!                              END

@@ -1,6 +1,26 @@
 # libcurl
 libcurl for Clarion
 
+v1.07
+
+- NEW: CURLE_xxx error code
+- NEW: includes 'libcurl.trn' for error translation
+- CHG: TCurlClass.StrError() now VIRTUAL
+- NEW: AddError(), AddErrors() methods
+- NEW: TCurlHttpClass
+  - redirection support:
+    - FollowLocation
+    - MaxRedirs
+    - GetRedirectUrl
+  - cookies support
+    - AddHeaderCookie
+    - ImportCookies
+    - ExportCookies
+    - AddCookie
+    - GetCookieList
+- NEW: cookies example
+- CHG: Removed a reference to 'svapifnc.inc'
+
 v1.06
 
 - FIX: TCurlMailClass -- possible redundant 'noname.txt' attachment

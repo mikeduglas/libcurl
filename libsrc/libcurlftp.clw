@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.06
-!** 27.11.2015
+!** libcurl for Clarion v1.07
+!** 26.12.2015
 !** mikeduglas66@gmail.com
 
 
@@ -265,7 +265,7 @@ qIndex                          LONG, AUTO
   IF res <> CURLE_OK
     RETURN res
   END
-
+  
 !  ParseResponse(respBuffer, RespQ)
   respdata &= GetFileContents(respfile)
   ParseFullListResponse(respdata, RespQ)

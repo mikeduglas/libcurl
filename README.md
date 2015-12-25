@@ -3,8 +3,8 @@ libcurl for Clarion
 
 v1.07
 
-- NEW: CURLE_xxx error code
-- NEW: includes 'libcurl.trn' for error translation
+- NEW: CURLE_xxx error codes
+- NEW: includes 'libcurl.trn' to translate curl errors
 - CHG: TCurlClass.StrError() now VIRTUAL
 - NEW: AddError(), AddErrors() methods
 - NEW: TCurlHttpClass

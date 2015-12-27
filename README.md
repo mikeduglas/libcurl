@@ -1,6 +1,8 @@
 # libcurl
 libcurl for Clarion
 
+**Template support added**
+
 v1.07
 
 - NEW: CURLE_xxx error codes

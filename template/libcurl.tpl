@@ -56,8 +56,12 @@
   %curlVar.Init()
 #ENDAT
 #! --------------------------------------------------------------------------
-#AT(%WindowManagerMethodCodeSection,'Init','(),BYTE'), FIRST, WHERE(%ProcedureTemplate <> 'SOURCE'), DESCRIPTION('-- '& %curlVar &' initialization --')
+#AT(%WindowManagerMethodCodeSection,'Init','(),BYTE'), FIRST, WHERE(UPPER(%ModuleTemplate)='GENERATED(ABC)' AND %ProcedureTemplate <> 'SOURCE'), DESCRIPTION('-- '& %curlVar &' initialization --')
 %curlVar.Init()
+#ENDAT
+#! --------------------------------------------------------------------------
+#AT(%AfterWindowOpening), FIRST,  WHERE(UPPER(%ModuleTemplate)='GENERATED(CLARION)' AND %ProcedureTemplate <> 'SOURCE'), DESCRIPTION('-- '& %curlVar &' initialization --')
+  %curlVar.Init()
 #ENDAT
 #! --------------------------------------------------------------------------
 #! --------------------------------------------------------------------------

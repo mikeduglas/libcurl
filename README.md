@@ -1,6 +1,9 @@
 # libcurl
 libcurl for Clarion
 
+30.12.2015: Added ReceiveMail example
+
+
 **Template support added**
 
 v1.07

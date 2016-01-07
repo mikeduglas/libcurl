@@ -1,6 +1,12 @@
 # libcurl
 libcurl for Clarion
 
+V1.08
+
+- FIX: TCurlFtpClass.ReadFile() went into endless loop for SFTP protocol.
+- FIX: Updated FTPManager.exe
+
+
 30.12.2015: Added ReceiveMail example
 
 

@@ -484,9 +484,12 @@ res                                 CURLcode, AUTO
   CODE
   !turn on wildcard matching
   !this also turns on curl::ChunkBgnCallback() and curl::ChunkEndCallback()
-  res = SELF.SetOpt(CURLOPT_WILDCARDMATCH, 1)  
-  IF res <> CURLE_OK
-    RETURN res
+  !for FTP only (not SFTP)
+  IF UPPER(SUB(pRemoteFile, 1, 7)) <> 'SFTP://'
+    res = SELF.SetOpt(CURLOPT_WILDCARDMATCH, 1)  
+    IF res <> CURLE_OK
+      RETURN res
+    END
   END
   
   RETURN PARENT.ReadFile(pRemoteFile, pLocalFile, xferproc)

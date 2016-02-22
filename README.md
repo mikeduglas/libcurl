@@ -1,6 +1,10 @@
 # libcurl
 libcurl for Clarion
 
+22.02.2016: 
+  FTP Manager now correctly displays local disk drives.
+
+
 V1.08
 
 - FIX: TCurlFtpClass.ReadFile() went into endless loop for SFTP protocol.

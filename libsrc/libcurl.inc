@@ -1,7 +1,8 @@
-!** libcurl for Clarion v1.07
-!** 26.12.2015
+!** libcurl for Clarion v1.09
+!** 14.04.2016
 !** mikeduglas66@gmail.com
 
+  INCLUDE('DynStr.inc'), ONCE
 
 CURL                          EQUATE(LONG)
 
@@ -234,6 +235,8 @@ CURLOPT_SERVER_RESPONSE_TIMEOUT   EQUATE(CURLOPT_FTP_RESPONSE_TIMEOUT)
 CURLOPT_ACCEPTTIMEOUT_MS      EQUATE(212 + CURLOPTTYPE_LONG)            !Time-out accept operations (currently for FTP only) after this amount of miliseconds
 
 CURLOPT_POSTFIELDS            EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)      !POST static input fields.
+CURLOPT_POSTFIELDSIZE         EQUATE(60 + CURLOPTTYPE_LONG)
+CURLOPT_POSTFIELDSIZE_LARGE   EQUATE(120 + CURLOPTTYPE_OFF_T)
 
 CURLOPT_COOKIE                EQUATE(22 + CURLOPTTYPE_OBJECTPOINT)      !Set cookie in request
 CURLOPT_COOKIEFILE            EQUATE(31 + CURLOPTTYPE_OBJECTPOINT)      !point to a file to read the initial cookies from, also enables "cookie awareness"
@@ -247,6 +250,7 @@ CURLOPT_SSLCERT               EQUATE(25 + CURLOPTTYPE_OBJECTPOINT)      !name of
 CURLOPT_KEYPASSWD             EQUATE(26 + CURLOPTTYPE_OBJECTPOINT)      !password for the SSL or SSH private key
 
 CURLOPT_QUOTE                 EQUATE(28 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of QUOTE commands
+CURLOPT_HEADERDATA            EQUATE(29 + CURLOPTTYPE_OBJECTPOINT)      !send FILE * or void * to store headers to, if you use a callback it is simply passed to the callback unmodified
 CURLOPT_PREQUOTE              EQUATE(93 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of pre-transfer QUOTE commands
 CURLOPT_POSTQUOTE             EQUATE(39 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of post-transfer QUOTE commands
 
@@ -296,6 +300,11 @@ CURLOPT_SSH_KEYDATA           EQUATE(185 + CURLOPTTYPE_OBJECTPOINT)     !set the
 CURLOPT_HTTPHEADER            EQUATE(23 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of headers, struct curl_slist kind. This list is also used for RTSP (in spite of its name)
 CURLOPT_HTTPGET               EQUATE(80 + CURLOPTTYPE_LONG)             !Set this to force the HTTP request to get back to GET. Only really usable if POST, PUT or a custom request have been used first.
 
+!  /* set to zero to disable the libcurl's decoding and thus pass the raw body
+!     data to the application even when it is encoded/compressed */
+CURLOPT_HTTP_TRANSFER_DECODING  EQUATE(157 + CURLOPTTYPE_LONG)
+CURLOPT_HTTP_CONTENT_DECODING EQUATE(158 + CURLOPTTYPE_LONG)
+    
 CURLOPT_CUSTOMREQUEST         EQUATE(36 + CURLOPTTYPE_OBJECTPOINT)      !Custom request, for customizing the get command like HTTP: DELETE, TRACE and others, FTP: to use a different list command 
 
 !Set if we should verify the Common name from the peer certificate in ssl 
@@ -336,6 +345,48 @@ CURLOPT_MAIL_RCPT             EQUATE(187 + CURLOPTTYPE_OBJECTPOINT)
 !  */
 CURLOPT_INFILESIZE            EQUATE(14 + CURLOPTTYPE_LONG)
  
+!  /* Set this to a bitmask value to enable the particular authentications
+!     methods you like. Use this in combination with CURLOPT_USERPWD.
+!     Note that setting multiple bits may cause extra network round-trips. */
+!  CINIT(HTTPAUTH, LONG, 107), 
+CURLOPT_HTTPAUTH              EQUATE(107 + CURLOPTTYPE_LONG)
+
+!  /*
+!  * Bitmasks for CURLOPT_HTTPAUTH and CURLOPT_PROXYAUTH options:
+!  *
+!  * CURLAUTH_NONE         - No HTTP authentication
+!  * CURLAUTH_BASIC        - HTTP Basic authentication (default)
+!  * CURLAUTH_DIGEST       - HTTP Digest authentication
+!  * CURLAUTH_NEGOTIATE    - HTTP Negotiate (SPNEGO) authentication
+!  * CURLAUTH_GSSNEGOTIATE - Alias for CURLAUTH_NEGOTIATE (deprecated)
+!  * CURLAUTH_NTLM         - HTTP NTLM authentication
+!  * CURLAUTH_DIGEST_IE    - HTTP Digest authentication with IE flavour
+!  * CURLAUTH_NTLM_WB      - HTTP NTLM authentication delegated to winbind helper
+!  * CURLAUTH_ONLY         - Use together with a single other type to force no
+!  *                         authentication or just that single type
+!  * CURLAUTH_ANY          - All fine types set
+!  * CURLAUTH_ANYSAFE      - All fine types except Basic
+!  */
+
+!  #define CURLAUTH_NONE         ((unsigned long)0)
+!  #define CURLAUTH_BASIC        (((unsigned long)1)<<0)
+!  #define CURLAUTH_DIGEST       (((unsigned long)1)<<1)
+!  #define CURLAUTH_NEGOTIATE    (((unsigned long)1)<<2)
+!  /* Deprecated since the advent of CURLAUTH_NEGOTIATE */
+!  #define CURLAUTH_GSSNEGOTIATE CURLAUTH_NEGOTIATE
+!  #define CURLAUTH_NTLM         (((unsigned long)1)<<3)
+!  #define CURLAUTH_DIGEST_IE    (((unsigned long)1)<<4)
+!  #define CURLAUTH_NTLM_WB      (((unsigned long)1)<<5)
+!  #define CURLAUTH_ONLY         (((unsigned long)1)<<31)
+!  #define CURLAUTH_ANY          (~CURLAUTH_DIGEST_IE)
+!  #define CURLAUTH_ANYSAFE      (~(CURLAUTH_BASIC|CURLAUTH_DIGEST_IE))
+! 
+CURLAUTH_NONE                 EQUATE(0)
+CURLAUTH_BASIC                EQUATE(1)
+CURLAUTH_DIGEST               EQUATE(2)
+CURLAUTH_NEGOTIATE            EQUATE(4)
+
+
 CURL_SSLVERSION_ENUM          EQUATE(LONG)
 CURL_SSLVERSION_DEFAULT       EQUATE(0)
 CURL_SSLVERSION_TLSv1         EQUATE(1) !/* TLS 1.x */
@@ -582,7 +633,7 @@ filled                          LONG  !bytes written
 
     MODULE('libcurl')
       curl::DebugInfo(STRING s)
-      GetFileContents(STRING pFile), *STRING
+      curl::GetFileContents(STRING pFile), *STRING
 
       !writes to a file
       curl::FileWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
@@ -601,6 +652,7 @@ filled                          LONG  !bytes written
       !curl_fnmatch_callback
 !      curl::FnMatchCallback(LONG ptr, *CSTRING pattern, *CSTRING string), LONG, C
 
+      curl::DynStrWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pDynStr), size_t, C
 
       curl::GlobalInit(CURL_GLOBAL_ENUM pFlag = CURL_GLOBAL_DEFAULT), CURLcode, PROC 
       curl::GlobalCleanup()
@@ -609,7 +661,7 @@ filled                          LONG  !bytes written
     ! CreateFile, WriteFile, CloseHandle etc
 !    INCLUDE('svapifnc.inc')
     MODULE('WIN API')
-      winapi::CreateDirectory(*CString szPathName, *SECURITY_ATTRIBUTES SecurityAttributes),bool,pascal,raw,name('CreateDirectoryA')
+      winapi::CreateDirectory(*CString szPathName, <*SECURITY_ATTRIBUTES SecurityAttributes>),bool,pascal,proc,raw,name('CreateDirectoryA')
       winapi::GetLastError(),long,pascal,name('GetLastError')
       winapi::CreateFile(*cstring szFileName, long dwDesiredAccess, long dwShareMode, long lpSecurityAttributes, |
         long dwCreationDisposition, long dwFlagsAndAttributes, HANDLE hTemplateFile),HANDLE, |
@@ -704,10 +756,14 @@ SetUserPwd                      PROCEDURE(STRING pUser, STRING pPwd), CURLcode, 
 ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
 !upload file
 WriteFile                       PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+
 !GET/POST, saves server response in pResponseFile
 SendRequest                     PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 !GET/POST, saves server response in pResponseBuf string
 SendRequestStr                  PROCEDURE(STRING pUrl, <STRING pPostFields>, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+
+SendRequest                     PROCEDURE(STRING pUrl, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+
 !send a file using POST
 PostFile                        PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 PostFileStr                     PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
@@ -717,6 +773,7 @@ XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal
 
 !derive Debug to display debug info
 DebugCallback                   PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext), VIRTUAL
+TalkCallback                    PROCEDURE(CURL_INFOTYPE ptype, STRING ptext), VIRTUAL
 
 AddHttpHeader                   PROCEDURE(STRING pHeader)
 FreeHttpHeaders                 PROCEDURE()
@@ -797,6 +854,7 @@ ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile,
                               END
 
 !---------------------------- TCurlMailClass ----------------------------!
+!Send mails: SMTP protocol
 TCurlMailClass                CLASS(TCurlClass), TYPE, MODULE('libcurlmail.clw'), LINK('libcurlmail.clw')
 url                             STRING(256), PRIVATE        !smtp.gmail.com:587
 username                        STRING(128), PRIVATE
@@ -843,6 +901,144 @@ AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType
 
 Send                            PROCEDURE(), CURLcode, PROC
                               END
+
+!---------------------------- TCurlPOP3Class ----------------------------!
+!Receive mails: POP3 protocol
+!received emails
+TPOP3MailList                 QUEUE, TYPE
+MsgID                           LONG
+MsgSize                         LONG
+                              END
+
+TPOP3MailFailure              QUEUE, TYPE
+Acct                            STRING(25)
+MsgID                           LONG
+ErrMsg                          STRING(255)
+                              END
+
+TCurlPOP3Class                CLASS(TCurlClass), TYPE, MODULE('libcurlpop3.clw'), LINK('libcurlpop3.clw')
+tmpInboxFolder                  CSTRING(255)   !default '.'
+tmpMailListFile                 CSTRING(255)   !default '.\maillist.$$$'
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), DERIVED
+
+!!!<summary>
+!!!Returns mail list from account.
+!!!pAccount in form 'pop3s://pop.gmail.com:995/'.
+!!!User, password and SSL must be set prior this call
+!!!</summary>
+GetMailList                     PROCEDURE(STRING pAccount, *TPOP3MailList plistQ, BOOL pFreeQueue = TRUE), CURLcode, PROC
+
+!!!<summary>
+!!!Saves email by its ID as mime-file
+!!!</summary>
+GetMail                         PROCEDURE(STRING pAccount, LONG pMsgID, <STRING pFilename>), CURLcode, PROC
+
+!!!<summary>
+!!!Saves emails as set of mime-files
+!!!</summary>
+!!!<param name="pMaxMailsToGet">maximum number of mails to read, 0 - all emals</param>
+GetMails                        PROCEDURE(STRING pAccount, LONG pMaxMailsToGet = 100, <*TPOP3MailFailure pErrQ>), CURLcode, PROC
+
+OnMailSaved                     PROCEDURE(STRING pFilename), VIRTUAL, PROTECTED !event
+                              END
+
+!---------------------------- TCurlIMAPClass ----------------------------!
+TIMAPFolderTree               QUEUE, TYPE
+Name                            STRING(256)
+Level                           LONG
+ParentFolder                    STRING(256)
+                              END
+
+TIMAPFetchData                QUEUE, TYPE
+Line                            STRING(256)
+                              END
+
+TIMAPMsgHeader                GROUP, TYPE
+MsgID                           LONG        !ordinal number of email in a folder (returned by SEARCH command)
+DateTime                        STRING(64)
+From                            STRING(256)
+Subject                         STRING(256)
+                              END
+
+TIMAPMsgHeaders               QUEUE(TIMAPMsgHeader), TYPE
+                              END
+
+TCurlIMAPClass                CLASS(TCurlClass), TYPE, MODULE('libcurlimap.clw'), LINK('libcurlimap.clw')
+baseUrl                         CSTRING(256), PRIVATE
+userName                        CSTRING(256), PRIVATE
+password                        CSTRING(256), PRIVATE
+SSL                             CURL_USESSL, PRIVATE
+VerifyPeer                      BOOL, PRIVATE
+VerifyHost                      BOOL, PRIVATE
+
+curFolder                       CSTRING(256), PRIVATE ! a folder where FETCH is performed, set by 'SEARCH folder' call
+
+bFetching                       BOOL, PRIVATE   !FETCH call in progress
+FetchData                       &TIMAPFetchData, PRIVATE
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), DERIVED
+
+SetConnection                   PROCEDURE(), PROTECTED
+Reset                           PROCEDURE(), DERIVED
+
+!!!<summary>
+!!!Sets imap credentials
+!!!</summary>
+!!!<param name="pBaseUrl">for gmail: 'imaps://imap.gmail.com:993'</param>
+!!!<param name="pUser">User name</param>
+!!!<param name="pPsw">Password</param>
+!!!<param name="pSSL">Use SSL</param>
+!!!<param name="pVerifyPeer"Verify peer</param>
+!!!<param name="pVerifyHost"Verify host</param>
+Credentials                     PROCEDURE(STRING pBaseUrl, STRING pUser, STRING pPsw, CURL_USESSL pSSL = CURLUSESSL_ALL, BOOL pVerifyPeer = FALSE, BOOL pVerifyHost = FALSE)
+
+!!!<summary>
+!!!Sends a command
+!!!</summary>
+!!!<param name="pCommand">any available command like 'SEARCH NEW'</param>
+!!!<param name="pDynStr">server response</param>
+SendCommand                     PROCEDURE(STRING pCommand, *IDynStr pDynStr), CURLcode, PROC
+
+!!!<summary>
+!!!Sends a command
+!!!</summary>
+!!!<param name="pFolder">folder name to request; like 'INBOX'</param>
+!!!<param name="pCommand">any available command like 'SEARCH NEW'</param>
+!!!<param name="pDynStr">server response</param>
+SendCommand                     PROCEDURE(STRING pFolder, STRING pCommand, *IDynStr pDynStr), CURLcode, PROC
+
+!!!<summary>
+!!!Sends a SEARCH command
+!!!</summary>
+!!!<param name="pFolder">folder name to request; like 'INBOX'</param>
+!!!<param name="pCriteria">Search criteria keywords including flags such as ALL, ANSWERED, DELETED, DRAFT, FLAGGED, NEW, RECENT and SEEN.
+!!!Ex.:  SEARCH FLAGGED SINCE 1-Feb-1994 NOT FROM "Smith"
+!!!</param>
+!!!<param name="msglist">List of MsgIDs</param>
+Search                          PROCEDURE(STRING pFolder, STRING pCriteria, *IDynStr msglist), CURLcode, PROC
+
+FetchHeaders                    PROCEDURE(STRING pMsgList, *TIMAPMsgHeaders headers), CURLcode, PROC
+FetchHeaders                    PROCEDURE(STRING pFolder, STRING pCriteria, *TIMAPMsgHeaders headers), CURLcode, PROC
+FetchHeaders                    PROCEDURE(STRING pFolder, STRING pCriteria, LONG pRecsPerPage, LONG pPageNum, *TIMAPMsgHeaders headers), CURLcode, PROC
+
+FetchText                       PROCEDURE(LONG pMsgID, *IDynStr ptext), CURLcode, PROC
+FetchText                       PROCEDURE(LONG pMsgID), STRING
+
+TalkCallback                    PROCEDURE(CURL_INFOTYPE ptype, STRING ptext), DERIVED
+
+!!!<summary>
+!!!Builds folder tree, calling 'LIST "" *"' command
+!!!</summary>
+!!!<param name="tree">queue ready to use as data source in Clarion Tree List control</param>
+BuildFolderTree                 PROCEDURE(*TIMAPFolderTree tree), CURLcode, PROC
+
+!TIMAPFolder test
+ParseFolder                     PROCEDURE(STRING input), STRING
+                              END
+
 
 !---------------------------- TCurlHttpClass ----------------------------!
 TCurlHttpClass                CLASS(TCurlClass), TYPE, MODULE('libcurlhttp.clw'), LINK('libcurlhttp.clw')
@@ -891,4 +1087,38 @@ AddCookie                       PROCEDURE(STRING pCookie), CURLcode, PROC
 !!!Since 7.43.0 cookies that were imported in the Set-Cookie format without a domain name are not exported by this option
 !!!</summary>
 GetCookieList                   PROCEDURE(*TCurlSQueue pQ), BOOL, PROC
+                              END
+
+!---------------------------- TCurlHttpClass ----------------------------!
+TCurlDropboxClass             CLASS(TCurlHttpClass), TYPE, MODULE('libcurldropbox.clw'), LINK('libcurldropbox.clw')
+_accessToken                    CSTRING(128), PROTECTED
+_response                       &IDynStr, PROTECTED
+_lastCurlCode                   CURLcode, PROTECTED
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), DERIVED
+
+AccessToken                     PROCEDURE(STRING pAccessToken)
+AccessToken                     PROCEDURE(), STRING
+
+SetRPCEndpoint                  PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED
+SetContentUploadEndpoint        PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED
+SetContentDownloadEndpoint      PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED
+
+Send                            PROCEDURE(STRING pDomain, STRING pNamespace, STRING pFunction), CURLcode, PROC, PROTECTED
+
+
+!- public API
+Copy                            PROCEDURE(STRING pFromPath, STRING pToPath), BOOL, PROC
+Move                            PROCEDURE(STRING pFromPath, STRING pToPath), BOOL, PROC
+CreateFolder                    PROCEDURE(STRING pPath), BOOL, PROC
+Delete                          PROCEDURE(STRING pPath), BOOL, PROC
+Download                        PROCEDURE(STRING pRemotePath, STRING pLocalPath), BOOL, PROC
+Upload                          PROCEDURE(STRING pLocalPath, STRING pRemotePath, <STRING pMode>, BOOL pAutorename = FALSE), BOOL, PROC
+ListFolder                      PROCEDURE(STRING pPath, BOOL pRecursive = FALSE), BOOL, PROC
+
+!- responses
+DropboxResponse                 PROCEDURE(), STRING !- HTTP response
+CurlResponse                    PROCEDURE(), CURLcode
+!GetResponseCode                 PROCEDURE(), LONG  !- HTTP response code (defined in parent class)
                               END

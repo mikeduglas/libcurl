@@ -1,6 +1,16 @@
 # libcurl
 libcurl for Clarion
 
+v1.09
+
+- NEW: TCurlDropboxClass (Dropbox API v2)
+  - allows to copy, move, delete files and folders, create folders, upload and download files, get folder list (application access token required)
+- NEW: Dropbox File Manager hand-coded example (C10 solution, uses JSON stuff)
+- NEW: some curl constants added
+- CHG: some methods rewritten to use dynamic strings (IDynStr) instead of files as server response storage
+- FIX: TCurlClass.SetOpt(CURLoption option, *STRING param)
+
+
 22.02.2016: 
   FTP Manager now correctly displays local disk drives.
 

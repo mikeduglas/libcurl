@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.07
-!** 26.12.2015
+!** libcurl for Clarion v1.09
+!** 14.04.2016
 !** mikeduglas66@gmail.com
 
 
@@ -470,6 +470,7 @@ n_block                         LONG, AUTO    !block number
   END
   
   RETURN CLIP(output_buf)
+  
 !!!endregion
   
 !!!region callbacks
@@ -773,7 +774,7 @@ encdata                             &STRING
       mail.AddLine()
     
       !attachment contents
-      filedata &= GetFileContents(SELF.attachments.filename)
+      filedata &= curl::GetFileContents(SELF.attachments.filename)
       IF NOT filedata &= NULL
           
         encdata &= NEW STRING((LEN(filedata)/DECODED_BUF_SIZE + 1) * ENCODED_BUF_SIZE)
@@ -839,5 +840,4 @@ res                             CURLcode, AUTO
   END
 
   RETURN SELF.Perform()
-  
 !!!endregion

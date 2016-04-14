@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.07
-!** 26.12.2015
+!** libcurl for Clarion v1.09
+!** 14.04.2016
 !** mikeduglas66@gmail.com
 
 
@@ -243,10 +243,7 @@ res                             CURLcode, AUTO
   RETURN CURLE_OK
 
 TCurlFtpClass.LoadDir         PROCEDURE(STRING pUrl, *TFtpFilesInfo dirlist)
-!respBuffer                      STRING(32768) !big enuff to hold received response
-!respBuffer                      STRING(1000000) !big enuff to hold received response
-respfile                        STRING('$$$ftpdir$$$.txt')
-respdata                        &STRING
+ds                              &IDynStr
 res                             CURLcode, AUTO
 RespQ                           QUEUE, PRE(RespQ)
 Item                              STRING(255)
@@ -260,17 +257,14 @@ qIndex                          LONG, AUTO
     RETURN res
   END
 
-!  res = SELF.SendRequestStr(pUrl, , respBuffer)
-  res = SELF.SendRequest(pUrl, , respfile)
+  ds &= NewDynStr()
+  res = SELF.SendRequest(pUrl, ds)
   IF res <> CURLE_OK
     RETURN res
   END
   
-!  ParseResponse(respBuffer, RespQ)
-  respdata &= GetFileContents(respfile)
-  ParseFullListResponse(respdata, RespQ)
-  DISPOSE(respdata)
-  REMOVE(respfile)
+  ParseFullListResponse(ds.Str(), RespQ)
+  DisposeDynStr(ds)
   
   !http://superuser.com/questions/482763/what-do-different-things-mean-in-ftp-dir-output
   
@@ -332,8 +326,7 @@ qIndex                          LONG, AUTO
   RETURN CURLE_OK
 
 TCurlFtpClass.LoadDirListOnly PROCEDURE(STRING pUrl, *TFtpDirList barelist)
-respfile                        STRING('$$$ftpdir$$$.txt')
-respdata                        &STRING
+ds                              &IDynStr
 res                             CURLcode, AUTO
   CODE
   res = SELF.SetOpt(CURLOPT_FTPLISTONLY, 1)
@@ -341,19 +334,16 @@ res                             CURLcode, AUTO
     RETURN res
   END
 
-!  res = SELF.SendRequestStr(pUrl, , respBuffer)
-  res = SELF.SendRequest(pUrl, , respfile)
+  ds &= NewDynStr()
+  res = SELF.SendRequest(pUrl, ds)
   IF res <> CURLE_OK
     RETURN res
   END
 
   FREE(barelist)
 
-!  ParseResponse(respBuffer, RespQ)
-  respdata &= GetFileContents(respfile)
-  ParseBareListResponse(respdata, barelist)
-  DISPOSE(respdata)
-  REMOVE(respfile)
+  ParseBareListResponse(ds.Str(), barelist)
+  DisposeDynStr(ds)
   
   RETURN CURLE_OK
   

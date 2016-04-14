@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.07
-!** 26.12.2015
+!** libcurl for Clarion v1.09
+!** 14.04.2016
 !** mikeduglas66@gmail.com
 
 
@@ -203,7 +203,7 @@ cs                              CSTRING(LEN(s) + LEN(prefix) + 1)
   cs = prefix & s
   curl::OutputDebugString(cs)
   
-GetFileContents               PROCEDURE(STRING pFile)
+curl::GetFileContents         PROCEDURE(STRING pFile)
 OS_INVALID_HANDLE_VALUE         EQUATE(-1)
 szFile                          CSTRING(256)
 sData                           &STRING
@@ -320,6 +320,24 @@ rc                              BOOL
   
   RETURN -1
 
+curl::DynStrWrite             PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pDynStr)
+bytesReceived                   size_t, AUTO
+ds                              &IDynStr
+sbuffer                         STRING(bufsize * nmemb)
+rc                              BOOL
+  CODE
+  IF pDynStr = 0
+    RETURN -1
+  END
+
+  ds &= (pDynStr)
+  
+  bytesReceived = bufsize * nmemb
+  curl::memcpy(ADDRESS(sbuffer), buffer, bytesReceived)
+  ds.Cat(sbuffer)
+  
+  RETURN bytesReceived
+
 curl::XFerInfo                PROCEDURE(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow)
 curl                            &TCurlClass
   CODE
@@ -357,6 +375,7 @@ infotype                        STRING(20)
   
     curl &= (userptr)
     curl::memcpy(ADDRESS(txt), pdata, psize)
+    curl.TalkCallback(ptype, txt)
     curl.DebugCallback(ptype, infotype, txt)
   END
   
@@ -644,11 +663,14 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, LONG param)
   RETURN curl_easy_setopt(SELF.curl, option, param)
   
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, *STRING param)
-szparam                         CSTRING(LEN(param) + 1)
+aparamAddr                      LONG
+aparam                          ASTRING, OVER(aparamAddr)
+szparam                         &CSTRING
   CODE
-  szparam = CLIP(param)
+  aparam  = CLIP(param) &'<0>'
+  szparam &= (aparamAddr)
   RETURN SELF.SetOpt(option, szparam)
-  
+
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, *CSTRING param)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, param)
@@ -883,6 +905,29 @@ fs                              LIKE(TCurlFileStruct)
   
   RETURN CURLE_OK
 
+TCurlClass.SendRequest        PROCEDURE(STRING pUrl, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+  CODE
+  IF NOT pDynStr &= NULL
+    res = SELF.SetWriteCallback(curl::DynStrWrite, ADDRESS(pDynStr))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+  
+  res = SELF.SetXFerCallback(xferproc)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.SetUrl(pUrl)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  ! perform request
+  RETURN SELF.Perform()
+
 TCurlClass.SendRequest        PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
 res                             CURLcode, AUTO
 fs                              LIKE(TCurlFileStruct)
@@ -1027,6 +1072,9 @@ TCurlClass.DebugCallback      PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, ST
   CODE
   curl::DebugInfo(CLIP(ptypetxt) &': '& CLIP(ptext))
   
+TCurlClass.TalkCallback       PROCEDURE(CURL_INFOTYPE ptype, STRING ptext)
+  CODE
+  
 TCurlClass.AddHttpHeader      PROCEDURE(STRING pHeader)
   CODE
   SELF.headers.Append(pHeader)
@@ -1042,8 +1090,12 @@ TCurlClass.SetHttpHeaders     PROCEDURE()
 TCurlClass.SetCustomRequest   PROCEDURE(STRING pCustomRequest)
 szreq                           CSTRING(LEN(pCustomRequest) + 1)
   CODE
-  szreq = CLIP(pCustomRequest)
-  RETURN SELF.SetOpt(CURLOPT_CUSTOMREQUEST, ADDRESS(szreq))
+  IF pCustomRequest
+    szreq = CLIP(pCustomRequest)
+    RETURN SELF.SetOpt(CURLOPT_CUSTOMREQUEST, ADDRESS(szreq))
+  END
+  
+  RETURN CURLE_OK
 
 TCurlClass.SetHttpGET         PROCEDURE(BOOL pValue = TRUE)
   CODE

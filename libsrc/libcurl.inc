@@ -1101,8 +1101,6 @@ Destruct                        PROCEDURE(), DERIVED
 AccessToken                     PROCEDURE(STRING pAccessToken)
 AccessToken                     PROCEDURE(), STRING
 
-Authorize                       PROCEDURE(STRING pAppKey, STRING pAppSecret), STRING !- on success: returns AccessToken
-
 SetRPCEndpoint                  PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED
 SetContentUploadEndpoint        PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED
 SetContentDownloadEndpoint      PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED

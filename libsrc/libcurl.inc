@@ -1089,7 +1089,7 @@ AddCookie                       PROCEDURE(STRING pCookie), CURLcode, PROC
 GetCookieList                   PROCEDURE(*TCurlSQueue pQ), BOOL, PROC
                               END
 
-!---------------------------- TCurlHttpClass ----------------------------!
+!---------------------------- TCurlDropboxClass ----------------------------!
 TCurlDropboxClass             CLASS(TCurlHttpClass), TYPE, MODULE('libcurldropbox.clw'), LINK('libcurldropbox.clw')
 _accessToken                    CSTRING(128), PROTECTED
 _response                       &IDynStr, PROTECTED

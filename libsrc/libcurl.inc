@@ -675,6 +675,7 @@ filled                          LONG  !bytes written
       winapi::WideCharToMultiByte(long CodePage, long dwFlags, long lpWideCharStr, long cchWideChar, |
         long lpMultiByteStr, long cbMultiByte, long lpDefaultChar, |
         long lpUsedDefaultChar),long,pascal,name('WideCharToMultiByte')
+      winapi::ShellExecute(LONG phWnd, <*CSTRING pAction>, *CSTRING pFilename, <*CSTRING pParameters>, <*CSTRING pDirectory>, LONG pFlags=1), LONG, PASCAL, RAW, PROC, NAME('ShellExecuteA')
     END
   END
 
@@ -1098,9 +1099,20 @@ _lastCurlCode                   CURLcode, PROTECTED
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), DERIVED
 
+!!!<summary>Redirect to authorization page</summary>
+!!!<param name="pAppKey">Application key</param>
+Authorize                       PROCEDURE(STRING pAppKey)
+
+!!!<summary>Acquire a bearer token once the user has authorized the app</summary>
+!!!<param name="pAuthCode">The authorization code, which can be used to attain a bearer token</param>
+!!!<param name="pAppKey">Application key</param>
+!!!<param name="pAppSecret">Application secret</param>
+AccessToken                     PROCEDURE(STRING pAuthCode, STRING pAppKey, STRING pAppSecret), BOOL, PROC
+
 AccessToken                     PROCEDURE(STRING pAccessToken)
 AccessToken                     PROCEDURE(), STRING
 
+SetAuthEndpoint                 PROCEDURE(STRING pPostFields), CURLcode, PROC, PROTECTED
 SetRPCEndpoint                  PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED
 SetContentUploadEndpoint        PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED
 SetContentDownloadEndpoint      PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED

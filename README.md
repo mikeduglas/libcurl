@@ -1,6 +1,10 @@
 # libcurl
 libcurl for Clarion
 
+v1.10
+- NEW: TCurlDropboxClass OAuth2 authorization support
+- CHG: Dropbox File Manager example now uses OAuth2
+
 v1.09
 
 - NEW: TCurlDropboxClass (Dropbox API v2)

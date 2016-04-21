@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.09
-!** 14.04.2016
+!** libcurl for Clarion v1.11
+!** 21.04.2016
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -356,6 +356,106 @@ args                            CSTRING(256)
   END
 
   RETURN CHOOSE(SELF.GetResponseCode() = 200, TRUE)
+
+TCurlDropboxClass.Get_Copy_Reference  PROCEDURE(STRING pPath)
+func                                    STRING('copy_reference/get')
+args                                    CSTRING(256)
+  CODE
+  args = '{{"path": "'& CLIP(pPath) &'"}'
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+  
+  SELF._lastCurlCode = SELF.Send(domain_API, ns_Files, func)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+
+  RETURN CHOOSE(SELF.GetResponseCode() = 200, TRUE)
+  
+TCurlDropboxClass.Save_Copy_Reference PROCEDURE(STRING pPath, STRING pCopyReference)
+func                                    STRING('copy_reference/save')
+args                                    CSTRING(512)
+  CODE
+  args = '{{"path": "'& CLIP(pPath) &'","copy_reference": "'& CLIP(pCopyReference) &'"}'
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+  
+  SELF._lastCurlCode = SELF.Send(domain_API, ns_Files, func)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+
+  RETURN CHOOSE(SELF.GetResponseCode() = 200, TRUE)
+
+TCurlDropboxClass.Preview     PROCEDURE(STRING pPath, *STRING pTmpFile)
+func                            STRING('get_preview')
+args                            CSTRING(256)
+htmlDocTypeStr                  STRING('<<!DOCTYPE html>')
+pdfDocTypeStr                   STRING('%PDF')
+fs                              TCurlFileStruct
+dwBytes                         LONG, AUTO
+rc                              BOOL(FALSE)
+  CODE
+  args = '{{"path": "'& CLIP(pPath) &'"}'
+  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+  
+  SELF._lastCurlCode = SELF.Send(domain_Content, ns_Files, func)
+  IF SELF._lastCurlCode = CURLE_OK
+    IF SELF.GetResponseCode() = 200 !- HTTP OK
+      IF INSTRING(htmlDocTypeStr, SELF._response.Str(), 1, 1) = 1
+        pTmpFile = CLIP(pTmpFile) &'.html'
+      ELSIF INSTRING(pdfDocTypeStr, SELF._response.Str(), 1, 1) = 1
+        pTmpFile = CLIP(pTmpFile) &'.pdf'
+      ELSE
+        RETURN FALSE
+      END
+
+      !-- save temp file
+      fs.Init(pTmpFile)
+      IF fs.CreateFile()
+        IF fs.WriteFile(SELF._response.CStrRef(), SELF._response.StrLen(), dwBytes)
+          rc = TRUE
+        END
+      END
+    END
+  END
+  
+  RETURN rc
+
+TCurlDropboxClass.Thumbnail   PROCEDURE(STRING pPath, TDbxThumbnailFormat pFormat, TDbxThumbnailSize pSize, *STRING pTmpFile)
+func                            STRING('get_thumbnail')
+args                            CSTRING(256)
+fs                              TCurlFileStruct
+dwBytes                         LONG, AUTO
+rc                              BOOL(FALSE)
+  CODE
+  args = '{{"path": "'& CLIP(pPath) &'", "format": "'& CLIP(pFormat) &'", "size": "'& CLIP(pSize) &'"}'
+  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+  
+  SELF._lastCurlCode = SELF.Send(domain_Content, ns_Files, func)
+  IF SELF._lastCurlCode = CURLE_OK
+    IF SELF.GetResponseCode() = 200 !- HTTP OK
+      !-- save temp file
+      fs.Init(pTmpFile)
+      IF fs.CreateFile()
+        IF fs.WriteFile(SELF._response.CStrRef(), SELF._response.StrLen(), dwBytes)
+          rc = TRUE
+        END
+      END
+    END
+  END
+  
+  RETURN rc
 
 TCurlDropboxClass.DropboxResponse PROCEDURE()
   CODE

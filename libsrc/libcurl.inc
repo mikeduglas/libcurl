@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.09
-!** 14.04.2016
+!** libcurl for Clarion v1.11
+!** 21.04.2016
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -1091,6 +1091,18 @@ GetCookieList                   PROCEDURE(*TCurlSQueue pQ), BOOL, PROC
                               END
 
 !---------------------------- TCurlDropboxClass ----------------------------!
+TDbxThumbnailFormat           EQUATE(STRING)
+TDbxThumbnailFormat:JPEG      EQUATE('jpeg')
+TDbxThumbnailFormat:PNG       EQUATE('png')
+
+TDbxThumbnailSize             EQUATE(STRING)
+TDbxThumbnailSize:w32h32      EQUATE('w32h32')
+TDbxThumbnailSize:w64h64      EQUATE('w64h64')
+TDbxThumbnailSize:w128h128    EQUATE('w128h128')
+TDbxThumbnailSize:w640h480    EQUATE('w640h480')
+TDbxThumbnailSize:1024h768    EQUATE('1024h768')
+
+
 TCurlDropboxClass             CLASS(TCurlHttpClass), TYPE, MODULE('libcurldropbox.clw'), LINK('libcurldropbox.clw')
 _accessToken                    CSTRING(128), PROTECTED
 _response                       &IDynStr, PROTECTED
@@ -1128,6 +1140,26 @@ Delete                          PROCEDURE(STRING pPath), BOOL, PROC
 Download                        PROCEDURE(STRING pRemotePath, STRING pLocalPath), BOOL, PROC
 Upload                          PROCEDURE(STRING pLocalPath, STRING pRemotePath, <STRING pMode>, BOOL pAutorename = FALSE), BOOL, PROC
 ListFolder                      PROCEDURE(STRING pPath, BOOL pRecursive = FALSE), BOOL, PROC
+!- v1.11
+Get_Copy_Reference              PROCEDURE(STRING pPath), BOOL, PROC
+Save_Copy_Reference             PROCEDURE(STRING pPath, STRING pCopyReference), BOOL, PROC
+!!!<summary>
+!!!Gets a preview of a file. Previews are only generated for the files with the following extensions: 
+!!!.doc, .docx, .docm, .ppt, .pps, .ppsx, .ppsm, .pptx, .pptm, .xls, .xlsx, .xlsm, .rtf
+!!!</summary>
+!!!<param name="pPath">The absolute path to the file you want to preview.</param>
+!!!<param name="pTmpFile">The absolute local path to the tempory file, without extension. On return, gets an extension of 'html' or 'pdf'</param>
+Preview                         PROCEDURE(STRING pPath, *STRING pTmpFile), BOOL, PROC
+!!!<summary>
+!!!Get a thumbnail for an image. This method currently supports files with the following file extensions:
+!!!jpg, jpeg, png, tiff, tif, gif and bmp. Photos that are larger than 20MB in size won't be converted to a thumbnail.
+!!!</summary>
+!!!<param name="pPath">The path to the image file you want to thumbnail.</param>
+!!!<param name="pFormat">The format for the thumbnail image, jpeg (default) or png. For images that are photos, jpeg should be preferred, while png is better for screenshots and digital arts. The default for this union is jpeg.</param>
+!!!<param name="pSize">The size for the thumbnail image. The default for this union is w64h64.</param>
+!!!<param name="pTmpFile">The absolute local path to the tempory file, without extension. On return, gets an extension of 'html' or 'pdf'</param>
+Thumbnail                       PROCEDURE(STRING pPath, TDbxThumbnailFormat pFormat, TDbxThumbnailSize pSize, *STRING pTmpFile), BOOL, PROC
+
 
 !- responses
 DropboxResponse                 PROCEDURE(), STRING !- HTTP response

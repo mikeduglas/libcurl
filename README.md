@@ -1,6 +1,10 @@
 # libcurl
 libcurl for Clarion
 
+v1.11
+- NEW: TCurlDropboxClass methods .Get_Copy_Reference, .Save_Copy_Reference, .Preview, .Thumbnail
+- CHG: Dropbox File Manager -- enhanced UI (2 file panels, preview/thumbnail for documents and images), modified JSON.CLW (2 bugs fixed in JSONDataClass.FromJSON)
+
 v1.10
 - NEW: TCurlDropboxClass OAuth2 authorization support
 - CHG: Dropbox File Manager example now uses OAuth2

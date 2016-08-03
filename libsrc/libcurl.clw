@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.11
-!** 21.04.2016
+!** libcurl for Clarion v1.12
+!** 03.08.2016
 !** mikeduglas66@gmail.com
 
 
@@ -1007,7 +1007,7 @@ pf                              CSTRING(LEN(pPostFields) + 1)
   RETURN SELF.Perform()
 
 TCurlClass.PostFile           PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
-formpost                        LONG(0)
+httppost                        LONG(0)
 lastptr                         LONG(0)
 szarg                           CSTRING(LEN(pArgname) + 1)
 szfilename                      CSTRING(LEN(pFilename) + 1)
@@ -1018,12 +1018,12 @@ cfres                           CURLFORMcode, AUTO
   szarg = CLIP(pArgname)
   szfilename = CLIP(pFilename)
   
-  cfres = curl_formadd(ADDRESS(formpost), ADDRESS(lastptr), CURLFORM_COPYNAME, szarg, CURLFORM_FILE, szfilename, CURLFORM_END)
+  cfres = curl_formadd(ADDRESS(httppost), ADDRESS(lastptr), CURLFORM_COPYNAME, szarg, CURLFORM_FILE, szfilename, CURLFORM_END)
   IF cfres <> CURL_FORMADD_OK
     RETURN -1
   END
   
-  res = SELF.SetOpt(CURLOPT_HTTPPOST, formpost)
+  res = SELF.SetOpt(CURLOPT_HTTPPOST, httppost)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -1031,12 +1031,12 @@ cfres                           CURLFORMcode, AUTO
   ! perform request
   res = SELF.SendRequest(pUrl, '', pResponseFile, xferproc)
   
-  curl_formfree(formpost)
+  curl_formfree(httppost)
 
   RETURN res
 
 TCurlClass.PostFileStr        PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>)
-formpost                        LONG(0)
+httppost                        LONG(0)
 lastptr                         LONG(0)
 szarg                           CSTRING(LEN(pArgname) + 1)
 szfilename                      CSTRING(LEN(pFilename) + 1)
@@ -1047,12 +1047,12 @@ cfres                           CURLFORMcode, AUTO
   szarg = CLIP(pArgname)
   szfilename = CLIP(pFilename)
   
-  cfres = curl_formadd(ADDRESS(formpost), ADDRESS(lastptr), CURLFORM_COPYNAME, szarg, CURLFORM_FILE, szfilename, CURLFORM_END)
+  cfres = curl_formadd(ADDRESS(httppost), ADDRESS(lastptr), CURLFORM_COPYNAME, szarg, CURLFORM_FILE, szfilename, CURLFORM_END)
   IF cfres <> CURL_FORMADD_OK
     RETURN -1
   END
   
-  res = SELF.SetOpt(CURLOPT_HTTPPOST, formpost)
+  res = SELF.SetOpt(CURLOPT_HTTPPOST, httppost)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -1060,7 +1060,7 @@ cfres                           CURLFORMcode, AUTO
   ! perform request
   res = SELF.SendRequestStr(pUrl, '', pResponseBuf, xferproc)
   
-  curl_formfree(formpost)
+  curl_formfree(httppost)
 
   RETURN res
 

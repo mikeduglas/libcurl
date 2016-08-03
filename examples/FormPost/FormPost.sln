@@ -1,0 +1,18 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+# Clarion 2.1.0.2447
+Project("{12B76EC0-1D7B-4FA7-A7D0-C524288B48A1}") = "FormPost", "FormPost.cwproj", "{0C76590C-8F74-44AF-B8E8-51C81FEF09E5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C76590C-8F74-44AF-B8E8-51C81FEF09E5}.Debug|Win32.Build.0 = Debug|Win32
+		{0C76590C-8F74-44AF-B8E8-51C81FEF09E5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0C76590C-8F74-44AF-B8E8-51C81FEF09E5}.Release|Win32.Build.0 = Release|Win32
+		{0C76590C-8F74-44AF-B8E8-51C81FEF09E5}.Release|Win32.ActiveCfg = Release|Win32
+	EndGlobalSection
+EndGlobal

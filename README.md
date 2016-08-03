@@ -1,6 +1,14 @@
 # libcurl
 libcurl for Clarion
 
+v1.12
+- NEW: TCurlHttpClass methods to support form fields:
+.FormAdd() adds field's contents to a query;
+.FormAddFile() adds a file to a query;
+.FormPost() and .FormPostStr() post a query.
+
+- NEW: FormPost example
+
 v1.11
 - NEW: TCurlDropboxClass methods .Get_Copy_Reference, .Save_Copy_Reference, .Preview, .Thumbnail
 - CHG: Dropbox File Manager -- enhanced UI (2 file panels, preview/thumbnail for documents and images), modified JSON.CLW (2 bugs fixed in JSONDataClass.FromJSON)

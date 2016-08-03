@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.11
-!** 21.04.2016
+!** libcurl for Clarion v1.12
+!** 03.08.2016
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -1043,6 +1043,12 @@ Send                            PROCEDURE(), CURLcode, PROC
 
 !---------------------------- TCurlHttpClass ----------------------------!
 TCurlHttpClass                CLASS(TCurlClass), TYPE, MODULE('libcurlhttp.clw'), LINK('libcurlhttp.clw')
+!- used in curl_formadd etc
+httppost                        LONG, PROTECTED
+postend                         LONG, PROTECTED
+
+Destruct                        PROCEDURE(), DERIVED
+
 FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
 MaxRedirs                       PROCEDURE(LONG pValue), CURLcode, PROC
 GetRedirectUrl                  PROCEDURE(), STRING !if CURLOPT_FOLLOWLOCATION set to 1
@@ -1069,7 +1075,7 @@ ImportCookies                   PROCEDURE(<STRING pCookieFile>), CURLcode, PROC 
 !!!may have added, deleted or modified cookies by then. The cookies that
 !!!were skipped on import are not exported.
 !!!</summary>
-ExportCookies                 PROCEDURE(STRING pCookieFile), CURLcode, PROC
+ExportCookies                   PROCEDURE(STRING pCookieFile), CURLcode, PROC
 
 !http://curl.haxx.se/libcurl/c/CURLOPT_COOKIELIST.html
 !!!<summary>
@@ -1088,6 +1094,15 @@ AddCookie                       PROCEDURE(STRING pCookie), CURLcode, PROC
 !!!Since 7.43.0 cookies that were imported in the Set-Cookie format without a domain name are not exported by this option
 !!!</summary>
 GetCookieList                   PROCEDURE(*TCurlSQueue pQ), BOOL, PROC
+
+!--  post form fields
+FormAdd                         PROCEDURE(STRING pFieldName, STRING pContents), CURLFORMcode, PROC
+FormAddFile                     PROCEDURE(STRING pFieldName, STRING pFileName, <STRING pContentType>), CURLFORMcode, PROC !ContentType like 'image/jpeg'
+FormPost                        PROCEDURE(STRING pUrl, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+FormPostStr                     PROCEDURE(STRING pUrl, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+FormFree                        PROCEDURE()
+
+StrFormAddError                 PROCEDURE(CURLFORMcode errcode), STRING, VIRTUAL
                               END
 
 !---------------------------- TCurlDropboxClass ----------------------------!

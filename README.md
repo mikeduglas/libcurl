@@ -6,12 +6,12 @@ v1.13
 .AddCustomHeader(STRING pKey, STRING pValue)
 
 Examples:
- curl.AddCustomHeader('X-Confirm-Reading-To', 'mikeduglas66@gmail.com')
- curl.AddCustomHeader('Return-Receipt-To', 'mikeduglas66@gmail.com')
- curl.AddCustomHeader('Disposition-Notification-To', 'mikeduglas66@gmail.com')
- curl.AddCustomHeader('X-Priority', 1)
- curl.AddCustomHeader('X-MSMail-Priority', 'High')
- curl.AddCustomHeader('Importance', 'High')
+- curl.AddCustomHeader('X-Confirm-Reading-To', 'mikeduglas66@gmail.com')
+- curl.AddCustomHeader('Return-Receipt-To', 'mikeduglas66@gmail.com')
+- curl.AddCustomHeader('Disposition-Notification-To', 'mikeduglas66@gmail.com')
+- curl.AddCustomHeader('X-Priority', 1)
+- curl.AddCustomHeader('X-MSMail-Priority', 'High')
+- curl.AddCustomHeader('Importance', 'High')
 
 **Note: custom headers may be deprecated or ignored by mail server.**
 

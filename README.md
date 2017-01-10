@@ -1,6 +1,20 @@
 # libcurl
 libcurl for Clarion
 
+v1.13
+- NEW: TCurlMailClass method:
+.AddCustomHeader(STRING pKey, STRING pValue)
+
+Examples:
+curl.AddCustomHeader('X-Confirm-Reading-To', 'mikeduglas66@gmail.com')
+curl.AddCustomHeader('Return-Receipt-To', 'mikeduglas66@gmail.com')
+curl.AddCustomHeader('Disposition-Notification-To', 'mikeduglas66@gmail.com')
+curl.AddCustomHeader('X-Priority', 1)
+curl.AddCustomHeader('X-MSMail-Priority', 'High')
+curl.AddCustomHeader('Importance', 'High')
+
+**Note: custom headers may be deprecated or ignored by mail server.**
+
 v1.12
 - NEW: TCurlHttpClass methods to support form fields:
 .FormAdd() adds field's contents to a query;

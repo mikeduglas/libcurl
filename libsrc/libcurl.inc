@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.12
-!** 03.08.2016
+!** libcurl for Clarion v1.13
+!** 27.11.2016
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -867,6 +867,8 @@ mailbody                        &STRING, PRIVATE
 attachments                     &TCurlMailAttachments, PRIVATE
 boundary                        STRING(28), PRIVATE
 
+customHeaderLines               &TCurlMailHeaderLines, PRIVATE
+
 !body's property
 bodyContentType                 CSTRING(256), PRIVATE
 !body's property
@@ -890,6 +892,18 @@ Account                         PROCEDURE(STRING pUsername, STRING pPwd)        
 From                            PROCEDURE(STRING pFrom)                         !<username@gmail.com>
 AddRecipient                    PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING pBCC>)
 Subject                         PROCEDURE(STRING pSubject)
+
+!!!<summary>
+!!!Adds custom mail header line in form key: value
+!!!Examples:
+!!!X-Confirm-Reading-To: mikeduglas66@gmail.com
+!!!Return-Receipt-To: mikeduglas66@gmail.com
+!!!Disposition-Notification-To: mikeduglas66@gmail.com
+!!!X-Priority: 1
+!!!X-MSMail-Priority: High
+!!!Importance: High
+!!!</summary>
+AddCustomHeader                 PROCEDURE(STRING pKey, STRING pValue)
 
 !Default content type: "text/plain"
 Body                            PROCEDURE(STRING pBody)

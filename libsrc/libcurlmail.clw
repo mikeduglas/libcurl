@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.11
-!** 21.04.2016
+!** libcurl for Clarion v1.13
+!** 27.11.2016
 !** mikeduglas66@gmail.com
 
 
@@ -46,6 +46,11 @@ TCurlMailAttachments          QUEUE(TCurlMailAttachment), TYPE
 
 TCurlMailDataQueue            QUEUE, TYPE
 line                            &STRING
+                              END
+
+TCurlMailHeaderLines          QUEUE, TYPE
+Key                             STRING(256)
+Value                           STRING(256)
                               END
 
 cb64                          STRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
@@ -550,9 +555,12 @@ TCurlMailClass.Construct      PROCEDURE()
   SELF.bodyCharset = 'UTF-8'
   
   SELF.boundary = '001a11444b948e1888052560b246'
+  
+  SELF.customHeaderLines &= NEW TCurlMailHeaderLines
 
 TCurlMailClass.Destruct       PROCEDURE()
   CODE
+  DISPOSE(SELF.customHeaderLines)
   DISPOSE(SELF.attachments)
   DISPOSE(SELF.mailbody)
   DISPOSE(SELF.mailsubject)
@@ -623,6 +631,12 @@ TCurlMailClass.Subject        PROCEDURE(STRING pSubject)
   DISPOSE(SELF.mailsubject)
   SELF.mailsubject &= NEW STRING(LEN(CLIP(pSubject)))
   SELF.mailsubject = CLIP(pSubject)
+
+TCurlMailClass.AddCustomHeader    PROCEDURE(STRING pKey, STRING pValue)
+  CODE
+  SELF.customHeaderLines.Key = pKey
+  SELF.customHeaderLines.Value = pValue
+  ADD(SELF.customHeaderLines)
   
 TCurlMailClass.Body           PROCEDURE(STRING pBody)
   CODE
@@ -698,6 +712,7 @@ res                             CURLcode, AUTO
 !http://ncona.com/2011/06/using-utf-8-characters-on-an-e-mail-subject/
 TCurlMailClass.CreateHeader   PROCEDURE(*TCurlMailData mail)
 sname                           STRING(256)
+qIndex                          LONG, AUTO
   CODE
   !TO
   sname = ExtractName(SELF.ToStr)
@@ -738,6 +753,12 @@ sname                           STRING(256)
   !SUBJECT
   mail.AddLine('Subject: '& EncodeHeaderPart(SELF.mailsubject))
   
+  !custom header lines
+  LOOP qIndex = 1 TO RECORDS(SELF.customHeaderLines)
+    GET(SELF.customHeaderLines, qIndex)
+    mail.AddLine(CLIP(SELF.customHeaderLines.Key) &': '& CLIP(SELF.customHeaderLines.Value))
+  END
+
 TCurlMailClass.CreateBody     PROCEDURE(*TCurlMailData mail)
   CODE
   !Content-Type, charset

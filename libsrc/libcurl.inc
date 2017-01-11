@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.13
-!** 27.11.2016
+!** libcurl for Clarion v1.14
+!** 11.01.2017
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -38,7 +38,8 @@ CURLE_NOT_BUILT_IN            EQUATE(4)   ![was obsoleted in August 2007 for 7.1
 CURLE_COULDNT_RESOLVE_PROXY   EQUATE(5)
 CURLE_COULDNT_RESOLVE_HOST    EQUATE(6)
 CURLE_COULDNT_CONNECT         EQUATE(7)
-CURLE_FTP_WEIRD_SERVER_REPLY  EQUATE(8)
+CURLE_WEIRD_SERVER_REPLY      EQUATE(8)
+CURLE_FTP_WEIRD_SERVER_REPLY  EQUATE(CURLE_WEIRD_SERVER_REPLY)
 CURLE_REMOTE_ACCESS_DENIED    EQUATE(9)   !a service was denied by the server due to lack of access - when login fails this is not returned.
 CURLE_FTP_ACCEPT_FAILED       EQUATE(10)  ![was obsoleted in April 2006 for 7.15.4, reused in Dec 2011 for 7.24.0]
 CURLE_FTP_WEIRD_PASS_REPLY    EQUATE(11)
@@ -124,13 +125,19 @@ CURLE_RTSP_SESSION_ERROR      EQUATE(86)  !mismatch of RTSP Session Ids
 CURLE_FTP_BAD_FILE_LIST       EQUATE(87)  !unable to parse FTP file list
 CURLE_CHUNK_FAILED            EQUATE(88)  !chunk callback reported error
 CURLE_NO_CONNECTION_AVAILABLE EQUATE(89)  !No connection available, the session will be queued
-CURLE_SSL_PINNEDPUBKEYNOTMATCH EQUATE(90) !specified pinned public key did not match
+CURLE_SSL_PINNEDPUBKEYNOTMATCH    EQUATE(90) !specified pinned public key did not match
+
+!-- v7.52
+CURLE_SSL_INVALIDCERTSTATUS   EQUATE(91)  !invalid certificate status
+CURLE_HTTP2_STREAM            EQUATE(92)  !stream error in HTTP/2 framing layer
+
 !CURL_LAST /* never use! */ 
 
 CURLINFO_STRING               EQUATE(0100000h)
 CURLINFO_LONG                 EQUATE(0200000h)
 CURLINFO_DOUBLE               EQUATE(0300000h)
 CURLINFO_SLIST                EQUATE(0400000h)
+CURLINFO_SOCKET               EQUATE(0500000h)
 CURLINFO_MASK                 EQUATE(00fffffh)
 CURLINFO_TYPEMASK             EQUATE(0f00000h)
 
@@ -179,6 +186,13 @@ CURLINFO_PRIMARY_PORT         EQUATE(CURLINFO_LONG   + 40)
 CURLINFO_LOCAL_IP             EQUATE(CURLINFO_STRING + 41)
 CURLINFO_LOCAL_PORT           EQUATE(CURLINFO_LONG   + 42)
 CURLINFO_TLS_SESSION          EQUATE(CURLINFO_SLIST  + 43)
+!v7.52
+CURLINFO_ACTIVESOCKET         EQUATE(CURLINFO_SOCKET + 44)
+CURLINFO_TLS_SSL_PTR          EQUATE(CURLINFO_SLIST  + 45)
+CURLINFO_HTTP_VERSION         EQUATE(CURLINFO_LONG   + 46)
+CURLINFO_PROXY_SSL_VERIFYRESULT   EQUATE(CURLINFO_LONG + 47)
+CURLINFO_PROTOCOL             EQUATE(CURLINFO_LONG   + 48)
+CURLINFO_SCHEME               EQUATE(CURLINFO_STRING + 49)
 
 !#define CURL_GLOBAL_SSL (1<<0)
 !#define CURL_GLOBAL_WIN32 (1<<1)
@@ -209,21 +223,30 @@ CURLUSESSL_LAST                 EQUATE    !/* not an option, never use */
 CURLoption                    EQUATE(LONG)
 CURLOPTTYPE_LONG              EQUATE(0)
 CURLOPTTYPE_OBJECTPOINT       EQUATE(10000)
+CURLOPTTYPE_STRINGPOINT       EQUATE(CURLOPTTYPE_OBJECTPOINT) !STRINGPOINT is an alias for OBJECTPOINT to allow tools to extract the string options from the header file
 CURLOPTTYPE_FUNCTIONPOINT     EQUATE(20000)
 CURLOPTTYPE_OFF_T             EQUATE(30000)
 
-CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_OBJECTPOINT)       !The full URL to get/put
+CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_STRINGPOINT)       !The full URL to get/put
 CURLOPT_PORT                  EQUATE(3 + CURLOPTTYPE_LONG)              !Port number to connect to, if other than default
-CURLOPT_PROXY                 EQUATE(4 + CURLOPTTYPE_OBJECTPOINT)       !Name of proxy to use
-CURLOPT_USERPWD               EQUATE(5 + CURLOPTTYPE_OBJECTPOINT)       !"user:password;options" to use when fetching
-CURLOPT_PROXYUSERPWD          EQUATE(6 + CURLOPTTYPE_OBJECTPOINT)       !"user:password" to use with proxy
+CURLOPT_PROXY                 EQUATE(4 + CURLOPTTYPE_STRINGPOINT)       !Name of proxy to use
+CURLOPT_USERPWD               EQUATE(5 + CURLOPTTYPE_STRINGPOINT)       !"user:password;options" to use when fetching
+CURLOPT_PROXYUSERPWD          EQUATE(6 + CURLOPTTYPE_STRINGPOINT)       !"user:password" to use with proxy
+
+CURLOPT_DEFAULT_PROTOCOL      EQUATE(238 + CURLOPTTYPE_STRINGPOINT)     !Set the protocol used when curl is given a URL without a protocol
+
+CURLOPT_RANGE                 EQUATE(7 + CURLOPTTYPE_STRINGPOINT)       !Range to get, specified as an ASCII string.
 
 CURLOPT_TIMEOUT               EQUATE(13 + CURLOPTTYPE_LONG)             !Time-out the read operation after this amount of seconds
+
+CURLOPT_FTPPORT               EQUATE(17 + CURLOPTTYPE_STRINGPOINT)      !Set the FTP PORT string (interface name, named or numerical IP address). Use i.e '-' to use default address.
+
+
 CURLOPT_CONNECTTIMEOUT        EQUATE(78 + CURLOPTTYPE_LONG)             !Time-out connect operations after this amount of seconds, if connects are OK within this time, then fine... This only aborts the connect phase
 CURLOPT_TIMEOUT_MS            EQUATE(155 + CURLOPTTYPE_LONG)            !Same as TIMEOUT, but with ms resolution
 CURLOPT_CONNECTTIMEOUT_MS     EQUATE(156 + CURLOPTTYPE_LONG)            !Same as CONNECTTIMEOUT, but with ms resolution
 
-CURLOPT_USERAGENT             EQUATE(18 + CURLOPTTYPE_OBJECTPOINT)      !Set the User-Agent string (examined by some CGIs)
+CURLOPT_USERAGENT             EQUATE(18 + CURLOPTTYPE_STRINGPOINT)      !Set the User-Agent string (examined by some CGIs)
 
 !  /* FTP option that changes the timeout, in seconds, associated with
 !     getting a response.  This is different from transfer timeout time and
@@ -238,16 +261,25 @@ CURLOPT_POSTFIELDS            EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)      !POST st
 CURLOPT_POSTFIELDSIZE         EQUATE(60 + CURLOPTTYPE_LONG)
 CURLOPT_POSTFIELDSIZE_LARGE   EQUATE(120 + CURLOPTTYPE_OFF_T)
 
-CURLOPT_COOKIE                EQUATE(22 + CURLOPTTYPE_OBJECTPOINT)      !Set cookie in request
-CURLOPT_COOKIEFILE            EQUATE(31 + CURLOPTTYPE_OBJECTPOINT)      !point to a file to read the initial cookies from, also enables "cookie awareness"
-CURLOPT_COOKIEJAR             EQUATE(82 + CURLOPTTYPE_OBJECTPOINT)      !Specify which file name to write all known cookies in after completed operation. Set file name to "-" (dash) to make it go to stdout.
+CURLOPT_COOKIE                EQUATE(22 + CURLOPTTYPE_STRINGPOINT)      !Set cookie in request
+CURLOPT_COOKIEFILE            EQUATE(31 + CURLOPTTYPE_STRINGPOINT)      !point to a file to read the initial cookies from, also enables "cookie awareness"
+CURLOPT_COOKIEJAR             EQUATE(82 + CURLOPTTYPE_STRINGPOINT)      !Specify which file name to write all known cookies in after completed operation. Set file name to "-" (dash) to make it go to stdout.
 CURLOPT_COOKIESESSION         EQUATE(96 + CURLOPTTYPE_LONG)             !mark this as start of a cookie session
-CURLOPT_COOKIELIST            EQUATE(135 + CURLOPTTYPE_OBJECTPOINT)     !feed cookies into cookie engine
+CURLOPT_COOKIELIST            EQUATE(135 + CURLOPTTYPE_STRINGPOINT)     !feed cookie into cookie engine
 
 CURLOPT_HTTPPOST              EQUATE(24 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of post entries, struct curl_httppost
 
-CURLOPT_SSLCERT               EQUATE(25 + CURLOPTTYPE_OBJECTPOINT)      !name of the file keeping your private SSL-certificate
-CURLOPT_KEYPASSWD             EQUATE(26 + CURLOPTTYPE_OBJECTPOINT)      !password for the SSL or SSH private key
+CURLOPT_SSLCERT               EQUATE(25 + CURLOPTTYPE_STRINGPOINT)      !name of the file keeping your private SSL-certificate
+CURLOPT_SSLCERTTYPE           EQUATE(86 + CURLOPTTYPE_STRINGPOINT)      !type of the file keeping your SSL-certificate ("DER", "PEM", "ENG")
+CURLOPT_SSLKEY                EQUATE(87 + CURLOPTTYPE_STRINGPOINT)      !name of the file keeping your private SSL-key
+CURLOPT_SSLKEYTYPE            EQUATE(88 + CURLOPTTYPE_STRINGPOINT)      !type of the file keeping your private SSL-key ("DER", "PEM", "ENG")
+CURLOPT_SSLENGINE             EQUATE(89 + CURLOPTTYPE_STRINGPOINT)      !crypto engine for the SSL-sub system
+CURLOPT_SSLENGINE_DEFAULT     EQUATE(90 + CURLOPTTYPE_LONG)             !set the crypto engine for the SSL-sub system as default. The param has no meaning...
+
+CURLOPT_CRLFILE               EQUATE(169 + CURLOPTTYPE_STRINGPOINT)     !CRL file
+CURLOPT_ISSUERCERT            EQUATE(170 + CURLOPTTYPE_STRINGPOINT)     !Issuer certificate
+
+CURLOPT_KEYPASSWD             EQUATE(26 + CURLOPTTYPE_STRINGPOINT)      !password for the SSL or SSH private key
 
 CURLOPT_QUOTE                 EQUATE(28 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of QUOTE commands
 CURLOPT_HEADERDATA            EQUATE(29 + CURLOPTTYPE_OBJECTPOINT)      !send FILE * or void * to store headers to, if you use a callback it is simply passed to the callback unmodified
@@ -290,10 +322,10 @@ CURLOPT_XFERINFODATA          EQUATE(CURLOPT_PROGRESSDATA)
 
 CURLOPT_SSH_AUTH_TYPES        EQUATE(151 + CURLOPTTYPE_LONG)            !allowed SSH authentication methods
 
-CURLOPT_SSH_PUBLIC_KEYFILE    EQUATE(152 + CURLOPTTYPE_OBJECTPOINT)     !Used by scp/sftp to do public/private key authentication
-CURLOPT_SSH_PRIVATE_KEYFILE   EQUATE(153 + CURLOPTTYPE_OBJECTPOINT)     !Used by scp/sftp to do public/private key authentication
-CURLOPT_SSH_HOST_PUBLIC_KEY_MD5   EQUATE(162 + CURLOPTTYPE_OBJECTPOINT) !used by scp/sftp to verify the host's public key
-CURLOPT_SSH_KNOWNHOSTS        EQUATE(183 + CURLOPTTYPE_OBJECTPOINT)     !set the SSH knownhost file name to use
+CURLOPT_SSH_PUBLIC_KEYFILE    EQUATE(152 + CURLOPTTYPE_STRINGPOINT)     !Used by scp/sftp to do public/private key authentication
+CURLOPT_SSH_PRIVATE_KEYFILE   EQUATE(153 + CURLOPTTYPE_STRINGPOINT)     !Used by scp/sftp to do public/private key authentication
+CURLOPT_SSH_HOST_PUBLIC_KEY_MD5   EQUATE(162 + CURLOPTTYPE_STRINGPOINT) !used by scp/sftp to verify the host's public key
+CURLOPT_SSH_KNOWNHOSTS        EQUATE(183 + CURLOPTTYPE_STRINGPOINT)     !set the SSH knownhost file name to use
 CURLOPT_SSH_KEYFUNCTION       EQUATE(184 + CURLOPTTYPE_FUNCTIONPOINT)   !set the SSH host key callback, must point to a curl_sshkeycallback function
 CURLOPT_SSH_KEYDATA           EQUATE(185 + CURLOPTTYPE_OBJECTPOINT)     !set the SSH host key callback custom pointer
 
@@ -305,14 +337,14 @@ CURLOPT_HTTPGET               EQUATE(80 + CURLOPTTYPE_LONG)             !Set thi
 CURLOPT_HTTP_TRANSFER_DECODING  EQUATE(157 + CURLOPTTYPE_LONG)
 CURLOPT_HTTP_CONTENT_DECODING EQUATE(158 + CURLOPTTYPE_LONG)
     
-CURLOPT_CUSTOMREQUEST         EQUATE(36 + CURLOPTTYPE_OBJECTPOINT)      !Custom request, for customizing the get command like HTTP: DELETE, TRACE and others, FTP: to use a different list command 
+CURLOPT_CUSTOMREQUEST         EQUATE(36 + CURLOPTTYPE_STRINGPOINT)      !Custom request, for customizing the get command like HTTP: DELETE, TRACE and others, FTP: to use a different list command 
 
 !Set if we should verify the Common name from the peer certificate in ssl 
 !handshake, set 1 to check existence, 2 to ensure that it matches the 
 !provided hostname.
 CURLOPT_SSL_VERIFYHOST        EQUATE(81 + CURLOPTTYPE_LONG)
-!Set if we should verify the peer in ssl handshake, set 1 to verify.
-CURLOPT_SSL_VERIFYPEER        EQUATE(64 + CURLOPTTYPE_LONG)
+CURLOPT_SSL_VERIFYPEER        EQUATE(64 + CURLOPTTYPE_LONG)             !Set if we should verify the peer in ssl handshake, set 1 to verify.
+CURLOPT_SSL_VERIFYSTATUS      EQUATE(232 + CURLOPTTYPE_LONG)            !Set if we should verify the certificate status.
 
 CURLOPT_MAXREDIRS             EQUATE(68 + CURLOPTTYPE_LONG)             !Maximum number of http redirects to follow
 
@@ -326,13 +358,24 @@ CURLOPT_USE_SSL               EQUATE(119 + CURLOPTTYPE_LONG)
 CURLOPT_CONNECT_ONLY          EQUATE(141 + CURLOPTTYPE_LONG)            !no transfer, set up connection and let application use the socket by extracting it with CURLINFO_LASTSOCKET
 
 !"name" and "pwd" to use when fetching.
-CURLOPT_USERNAME              EQUATE(173 + CURLOPTTYPE_OBJECTPOINT)
-CURLOPT_PASSWORD              EQUATE(174 + CURLOPTTYPE_OBJECTPOINT)
+CURLOPT_USERNAME              EQUATE(173 + CURLOPTTYPE_STRINGPOINT)
+CURLOPT_PASSWORD              EQUATE(174 + CURLOPTTYPE_STRINGPOINT)
+!"name" and "pwd" to use with Proxy when fetching.
+CURLOPT_PROXYUSERNAME         EQUATE(175 + CURLOPTTYPE_STRINGPOINT)
+CURLOPT_PROXYPASSWORD         EQUATE(176 + CURLOPTTYPE_STRINGPOINT)
 
-!  /* set the SMTP mail originator */
-CURLOPT_MAIL_FROM             EQUATE(186 + CURLOPTTYPE_OBJECTPOINT)
-!  /* set the SMTP mail receiver(s) */
-CURLOPT_MAIL_RCPT             EQUATE(187 + CURLOPTTYPE_OBJECTPOINT)
+!  /* Comma separated list of hostnames defining no-proxy zones. These should
+!     match both hostnames directly, and hostnames within a domain. For
+!     example, local.com will match local.com and www.local.com, but NOT
+!     notlocal.com or www.notlocal.com. For compatibility with other
+!     implementations of this, .local.com will be considered to be the same as
+!     local.com. A single * is the only valid wildcard, and effectively
+!     disables the use of proxy. */
+CURLOPT_NOPROXY               EQUATE(177 + CURLOPTTYPE_STRINGPOINT)
+
+CURLOPT_MAIL_FROM             EQUATE(186 + CURLOPTTYPE_STRINGPOINT) !set the SMTP mail originator
+CURLOPT_MAIL_RCPT             EQUATE(187 + CURLOPTTYPE_OBJECTPOINT) !set the list of SMTP mail receiver(s)
+CURLOPT_MAIL_AUTH             EQUATE(217 + CURLOPTTYPE_OBJECTPOINT) !set the SMTP auth originator
 
 !  /* If the CURLOPT_INFILE is used, this can be used to inform libcurl about
 !  * how large the file being sent really is. That allows better error
@@ -348,7 +391,6 @@ CURLOPT_INFILESIZE            EQUATE(14 + CURLOPTTYPE_LONG)
 !  /* Set this to a bitmask value to enable the particular authentications
 !     methods you like. Use this in combination with CURLOPT_USERPWD.
 !     Note that setting multiple bits may cause extra network round-trips. */
-!  CINIT(HTTPAUTH, LONG, 107), 
 CURLOPT_HTTPAUTH              EQUATE(107 + CURLOPTTYPE_LONG)
 
 !  /*
@@ -395,8 +437,15 @@ CURL_SSLVERSION_SSLv3         EQUATE(3)
 CURL_SSLVERSION_TLSv1_0       EQUATE(4)
 CURL_SSLVERSION_TLSv1_1       EQUATE(5)
 CURL_SSLVERSION_TLSv1_2       EQUATE(6)
+CURL_SSLVERSION_TLSv1_3       EQUATE(7)
 
 CURLOPT_SSLVERSION            EQUATE(32 + CURLOPTTYPE_LONG)             !What version to specifically try to use. 
+
+CURLOPT_TLSAUTH_USERNAME      EQUATE(204 + CURLOPTTYPE_STRINGPOINT)     !Set a username for authenticated TLS
+CURLOPT_TLSAUTH_PASSWORD      EQUATE(205 + CURLOPTTYPE_STRINGPOINT)     !Set a password for authenticated TLS
+CURLOPT_TLSAUTH_TYPE          EQUATE(206 + CURLOPTTYPE_STRINGPOINT)     !Set authentication type for authenticated TLS
+
+CURLOPT_SSL_FALSESTART        EQUATE(233 + CURLOPTTYPE_LONG)            !Set if we should enable TLS false start.
 
 !/* When FTP over SSL/TLS is selected (with CURLOPT_USE_SSL), this option
 !   can be used to change libcurl's default action which is to first try
@@ -417,9 +466,11 @@ CURLFTPAUTH_SSL               EQUATE(1)       !use "AUTH SSL"
 CURLFTPAUTH_TLS               EQUATE(2)       !use "AUTH TLS"
 CURLFTPAUTH_LAST              EQUATE(3)       !not an option, never use
 
+
 !The CApath or CAfile used to validate the peer certificate
 !this option is used only if SSL_VERIFYPEER is true
-CURLOPT_CAINFO                EQUATE(65 + CURLOPTTYPE_OBJECTPOINT)
+CURLOPT_CAINFO                EQUATE(65 + CURLOPTTYPE_STRINGPOINT)
+CURLOPT_CAPATH                EQUATE(97 + CURLOPTTYPE_STRINGPOINT)    !The CApath directory used to validate the peer certificate. This option is used only if SSL_VERIFYPEER is true.
 
 CURLSSH_AUTH_ENUM             EQUATE(LONG)
                               ITEMIZE
@@ -435,19 +486,19 @@ CURLSSH_AUTH_DEFAULT            EQUATE(CURLSSH_AUTH_ANY)
 
 CURLOPT_WILDCARDMATCH         EQUATE(197 + CURLOPTTYPE_LONG)    !Turn on wildcard matching
 
-!Directory matching callback called before downloading of an individual file (chunk) started
-CURLOPT_CHUNK_BGN_FUNCTION    EQUATE(198 + CURLOPTTYPE_FUNCTIONPOINT)
-!Directory matching callback called after the file (chunk) was downloaded, or skipped
-CURLOPT_CHUNK_END_FUNCTION    EQUATE(199 + CURLOPTTYPE_FUNCTIONPOINT)
-!Change match (fnmatch-like) callback for wildcard matching
-CURLOPT_FNMATCH_FUNCTION      EQUATE(200 + CURLOPTTYPE_FUNCTIONPOINT)
-!Let the application define custom chunk data pointer
-CURLOPT_CHUNK_DATA            EQUATE(201 + CURLOPTTYPE_OBJECTPOINT)
-!FNMATCH_FUNCTION user pointer
-CURLOPT_FNMATCH_DATA          EQUATE(202 + CURLOPTTYPE_OBJECTPOINT)
+CURLOPT_CHUNK_BGN_FUNCTION    EQUATE(198 + CURLOPTTYPE_FUNCTIONPOINT) !Directory matching callback called before downloading of an individual file (chunk) started
+CURLOPT_CHUNK_END_FUNCTION    EQUATE(199 + CURLOPTTYPE_FUNCTIONPOINT) !Directory matching callback called after the file (chunk) was downloaded, or skipped
+CURLOPT_FNMATCH_FUNCTION      EQUATE(200 + CURLOPTTYPE_FUNCTIONPOINT) !Change match (fnmatch-like) callback for wildcard matching
+CURLOPT_CHUNK_DATA            EQUATE(201 + CURLOPTTYPE_OBJECTPOINT)   !Let the application define custom chunk data pointer
+CURLOPT_FNMATCH_DATA          EQUATE(202 + CURLOPTTYPE_OBJECTPOINT)   !FNMATCH_FUNCTION user pointer
+CURLOPT_TCP_KEEPALIVE         EQUATE(213 + CURLOPTTYPE_LONG)          !Set TCP keepalive
 
-CURLOPT_TCP_KEEPALIVE         EQUATE(213 + CURLOPTTYPE_LONG)    !Set TCP keepalive
+! Set the Accept-Encoding string. Use this to tell a server you would like
+! the response to be compressed. Before 7.21.6, this was known as
+! CURLOPT_ENCODING
+CURLOPT_ACCEPT_ENCODING       EQUATE(102 + CURLOPTTYPE_STRINGPOINT)
 
+CURLOPT_FTP_ALTERNATIVE_TO_USER   EQUATE(147 + CURLOPTTYPE_STRINGPOINT) !Pointer to command string to send if USER/PASS fails.
 
 !return codes for CURLOPT_CHUNK_BGN_FUNCTION
 CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)

@@ -1,6 +1,41 @@
 # libcurl
 libcurl for Clarion
 
+v1.14
+Now uses libcurl v7.52.1
+
+- Now only 3 dlls required:
+ - libcurl.dll
+ - libcrypto-1_1.dll
+ - libssl-1_1.dll
+
+- Some new CURL options (used in .SetOpt()):
+ - CURLOPT_SSLCERTTYPE      !type of the file keeping your SSL-certificate ("DER", "PEM", "ENG")
+ - CURLOPT_SSLKEY           !name of the file keeping your private SSL-key
+ - CURLOPT_SSLKEYTYPE       !type of the file keeping your private SSL-key ("DER", "PEM", "ENG")
+ - CURLOPT_SSLENGINE        !crypto engine for the SSL-sub system
+ - CURLOPT_CAPATH           !The CApath directory used to validate the peer certificate. This option is used only if SSL_VERIFYPEER is true.
+ - CURLOPT_CRLFILE          !CRL file
+ - CURLOPT_ISSUERCERT       !Issuer certificate
+ - CURLOPT_PROXYUSERNAME    !"name" to use with Proxy when fetching.
+ - CURLOPT_PROXYPASSWORD    !"pwd" to use with Proxy when fetching.
+ - CURLOPT_TLSAUTH_USERNAME !Set a username for authenticated TLS
+ - CURLOPT_TLSAUTH_PASSWORD !Set a password for authenticated TLS
+ - CURLOPT_TLSAUTH_TYPE     !Set authentication type for authenticated TLS
+ - CURLOPT_MAIL_AUTH        !set the SMTP auth originator
+ - CURLOPT_SSL_VERIFYSTATUS !Set if we should verify the certificate status.
+ - CURLOPT_SSL_FALSESTART   !Set if we should enable TLS false start.
+ - CURLOPT_DEFAULT_PROTOCOL !Set the protocol used when curl is given a URL without a protocol
+ - CURLOPT_FTP_ALTERNATIVE_TO_USER !Pointer to command string to send if USER/PASS fails.
+
+- New constants:
+ - CURL_SSLVERSION_TLSv1_3  !used in .SetSSLVersion()
+
+- New error codes (used in functions returning "CURLcode"):
+ - CURLE_SSL_INVALIDCERTSTATUS   !invalid certificate status
+ - CURLE_HTTP2_STREAM            !stream error in HTTP/2 framing layer
+
+
 v1.13
 - NEW: TCurlMailClass method:
 .AddCustomHeader(STRING pKey, STRING pValue)

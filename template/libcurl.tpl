@@ -4,7 +4,7 @@
 #SHEET
   #TAB('About')
     #DISPLAY('Libcurl support')
-    #DISPLAY('(c) 2015 by Mike Duglas')
+    #DISPLAY('(c) 2015-2017 by Mike Duglas')
     #DISPLAY('home page: https://github.com/mikeduglas/libcurl')
     #DISPLAY('email: mikeduglas66@gmail.com')
     #DISPLAY('')
@@ -27,12 +27,8 @@
   #PROJECT('libcurl.lib')
   #IF(%CWVersion >= 8000)
     #PROJECT('None(libcurl.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(libeay32.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(libidn-11.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(librtmp.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(libssh2.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(ssleay32.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(zlib1.dll), CopyToOutputDirectory=PreserveNewest')
+    #PROJECT('None(libcrypto-1_1.dll), CopyToOutputDirectory=PreserveNewest')
+    #PROJECT('None(libssl-1_1.dll), CopyToOutputDirectory=PreserveNewest')
   #ENDIF
 #ENDAT
 #! --------------------------------------------------------------------------

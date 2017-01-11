@@ -1,5 +1,5 @@
 !** libcurl for Clarion v1.13
-!** 27.11.2016
+!** 10.01.2017
 !** mikeduglas66@gmail.com
 
 

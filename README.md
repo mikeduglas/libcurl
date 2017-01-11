@@ -2,7 +2,7 @@
 libcurl for Clarion
 
 v1.14
-Now uses libcurl v7.52.1
+- Now uses libcurl v7.52.1
 
 - Now only 3 dlls required:
  - libcurl.dll

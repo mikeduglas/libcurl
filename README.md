@@ -9,6 +9,9 @@ v1.14
  - libcrypto-1_1.dll
  - libssl-1_1.dll
 
+**Note: Microsoft Visual C++ 2010 SP1 Runtime (msvcr100.dll) must be installed on target computer.
+[Download Microsoft Visual C++ 2010 SP1 Runtime](http://www.microsoft.com/en-us/download/details.aspx?id=8328)
+
 - Some new CURL options (used in .SetOpt()):
  - CURLOPT_SSLCERTTYPE      !type of the file keeping your SSL-certificate ("DER", "PEM", "ENG")
  - CURLOPT_SSLKEY           !name of the file keeping your private SSL-key

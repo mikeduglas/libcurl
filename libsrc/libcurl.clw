@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.12
-!** 03.08.2016
+!** libcurl for Clarion v1.15
+!** 23.01.2017
 !** mikeduglas66@gmail.com
 
 
@@ -1211,6 +1211,10 @@ TCurlClass.PreQuote           PROCEDURE(TCurlSList plist)
 TCurlClass.PostQuote          PROCEDURE(TCurlSList plist)
   CODE
   RETURN SELF.SetOpt(CURLOPT_POSTQUOTE, plist)
+  
+TCurlClass.SetDefaultProtocol PROCEDURE(STRING pSchema)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_DEFAULT_PROTOCOL, pSchema)
   
 !!!endregion
   

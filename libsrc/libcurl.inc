@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.14
-!** 11.01.2017
+!** libcurl for Clarion v1.15
+!** 23.01.2017
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -854,6 +854,8 @@ GetResponseCode                 PROCEDURE(), LONG ! returns the last received HT
 SetQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
 PreQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
 PostQuote                       PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
+
+SetDefaultProtocol              PROCEDURE(STRING pSchema), CURLcode, PROC
                               END
 
 !---------------------------- TCurlFtpClass -----------------------------!
@@ -938,7 +940,7 @@ CreateHeader                    PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateBody                      PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateAttachments               PROCEDURE(*TCurlMailData mail), PRIVATE
 
-Server                          PROCEDURE(STRING pServer, LONG pPort)           !smtp.gmail.com, 587
+Server                          PROCEDURE(STRING pServer, LONG pPort, <STRING pHelo>)           !smtp.gmail.com, 587
 Account                         PROCEDURE(STRING pUsername, STRING pPwd)        !username: username@gmail.com
 From                            PROCEDURE(STRING pFrom)                         !<username@gmail.com>
 AddRecipient                    PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING pBCC>)

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.11
-!** 21.04.2016
+!** libcurl for Clarion v1.14
+!** 11.01.2017
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -98,7 +98,7 @@ access_token:end                LONG, AUTO
   RETURN FALSE
 
 TCurlDropboxClass.Send        PROCEDURE(STRING pDomain, STRING pNamespace, STRING pFunction)
-UserAgent                       CSTRING('curl/7.40.0')
+UserAgent                       CSTRING('curl/7.52.1')
   CODE
   !-- POST request
   SELF.SetCustomRequest('POST')

@@ -1,6 +1,11 @@
 # libcurl
 libcurl for Clarion
 
+v1.15
+- CHG: TCurlMailClass.Server now accepts 3rd parameter for 'HELO/EHLO' command: TCurlMailClass.Server(STRING pServer, LONG pPort, <STRING pHelo>)
+- NEW: TCurlClass.SetDefaultProtocol PROCEDURE(STRING pSchema)
+
+
 v1.14
 - Now uses libcurl v7.52.1
 

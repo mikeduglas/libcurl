@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.13
-!** 10.01.2017
+!** libcurl for Clarion v1.15
+!** 23.01.2017
 !** mikeduglas66@gmail.com
 
 
@@ -54,7 +54,7 @@ Value                           STRING(256)
                               END
 
 cb64                          STRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
-szUserAgent                   CSTRING('curl/7.40.0')
+szUserAgent                   CSTRING('curl/7.52.1')
 
 DECODED_BUF_SIZE              EQUATE(54)    !54 characters per line
 ENCODED_BUF_SIZE              EQUATE(72)    !54 * 4 / 3
@@ -566,9 +566,13 @@ TCurlMailClass.Destruct       PROCEDURE()
   DISPOSE(SELF.mailsubject)
   DISPOSE(SELF.mailto)
   
-TCurlMailClass.Server         PROCEDURE(STRING pServer, LONG pPort)
+TCurlMailClass.Server         PROCEDURE(STRING pServer, LONG pPort, <STRING pHelo>)
   CODE
-  SELF.url = CLIP(pServer) &':'& pPort
+  IF NOT pHelo
+    SELF.url = CLIP(pServer) &':'& pPort
+  ELSE
+    SELF.url = CLIP(pServer) &':'& pPort &'/'& pHelo
+  END
   
 TCurlMailClass.Account        PROCEDURE(STRING pUsername, STRING pPwd)
   CODE

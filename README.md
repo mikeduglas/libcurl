@@ -2,7 +2,7 @@
 libcurl for Clarion
 
 v1.15
-- CHG: TCurlMailClass.Server now accepts 3rd parameter for 'HELO/EHLO' command: curl.Server('smtp.gmail.com', 587, 'client.examples.com')
+- CHG: TCurlMailClass.Server now accepts optional 3rd parameter for 'HELO/EHLO' command: curl.Server('smtp.gmail.com', 587, 'client.examples.com')
 - NEW: TCurlClass.SetDefaultProtocol PROCEDURE(STRING pSchema)
 
 

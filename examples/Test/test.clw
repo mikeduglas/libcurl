@@ -125,7 +125,7 @@ Window                        WINDOW('libcurl demo'),AT(,,425,278),CENTER,GRAY,F
                                 BUTTON('Close'),AT(376,254,47),USE(?bClose),STD(STD:Close)
                               END
 
-TCurlClassEx                  CLASS(TCurlClass)
+TCurlClassEx                  CLASS(TCurlClass), TYPE
 XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, DERIVED
                               END
 

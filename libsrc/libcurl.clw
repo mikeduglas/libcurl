@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.15
-!** 23.01.2017
+!** libcurl for Clarion v1.16
+!** 28.06.2017
 !** mikeduglas66@gmail.com
 
 
@@ -529,9 +529,9 @@ TCurlSList.AssignPtr          PROCEDURE(LONG pListPtr)
   SELF.plist = pListPtr
   
 TCurlSList.Append             PROCEDURE(STRING pData)
-szData                          CSTRING(256)
+szData                          CSTRING(LEN(pData) + 1)
   CODE
-  szData = CLIP(pData)
+  szData = pData
   SELF.plist = curl_slist_append(SELF.plist, szData)
   RETURN
   

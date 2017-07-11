@@ -1,4 +1,4 @@
-#TEMPLATE(LibcurlTpl, 'Libcurl template'), FAMILY('ABC'), FAMILY('Clarion')
+#TEMPLATE(LibcurlTpl, 'Libcurl template'), FAMILY('ABC'), FAMILY('CW20')
 #! --------------------------------------------------------------------------
 #EXTENSION(LibcurlGloExt, 'Activate Libcurl'), APPLICATION
 #SHEET

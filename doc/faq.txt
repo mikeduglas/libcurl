@@ -1,0 +1,6 @@
+Q. I need to send json string
+A. Assume sUrl is string variable containing url, sJson is string variable containing json:
+
+  curl.AddHttpHeader('Content-Type: application/json')  !- or 'Content-Type: text/json'
+  curl.SetCustomRequest('POST')
+  curl.SendRequest(sUrl, sJson)

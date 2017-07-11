@@ -1,7 +1,7 @@
 # libcurl
 libcurl for Clarion
 
-## Required C6 and newer.
+## Required C6.3 and newer.
 
 
 v1.16

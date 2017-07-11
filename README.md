@@ -1,6 +1,9 @@
 # libcurl
 libcurl for Clarion
 
+## Required C6 and newer.
+
+
 v1.16
 - FIX: TCurlClass.AddHttpHeader(STRING pHeader) now accepts unlimited HTTP header string (it was 255 characters).
 

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.15
-!** 23.01.2017
+!** libcurl for Clarion v1.16
+!** 29.06.2017
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE

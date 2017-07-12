@@ -3,6 +3,10 @@ libcurl for Clarion
 
 ## Required C6.3 and newer.
 
+v1.17
+- FIX: in TCurlClass methods .SetUrl, .SetUserPwd, .SetCAInfo now accept unlimited string arguments.
+- FIX: in TCurlDropboxClass size of some local string variables were increased.
+
 
 v1.16
 - FIX: TCurlClass.AddHttpHeader(STRING pHeader) now accepts unlimited HTTP header string (it was 255 characters).

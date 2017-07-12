@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.14
-!** 11.01.2017
+!** libcurl for Clarion v1.17
+!** 12.07.2017
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -55,7 +55,7 @@ TCurlDropboxClass.AccessToken PROCEDURE()
   
 TCurlDropboxClass.Authorize   PROCEDURE(STRING pAppKey)
 szAction                        CSTRING('open')
-szUrl                           CSTRING(256)
+szUrl                           CSTRING(512)
   CODE
   szUrl = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id='& CLIP(pAppKey)
   winapi::ShellExecute(0, szAction, szUrl, , , SW_SHOWNORMAL)
@@ -202,7 +202,7 @@ rc                                              CURLcode, AUTO
 
 TCurlDropboxClass.Copy        PROCEDURE(STRING pFromPath, STRING pToPath)
 func                            STRING('copy')
-args                            CSTRING(256)
+args                            CSTRING(1024)
   CODE
   args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
@@ -219,7 +219,7 @@ args                            CSTRING(256)
     
 TCurlDropboxClass.Move        PROCEDURE(STRING pFromPath, STRING pToPath)
 func                            STRING('move')
-args                            CSTRING(256)
+args                            CSTRING(1024)
   CODE
   args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
@@ -236,7 +236,7 @@ args                            CSTRING(256)
 
 TCurlDropboxClass.CreateFolder    PROCEDURE(STRING pPath)
 func                                STRING('create_folder')
-args                                CSTRING(256)
+args                                CSTRING(512)
   CODE
   args = '{{"path": "'& CLIP(pPath) &'"}'
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
@@ -253,7 +253,7 @@ args                                CSTRING(256)
 
 TCurlDropboxClass.Delete      PROCEDURE(STRING pPath)
 func                            STRING('delete')
-args                            CSTRING(256)
+args                            CSTRING(512)
   CODE
   args = '{{"path": "'& CLIP(pPath) &'"}'
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
@@ -270,7 +270,7 @@ args                            CSTRING(256)
 
 TCurlDropboxClass.Download    PROCEDURE(STRING pRemotePath, STRING pLocalPath)
 func                            STRING('download')
-args                            CSTRING(256)
+args                            CSTRING(512)
 fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
   CODE
@@ -337,7 +337,7 @@ fileContent                     &STRING
   
 TCurlDropboxClass.ListFolder  PROCEDURE(STRING pPath, BOOL pRecursive = FALSE)
 func                            STRING('list_folder')
-args                            CSTRING(256)
+args                            CSTRING(512)
   CODE
   args = '{{"path": "'& CLIP(pPath) &'"'
   IF pRecursive
@@ -359,7 +359,7 @@ args                            CSTRING(256)
 
 TCurlDropboxClass.Get_Copy_Reference  PROCEDURE(STRING pPath)
 func                                    STRING('copy_reference/get')
-args                                    CSTRING(256)
+args                                    CSTRING(512)
   CODE
   args = '{{"path": "'& CLIP(pPath) &'"}'
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
@@ -393,7 +393,7 @@ args                                    CSTRING(512)
 
 TCurlDropboxClass.Preview     PROCEDURE(STRING pPath, *STRING pTmpFile)
 func                            STRING('get_preview')
-args                            CSTRING(256)
+args                            CSTRING(512)
 htmlDocTypeStr                  STRING('<<!DOCTYPE html>')
 pdfDocTypeStr                   STRING('%PDF')
 fs                              TCurlFileStruct
@@ -431,7 +431,7 @@ rc                              BOOL(FALSE)
 
 TCurlDropboxClass.Thumbnail   PROCEDURE(STRING pPath, TDbxThumbnailFormat pFormat, TDbxThumbnailSize pSize, *STRING pTmpFile)
 func                            STRING('get_thumbnail')
-args                            CSTRING(256)
+args                            CSTRING(1024)
 fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
 rc                              BOOL(FALSE)

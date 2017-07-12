@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.16
-!** 28.06.2017
+!** libcurl for Clarion v1.17
+!** 12.07.2017
 !** mikeduglas66@gmail.com
 
 
@@ -205,7 +205,7 @@ cs                              CSTRING(LEN(s) + LEN(prefix) + 1)
   
 curl::GetFileContents         PROCEDURE(STRING pFile)
 OS_INVALID_HANDLE_VALUE         EQUATE(-1)
-szFile                          CSTRING(256)
+szFile                          CSTRING(LEN(pFile) + 1)
 sData                           &STRING
 hFile                           HANDLE
 dwFileSize                      LONG
@@ -704,7 +704,7 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
   RETURN curl_easy_setopt(SELF.curl, option, plist.GetList())
 
 TCurlClass.SetUrl             PROCEDURE(STRING pUrl)
-url                             CSTRING(256)
+url                             CSTRING(LEN(pUrl) + 1)
   CODE
   url = CLIP(pUrl)
   RETURN SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
@@ -728,7 +728,7 @@ TCurlClass.StrError           PROCEDURE(CURLcode errcode)
   RETURN curl_easy_strerror(errcode)
   
 TCurlClass.SetUserPwd         PROCEDURE(STRING pUser, STRING pPwd)
-userpwd                         CSTRING(256)
+userpwd                         CSTRING(LEN(pUser) + LEN(pPwd) + 1 + 1)
   CODE
   IF pUser AND pPwd
     userpwd = CLIP(pUser) &':'& CLIP(pPwd)
@@ -1117,7 +1117,7 @@ TCurlClass.SetSSLVerifyPeer   PROCEDURE(BOOL pValue)
   RETURN SELF.SetOpt(CURLOPT_SSL_VERIFYPEER, pValue)
 
 TCurlClass.SetCAInfo          PROCEDURE(STRING pCert)
-szcert                          CSTRING(256)
+szcert                          CSTRING(LEN(pCert) + 1)
   CODE
   szcert = CLIP(pCert)
   RETURN SELF.SetOpt(CURLOPT_CAINFO, ADDRESS(szcert))

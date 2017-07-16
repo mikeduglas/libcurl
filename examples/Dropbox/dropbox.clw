@@ -102,6 +102,11 @@ rc                              BOOL(FALSE)
   CODE
   appKey = GETINI('Application', 'Key', '', '.\dropbox.ini')
   appSecret = GETINI('Application', 'Secret', '', '.\dropbox.ini')
+  accessToken = GETINI('Application', 'AccessToken', '', '.\dropbox.ini')
+  IF accessToken
+    curl.AccessToken(accessToken)
+    RETURN TRUE
+  END
   
   OPEN(AuthWindow)
   
@@ -116,6 +121,7 @@ rc                              BOOL(FALSE)
         !- save app settings for future use
         PUTINI('Application', 'Key', appKey, '.\dropbox.ini')
         PUTINI('Application', 'Secret', appSecret, '.\dropbox.ini')
+        PUTINI('Application', 'AccessToken', curl.AccessToken(), '.\dropbox.ini')
 
         !- continue
         rc = TRUE

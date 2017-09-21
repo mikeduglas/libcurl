@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.17
-!** 12.07.2017
+!** libcurl for Clarion v1.18
+!** 21.09.2017
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -1170,6 +1170,14 @@ FormPostStr                     PROCEDURE(STRING pUrl, <*STRING pResponseBuf>, <
 FormFree                        PROCEDURE()
 
 StrFormAddError                 PROCEDURE(CURLFORMcode errcode), STRING, VIRTUAL
+
+!Shortcuts for curl.exe --data-binary [@file].
+!ContentType like 'image/jpeg'
+SendFile                        PROCEDURE(STRING pUrl, STRING pFileName, STRING pContentType, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+SendFileStr                     PROCEDURE(STRING pUrl, STRING pFileName, STRING pContentType, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+!pDataLen=0 means LEN(pBinData)
+SendBinData                     PROCEDURE(STRING pUrl, CONST *STRING pBinData, LONG pDataLen = 0, STRING pContentType, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+SendBinDataStr                  PROCEDURE(STRING pUrl, CONST *STRING pBinData, LONG pDataLen = 0, STRING pContentType, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
                               END
 
 !---------------------------- TCurlDropboxClass ----------------------------!

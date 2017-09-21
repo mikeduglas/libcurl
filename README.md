@@ -3,6 +3,12 @@ libcurl for Clarion
 
 ## Required C6.3 and newer.
 
+v1.18
+- CHG: OpenSSL dlls upgraded to version 1.1.f.
+**Note: Microsoft Visual C++ 2010 SP1 Runtime (msvcr100.dll) no more required to be installed on target computer.**
+- NEW: TCurlHttpClass methods to send a file (by name or contents): .SendFile, .SendBinData, .SendFileStr, .SendBinDataStr. Shortcuts for curl.exe --data-binary [@file].
+- FIX: template: Changed #AT(%DataSection) to #AT(%DataSectionBeforeWindow)
+
 v1.17
 - FIX: in TCurlClass methods .SetUrl, .SetUserPwd, .SetCAInfo now accept unlimited string arguments.
 - FIX: in TCurlDropboxClass size of some local string variables were increased.

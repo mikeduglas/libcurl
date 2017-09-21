@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.12
-!** 03.08.2016
+!** libcurl for Clarion v1.18
+!** 21.09.2017
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -144,5 +144,72 @@ TCurlHttpClass.StrFormAddError    PROCEDURE(CURLFORMcode errcode)
   ELSE
     RETURN 'Unknown CURLFORMcode: '& errcode
   END
+
+TCurlHttpClass.SendFile       PROCEDURE(STRING pUrl, STRING pFileName, STRING pContentType, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
+sFileContents                   &STRING
+res                             CURLcode, AUTO
+  CODE
+  sFileContents &= curl::GetFileContents(pFileName)
+  IF NOT sFileContents &= NULL
+    res = SELF.SendBinData(pUrl, sFileContents, LEN(sFileContents), pContentType, pResponseFile, xferproc)
+      
+    !-- deallocate dynamic buffer
+    DISPOSE(sFileContents)
+  ELSE
+    res = CURLE_READ_ERROR
+  END
   
+  RETURN res
+      
+TCurlHttpClass.SendBinData    PROCEDURE(STRING pUrl, CONST *STRING pBinData, LONG pDataLen = 0, STRING pContentType, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
+  CODE
+  IF pContentType
+    SELF.AddHttpHeader('Content-Type: '& CLIP(pContentType))
+    SELF.SetHttpHeaders()
+  END
+    
+  !- send binary content (--data-binary)
+  SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pBinData))
+  IF pDataLen = 0
+    SELF.SetOpt(CURLOPT_POSTFIELDSIZE, LEN(pBinData))
+  ELSE
+    SELF.SetOpt(CURLOPT_POSTFIELDSIZE, pDataLen)
+  END
+  
+  RETURN SELF.SendRequest(pUrl, '', pResponseFile, xferproc)
+
+TCurlHttpClass.SendFileStr    PROCEDURE(STRING pUrl, STRING pFileName, STRING pContentType, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>)
+sFileContents                   &STRING
+res                             CURLcode, AUTO
+  CODE
+  sFileContents &= curl::GetFileContents(pFileName)
+  IF NOT sFileContents &= NULL
+    res = SELF.SendBinDataStr(pUrl, sFileContents, LEN(sFileContents), pContentType, pResponseBuf, xferproc)
+    
+    !-- deallocate dynamic buffer
+    DISPOSE(sFileContents)
+  ELSE
+    res = CURLE_READ_ERROR
+  END
+  
+  RETURN res
+
+TCurlHttpClass.SendBinDataStr PROCEDURE(STRING pUrl, CONST *STRING pBinData, LONG pDataLen = 0, STRING pContentType, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+  CODE
+  IF pContentType
+    SELF.AddHttpHeader('Content-Type: '& CLIP(pContentType))
+    SELF.SetHttpHeaders()
+  END
+    
+  !- send binary content (--data-binary)
+  SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pBinData))
+  IF pDataLen = 0
+    SELF.SetOpt(CURLOPT_POSTFIELDSIZE, LEN(pBinData))
+  ELSE
+    SELF.SetOpt(CURLOPT_POSTFIELDSIZE, pDataLen)
+  END
+
+  RETURN SELF.SendRequestStr(pUrl, '', pResponseBuf, xferproc)
+
 !!!endregion

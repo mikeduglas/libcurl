@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.17
-!** 12.07.2017
+!** libcurl for Clarion v1.19
+!** 13.01.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -7,6 +7,9 @@
   INCLUDE('libcurl.inc')
 
   MAP
+    MODULE('WinAPI')
+      winapi::Sleep(LONG dwMilliseconds), PASCAL, PROC, NAME('Sleep')
+    END
   END
 
 !!RPC endpoints
@@ -325,6 +328,8 @@ fileContent                     &STRING
     RETURN FALSE
   END  
 
+  winapi::Sleep(10) !-- workaround for "Jason string invalid" error returned by Send().
+  
   SELF._lastCurlCode = SELF.Send(domain_Content, ns_Files, func)
   
   DISPOSE(fileContent)

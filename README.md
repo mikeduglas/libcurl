@@ -5,6 +5,9 @@ libcurl for Clarion
 
 [libcurl home page](https://curl.haxx.se/libcurl/)
 
+v1.19
+- FIX: added sleep() call before SELF.Send() in TCurlDropboxClass.Upload().
+Sometimes "Jason string invalid" error thrown; sleep() call is a workaround.
 
 v1.18
 - CHG: OpenSSL dlls upgraded to version 1.1.f.  

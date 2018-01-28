@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.17
-!** 12.07.2017
+!** libcurl for Clarion v1.20
+!** 28.01.2018
 !** mikeduglas66@gmail.com
 
 
@@ -1082,7 +1082,8 @@ TCurlClass.AddHttpHeader      PROCEDURE(STRING pHeader)
 TCurlClass.FreeHttpHeaders    PROCEDURE()
   CODE
   SELF.headers.Free()
-  
+  SELF.SetOpt(CURLOPT_HTTPHEADER, 0) !--  reset back to no custom headers
+
 TCurlClass.SetHttpHeaders     PROCEDURE()
   CODE
   RETURN SELF.SetOpt(CURLOPT_HTTPHEADER, SELF.headers)

@@ -5,6 +5,33 @@ libcurl for Clarion
 
 [libcurl home page](https://curl.haxx.se/libcurl/)
 
+## How to install:
+hit the 'Clone or Download' button and select 'Download Zip'.
+Now unzip libcurl-master.zip into a temporary folder somewhere.
+
+Copy the contents of...
+
+Bin into %ClarionRoot%\Accessory\bin
+Lib into %ClarionRoot%\Accessory\lib
+Libsrc into %ClarionRoot%\Accessory\libsrc\win
+Template into %ClarionRoot%\Accessory\template\win
+
+Where %ClarionRoot% is the folder into which you installed Clarion 10.
+
+Now, with no APPs or DCTs loaded in the Clarion IDE, register the libcurl template by selecting...
+Clarion main menu - Tools - 'Edit Template Registry' - click on 'Register' and use the dialog to navigate to %ClarionRoot%\Accessory\template\win and double-click on libcurl.tpl and click 'Open'.
+
+You should see 'Class LibcurlTpl - Libcurl template' and the LibcurlGloExt and LibcurlLocExt templates are now in the list.
+Click on the Save icon 'floppy disk' and the Green arrow to close.
+
+
+## Version history
+
+v1.21
+
+LONGLNOG -> TLONGLONG
+
+
 v1.20
 - FIX: TCurlClass.FreeHttpHeaders() sets CURLOPT_HTTPHEADER to NULL (resets back to no custom headers).
 

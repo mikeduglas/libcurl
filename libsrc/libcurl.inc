@@ -8,12 +8,12 @@ CURL                          EQUATE(LONG)
 
 size_t                        EQUATE(UNSIGNED)
 
-LONGLONG                      GROUP,  TYPE  !INT64
+TLONGLONG                     GROUP,  TYPE  !INT64. Has been changed from LONGLONG due to naming conflict with Office Inside LONGLONG.
 lo                              LONG
 hi                              LONG
                               END
 
-curl_off_t                    EQUATE(LONGLONG)
+curl_off_t                    EQUATE(TLONGLONG)
 
 CURLcode                      EQUATE(LONG)
 

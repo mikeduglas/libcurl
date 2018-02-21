@@ -5,8 +5,8 @@ libcurl for Clarion
 
 [libcurl home page](https://curl.haxx.se/libcurl/)
 
-## How to install:
-hit the 'Clone or Download' button and select 'Download Zip'.
+## How to install
+Hit the 'Clone or Download' button and select 'Download Zip'.
 Now unzip libcurl-master.zip into a temporary folder somewhere.
 
 Copy the contents of...

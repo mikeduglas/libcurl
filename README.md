@@ -11,10 +11,10 @@ Now unzip libcurl-master.zip into a temporary folder somewhere.
 
 Copy the contents of...
 
-Bin into %ClarionRoot%\Accessory\bin
-Lib into %ClarionRoot%\Accessory\lib
-Libsrc into %ClarionRoot%\Accessory\libsrc\win
-Template into %ClarionRoot%\Accessory\template\win
+Bin into %ClarionRoot%\Accessory\bin  
+Lib into %ClarionRoot%\Accessory\lib  
+Libsrc into %ClarionRoot%\Accessory\libsrc\win  
+Template into %ClarionRoot%\Accessory\template\win  
 
 Where %ClarionRoot% is the folder into which you installed Clarion 10.
 

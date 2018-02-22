@@ -28,7 +28,7 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 ## Version history
 
 v1.21
-- CHG: LONGLNOG -> TLONGLONG (naming conflict with Office Inside)
+- CHG: LONGLONG type renamed to TLONGLONG (naming conflict with Office Inside)
 
 v1.20
 - FIX: TCurlClass.FreeHttpHeaders() sets CURLOPT_HTTPHEADER to NULL (resets back to no custom headers).

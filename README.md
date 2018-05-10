@@ -27,8 +27,17 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Version history
 
+v1.22
+- NEW: CURLOPT_SSL_OPTIONS - set SSL behavior options.  
+Pass a long with a bitmask to tell libcurl about specific SSL behaviors:
+curl.SetOpt(CURLOPT_SSL_OPTIONS, CURLSSLOPT_ALLOW_BEAST)
+curl.SetOpt(CURLOPT_SSL_OPTIONS, CURLSSLOPT_ALLOW_BEAST + CURLSSLOPT_NO_REVOKE)
+
+- CHG: TCurlMailClass.Reset() now resets mailto list, attachments, custom headers. It does not change the following information kept in the handle:  
+live connections, the Session ID cache, the DNS cache, the cookies and shares.
+
 v1.21
-- CHG: LONGLONG type renamed to TLONGLONG (naming conflict with Office Inside)
+- CHG: LONGLONG type renamed to TLONGLONG (naming conflict with Office Inside).
 
 v1.20
 - FIX: TCurlClass.FreeHttpHeaders() sets CURLOPT_HTTPHEADER to NULL (resets back to no custom headers).

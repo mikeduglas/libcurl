@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.18
-!** 21.09.2017
+!** libcurl for Clarion v1.22
+!** 11.05.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -354,6 +354,19 @@ CURLOPT_MAXREDIRS             EQUATE(68 + CURLOPTTYPE_LONG)             !Maximum
 !  CURLUSESSL_ALL     - SSL for all communication or fail
 !  */
 CURLOPT_USE_SSL               EQUATE(119 + CURLOPTTYPE_LONG)
+
+!Enable/disable specific SSL features with a bitmask, see CURLSSLOPT_*
+CURLOPT_SSL_OPTIONS           EQUATE(216 + CURLOPTTYPE_LONG)
+! - ALLOW_BEAST tells libcurl to allow the BEAST SSL vulnerability in the
+!   name of improving interoperability with older servers. Some SSL libraries
+!   have introduced work-arounds for this flaw but those work-arounds sometimes
+!   make the SSL communication fail. To regain functionality with those broken
+!   servers, a user can this way allow the vulnerability back.
+CURLSSLOPT_ALLOW_BEAST        EQUATE(00000001b)
+! - NO_REVOKE tells libcurl to disable certificate revocation checks for those
+!   SSL backends where such behavior is present.
+CURLSSLOPT_NO_REVOKE          EQUATE(00000010b)
+
 
 CURLOPT_CONNECT_ONLY          EQUATE(141 + CURLOPTTYPE_LONG)            !no transfer, set up connection and let application use the socket by extracting it with CURLINFO_LASTSOCKET
 
@@ -968,6 +981,8 @@ Charset                         PROCEDURE(STRING pCharset)
 AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
 
 Send                            PROCEDURE(), CURLcode, PROC
+
+Reset                           PROCEDURE(), DERIVED
                               END
 
 !!---------------------------- TCurlPOP3Class ----------------------------!

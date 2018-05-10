@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.15
-!** 23.01.2017
+!** libcurl for Clarion v1.22
+!** 11.05.2018
 !** mikeduglas66@gmail.com
 
 
@@ -865,4 +865,18 @@ res                             CURLcode, AUTO
   END
 
   RETURN SELF.Perform()
+  
+TCurlMailClass.Reset          PROCEDURE()
+  CODE
+  SELF.mailto.Free()
+  FREE(SELF.attachments)
+  FREE(SELF.customHeaderLines)
+  SELF.bodyContentType = 'text/plain'
+  SELF.bodyCharset = 'UTF-8'
+  CLEAR(SELF.ToStr)
+  CLEAR(SELF.CCStr)
+  CLEAR(SELF.BCCStr)
+  
+  PARENT.Reset()
+  
 !!!endregion

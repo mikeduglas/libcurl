@@ -1,4 +1,4 @@
-!** libcurl for Clarion v1.22
+!** libcurl for Clarion v1.23
 !** 11.05.2018
 !** mikeduglas66@gmail.com
 
@@ -560,6 +560,10 @@ TCurlMailClass.Construct      PROCEDURE()
 
 TCurlMailClass.Destruct       PROCEDURE()
   CODE
+  SELF.FreeRecipients()
+  SELF.FreeAttachments()
+  SELF.FreeCustomHeaders()
+
   DISPOSE(SELF.customHeaderLines)
   DISPOSE(SELF.attachments)
   DISPOSE(SELF.mailbody)
@@ -866,16 +870,28 @@ res                             CURLcode, AUTO
 
   RETURN SELF.Perform()
   
-TCurlMailClass.Reset          PROCEDURE()
+TCurlMailClass.FreeRecipients PROCEDURE()
   CODE
   SELF.mailto.Free()
-  FREE(SELF.attachments)
-  FREE(SELF.customHeaderLines)
-  SELF.bodyContentType = 'text/plain'
-  SELF.bodyCharset = 'UTF-8'
   CLEAR(SELF.ToStr)
   CLEAR(SELF.CCStr)
   CLEAR(SELF.BCCStr)
+  
+TCurlMailClass.FreeAttachments    PROCEDURE()
+  CODE
+  FREE(SELF.attachments)
+
+TCurlMailClass.FreeCustomHeaders  PROCEDURE()
+  CODE
+  FREE(SELF.customHeaderLines)
+
+TCurlMailClass.Reset          PROCEDURE()
+  CODE
+  SELF.FreeRecipients()
+  SELF.FreeAttachments()
+  SELF.FreeCustomHeaders()
+  SELF.bodyContentType = 'text/plain'
+  SELF.bodyCharset = 'UTF-8'
   
   PARENT.Reset()
   

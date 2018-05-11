@@ -27,6 +27,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Version history
 
+v1.23
+- NEW: TCurlMailClass methods: .FreeRecipients(), .FreeAttachments(), .FreeCustomHeaders().
+
 v1.22
 - NEW: CURLOPT_SSL_OPTIONS - set SSL behavior options.  
 Pass a long with a bitmask to tell libcurl about specific SSL behaviors:

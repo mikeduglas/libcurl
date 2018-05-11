@@ -1,4 +1,4 @@
-!** libcurl for Clarion v1.22
+!** libcurl for Clarion v1.23
 !** 11.05.2018
 !** mikeduglas66@gmail.com
 
@@ -981,6 +981,10 @@ Charset                         PROCEDURE(STRING pCharset)
 AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
 
 Send                            PROCEDURE(), CURLcode, PROC
+
+FreeRecipients                  PROCEDURE()
+FreeAttachments                 PROCEDURE()
+FreeCustomHeaders               PROCEDURE()
 
 Reset                           PROCEDURE(), DERIVED
                               END

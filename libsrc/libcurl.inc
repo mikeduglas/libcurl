@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.23
-!** 11.05.2018
+!** libcurl for Clarion v1.24
+!** 13.05.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -929,6 +929,7 @@ pwd                             STRING(32), PRIVATE
 mailfrom                        STRING(256), PRIVATE  
 mailto                          &TCurlSList, PRIVATE
 mailsubject                     &STRING, PRIVATE
+bEncodeSubject                  BOOL, PRIVATE
 mailbody                        &STRING, PRIVATE
 attachments                     &TCurlMailAttachments, PRIVATE
 boundary                        STRING(28), PRIVATE
@@ -953,11 +954,11 @@ CreateHeader                    PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateBody                      PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateAttachments               PROCEDURE(*TCurlMailData mail), PRIVATE
 
-Server                          PROCEDURE(STRING pServer, LONG pPort, <STRING pHelo>)           !smtp.gmail.com, 587
-Account                         PROCEDURE(STRING pUsername, STRING pPwd)        !username: username@gmail.com
-From                            PROCEDURE(STRING pFrom)                         !<username@gmail.com>
+Server                          PROCEDURE(STRING pServer, LONG pPort, <STRING pHelo>)     !smtp.gmail.com, 587
+Account                         PROCEDURE(STRING pUsername, STRING pPwd)                  !username: username@gmail.com
+From                            PROCEDURE(STRING pFrom)                                   !username@gmail.com; 'LName FName <username@gmail.com>'
 AddRecipient                    PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING pBCC>)
-Subject                         PROCEDURE(STRING pSubject)
+Subject                         PROCEDURE(STRING pSubject, BOOL pEncode = TRUE)           !in Outlook, the subject is unreadable in UTF-8, so pass pEncode=FALSE
 
 !!!<summary>
 !!!Adds custom mail header line in form key: value

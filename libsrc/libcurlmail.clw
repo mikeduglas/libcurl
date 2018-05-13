@@ -1,7 +1,6 @@
-!** libcurl for Clarion v1.23
-!** 11.05.2018
+!** libcurl for Clarion v1.24
+!** 13.05.2018
 !** mikeduglas66@gmail.com
-
 
   MEMBER
 
@@ -634,11 +633,12 @@ trailingSlashPos                LONG, AUTO
   
   ADD(SELF.attachments)
   
-TCurlMailClass.Subject        PROCEDURE(STRING pSubject)
+TCurlMailClass.Subject        PROCEDURE(STRING pSubject, BOOL pEncode = TRUE)
   CODE
   DISPOSE(SELF.mailsubject)
   SELF.mailsubject &= NEW STRING(LEN(CLIP(pSubject)))
   SELF.mailsubject = CLIP(pSubject)
+  SELF.bEncodeSubject = pEncode
 
 TCurlMailClass.AddCustomHeader    PROCEDURE(STRING pKey, STRING pValue)
   CODE
@@ -759,7 +759,12 @@ qIndex                          LONG, AUTO
   END
  
   !SUBJECT
-  mail.AddLine('Subject: '& EncodeHeaderPart(SELF.mailsubject))
+  IF SELF.bEncodeSubject
+    mail.AddLine('Subject: '& EncodeHeaderPart(SELF.mailsubject))
+  ELSE
+    !- in Outlook, the subject is unreadable in UTF-8
+    mail.AddLine('Subject: '& SELF.mailsubject)
+  END
   
   !custom header lines
   LOOP qIndex = 1 TO RECORDS(SELF.customHeaderLines)

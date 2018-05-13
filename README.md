@@ -27,6 +27,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Version history
 
+v1.24
+- CHG: TCurlMailClass.Subject() now accepts 2nd parameter 'pEncode'; pass FALSE to disable utf-8 encoding (in Outlook, the subject is unreadable in UTF-8).
+
 v1.23
 - NEW: TCurlMailClass methods: .FreeRecipients(), .FreeAttachments(), .FreeCustomHeaders().
 

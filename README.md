@@ -29,7 +29,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 v1.25
 - NEW: overloaded TCurlClass.SendRequest() which takes IDynStr to get unlimited server response string:
+```
 SendRequest  PROCEDURE(STRING pUrl, <STRING pPostFields>, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+```
 
 v1.24
 - CHG: TCurlMailClass.Subject() now accepts 2nd parameter 'pEncode'; pass FALSE to disable utf-8 encoding (in Outlook, the subject is unreadable in UTF-8).

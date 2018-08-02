@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.24
-!** 13.05.2018
+!** libcurl for Clarion v1.25
+!** 02.08.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -828,6 +828,7 @@ SendRequest                     PROCEDURE(STRING pUrl, <STRING pPostFields>, <ST
 SendRequestStr                  PROCEDURE(STRING pUrl, <STRING pPostFields>, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 
 SendRequest                     PROCEDURE(STRING pUrl, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+SendRequest                     PROCEDURE(STRING pUrl, <STRING pPostFields>, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 
 !send a file using POST
 PostFile                        PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC

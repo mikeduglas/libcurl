@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.20
-!** 28.01.2018
+!** libcurl for Clarion v1.25
+!** 02.08.2018
 !** mikeduglas66@gmail.com
 
 
@@ -927,6 +927,20 @@ res                             CURLcode, AUTO
   
   ! perform request
   RETURN SELF.Perform()
+
+TCurlClass.SendRequest        PROCEDURE(STRING pUrl, <STRING pPostFields>, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>)
+pf                              CSTRING(LEN(pPostFields) + 1)
+res                             CURLcode, AUTO
+  CODE
+  IF pPostFields <> ''
+    pf = CLIP(pPostFields)
+    res = SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pf))
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+
+  RETURN SELF.SendRequest(pUrl, pDynStr, xferproc)
 
 TCurlClass.SendRequest        PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
 res                             CURLcode, AUTO

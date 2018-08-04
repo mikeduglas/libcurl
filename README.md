@@ -33,6 +33,8 @@ v1.25
 SendRequest  PROCEDURE(STRING pUrl, <STRING pPostFields>, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 ```
 
+- NEW: **Clarion 6.3 examples** *TestHTTP* and *FTPManager*, big thanks to Johan de Klerk!
+
 v1.24
 - CHG: TCurlMailClass.Subject() now accepts 2nd parameter 'pEncode'; pass FALSE to disable utf-8 encoding (in Outlook, the subject is unreadable in UTF-8).
 

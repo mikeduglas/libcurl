@@ -33,7 +33,7 @@ v1.25
 SendRequest  PROCEDURE(STRING pUrl, <STRING pPostFields>, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 ```
 
-- NEW: **Clarion 6.3 examples**, big thanks to Johan de Klerk! See [Readme.txt](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps/Readme.txt) for details.
+- NEW: [Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps), big thanks to Johan de Klerk! See [Readme.txt](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps/Readme.txt) for details.
 
 
 v1.24

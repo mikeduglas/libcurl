@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.18
-!** 21.09.2017
+!** libcurl for Clarion v1.26
+!** 09.08.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -103,6 +103,21 @@ res                             CURLcode, AUTO
 
   RETURN res
  
+TCurlHttpClass.FormPost       PROCEDURE(STRING pUrl, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
+  CODE
+  res = SELF.SetOpt(CURLOPT_HTTPPOST, SELF.httppost)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! perform request
+  res = SELF.SendRequest(pUrl, pDynStr, xferproc)
+  
+  SELF.FormFree()
+
+  RETURN res
+
 TCurlHttpClass.FormPostStr    PROCEDURE(STRING pUrl, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>)
 res                             CURLcode, AUTO
   CODE

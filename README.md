@@ -27,6 +27,12 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Version history
 
+v1.26
+- NEW: overloaded TCurlHttpClass.FormPost() which takes IDynStr to get unlimited server response string:
+```
+FormPost  PROCEDURE(STRING pUrl, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+```
+
 v1.25
 - NEW: overloaded TCurlClass.SendRequest() which takes IDynStr to get unlimited server response string:
 ```

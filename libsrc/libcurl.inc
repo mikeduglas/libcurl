@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.25
-!** 02.08.2018
+!** libcurl for Clarion v1.26
+!** 09.08.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -1187,6 +1187,7 @@ GetCookieList                   PROCEDURE(*TCurlSQueue pQ), BOOL, PROC
 FormAdd                         PROCEDURE(STRING pFieldName, STRING pContents), CURLFORMcode, PROC
 FormAddFile                     PROCEDURE(STRING pFieldName, STRING pFileName, <STRING pContentType>), CURLFORMcode, PROC !ContentType like 'image/jpeg'
 FormPost                        PROCEDURE(STRING pUrl, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+FormPost                        PROCEDURE(STRING pUrl, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 FormPostStr                     PROCEDURE(STRING pUrl, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 FormFree                        PROCEDURE()
 

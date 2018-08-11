@@ -31,8 +31,7 @@ v1.27
 - NEW: TCurlFtpClass.IsDirExist() checks remote directory existance; returns CURLE_OK if dir exists.
 - NEW: TCurlFtpClass.CreateMissingDirs() ("create missing dirs for FTP and SFTP"), pass one of the following parameters:
 ```
-CURLFTP_CREATE_DIR_NONE       EQUATE(0) !do NOT create missing dirs!
- Default value.
+CURLFTP_CREATE_DIR_NONE       EQUATE(0) !do NOT create missing dirs! Default value.
 CURLFTP_CREATE_DIR            EQUATE(1) !(FTP/SFTP) if CWD (Change working directory) fails, try MKD (Make directory) and then CWD again if MKD succeeded, for SFTP this does similar magic.
 CURLFTP_CREATE_DIR_RETRY      EQUATE(2) !(FTP only) if CWD fails, try MKD and then CWD again  even if MKD failed!
 

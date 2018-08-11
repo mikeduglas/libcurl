@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.11
-!** 21.04.2016
+!** libcurl for Clarion v1.27
+!** 11.08.2018
 !** mikeduglas66@gmail.com
 
 
@@ -420,7 +420,36 @@ res                             CURLcode, AUTO
   END
   
   RETURN res
+    
+TCurlFtpClass.IsDirExist      PROCEDURE(STRING pUrl, STRING pDirname)
+ds                              &IDynStr
+res                             CURLcode, AUTO
+  CODE
+  SELF.SetOpt(CURLOPT_NOBODY, 1)
+
+  ds &= NewDynStr()
+  ds.Cat(CLIP(pUrl))
+
+  !- prepend dir name with '/'
+  IF SUB(pDirname, LEN(CLIP(pUrl)), 1) <> '/' AND SUB(pDirname, 1, 1) <> '/'
+    ds.Cat('/')
+  END
+  ds.Cat(CLIP(pDirname))
   
+  !- append dir name with '/'
+  IF SUB(pDirname, LEN(CLIP(pDirname)), 1) <> '/'
+    ds.Cat('/')
+  END
+
+  res = SELF.SetUrl(ds.Str())
+  DisposeDynStr(ds)
+  
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  RETURN SELF.Perform()
+
 TCurlFtpClass.RenameFile      PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname)
 ftpcmd                          TCurlSList
 res                             CURLcode, AUTO
@@ -483,5 +512,9 @@ res                                 CURLcode, AUTO
   END
   
   RETURN PARENT.ReadFile(pRemoteFile, pLocalFile, xferproc)
+
+TCurlFtpClass.CreateMissingDirs   PROCEDURE(CURLFTP_CREATE_DIR_ENUM pValue)
+  CODE
+  RETURN SELF.SetOpt(CURLOPT_FTP_CREATE_MISSING_DIRS, pValue)
   
 !!!endregion

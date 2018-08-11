@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.26
-!** 09.08.2018
+!** libcurl for Clarion v1.27
+!** 11.08.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -513,6 +513,18 @@ CURLOPT_ACCEPT_ENCODING       EQUATE(102 + CURLOPTTYPE_STRINGPOINT)
 
 CURLOPT_FTP_ALTERNATIVE_TO_USER   EQUATE(147 + CURLOPTTYPE_STRINGPOINT) !Pointer to command string to send if USER/PASS fails.
 
+! FTP Option that causes missing dirs to be created on the remote server.
+! In 7.19.4 we introduced the convenience enums for this option using the
+! CURLFTP_CREATE_DIR prefix.
+CURLOPT_FTP_CREATE_MISSING_DIRS   EQUATE(110 + CURLOPTTYPE_LONG)
+
+! parameter for the CURLOPT_FTP_CREATE_MISSING_DIRS option
+CURLFTP_CREATE_DIR_ENUM       EQUATE(LONG)
+CURLFTP_CREATE_DIR_NONE       EQUATE(0) !do NOT create missing dirs! Default value.
+CURLFTP_CREATE_DIR            EQUATE(1) !(FTP/SFTP) if CWD (Change working directory) fails, try MKD (Make directory) and then CWD again if MKD succeeded, for SFTP this does similar magic.
+CURLFTP_CREATE_DIR_RETRY      EQUATE(2) !(FTP only) if CWD fails, try MKD and then CWD again  even if MKD failed!
+CURLFTP_CREATE_DIR_LAST       EQUATE(4) !not an option, never use
+          
 !return codes for CURLOPT_CHUNK_BGN_FUNCTION
 CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)
 CURL_CHUNK_BGN_FUNC_FAIL      EQUATE(1)             !tell the lib to end the task
@@ -913,12 +925,18 @@ SSHAuth                         PROCEDURE(TSSHSettings pSSH), CURLcode, PROC
 LoadDir                         PROCEDURE(STRING pUrl, *TFtpFilesInfo dirlist), CURLcode, PROC
 LoadDirListOnly                 PROCEDURE(STRING pUrl, *TFtpDirList barelist), CURLcode, PROC
 CreateDir                       PROCEDURE(STRING pUrl, STRING pDirname), CURLcode, PROC   !pUrl is ftp://user@95.96.97.98, pDirname is /home/files/temp
+IsDirExist                      PROCEDURE(STRING pUrl, STRING pDirname), CURLcode         !returns CURLE_OK if dir exists.
+
 ! delete file or empty dir
 DeleteFile                      PROCEDURE(STRING pUrl, STRING pFilename), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pFilename is /home/files/testfile.txt
 RenameFile                      PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
 RenameDir                       PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
 
 ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, DERIVED, PROC
+
+! create missing dirs for FTP and SFTP
+! https://curl.haxx.se/libcurl/c/CURLOPT_FTP_CREATE_MISSING_DIRS.html
+CreateMissingDirs               PROCEDURE(CURLFTP_CREATE_DIR_ENUM pValue), CURLcode, PROC
                               END
 
 !---------------------------- TCurlMailClass ----------------------------!

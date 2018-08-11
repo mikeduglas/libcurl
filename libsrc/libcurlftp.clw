@@ -422,28 +422,11 @@ res                             CURLcode, AUTO
   RETURN res
     
 TCurlFtpClass.IsDirExist      PROCEDURE(STRING pUrl, STRING pDirname)
-ds                              &IDynStr
 res                             CURLcode, AUTO
   CODE
   SELF.SetOpt(CURLOPT_NOBODY, 1)
 
-  ds &= NewDynStr()
-  ds.Cat(CLIP(pUrl))
-
-  !- prepend dir name with '/'
-  IF SUB(pDirname, LEN(CLIP(pUrl)), 1) <> '/' AND SUB(pDirname, 1, 1) <> '/'
-    ds.Cat('/')
-  END
-  ds.Cat(CLIP(pDirname))
-  
-  !- append dir name with '/'
-  IF SUB(pDirname, LEN(CLIP(pDirname)), 1) <> '/'
-    ds.Cat('/')
-  END
-
-  res = SELF.SetUrl(ds.Str())
-  DisposeDynStr(ds)
-  
+  res = SELF.SetUrl(CLIP(pUrl) & CLIP(pDirname) &'/')  
   IF res <> CURLE_OK
     RETURN res
   END

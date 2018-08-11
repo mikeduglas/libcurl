@@ -925,7 +925,7 @@ SSHAuth                         PROCEDURE(TSSHSettings pSSH), CURLcode, PROC
 LoadDir                         PROCEDURE(STRING pUrl, *TFtpFilesInfo dirlist), CURLcode, PROC
 LoadDirListOnly                 PROCEDURE(STRING pUrl, *TFtpDirList barelist), CURLcode, PROC
 CreateDir                       PROCEDURE(STRING pUrl, STRING pDirname), CURLcode, PROC   !pUrl is ftp://user@95.96.97.98, pDirname is /home/files/temp
-IsDirExist                      PROCEDURE(STRING pUrl, STRING pDirname), CURLcode         !returns CURLE_OK if dir exists.
+IsDirExist                      PROCEDURE(STRING pUrl, STRING pDirname), CURLcode, PROC   !Returns CURLE_OK if dir exists.
 
 ! delete file or empty dir
 DeleteFile                      PROCEDURE(STRING pUrl, STRING pFilename), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pFilename is /home/files/testfile.txt

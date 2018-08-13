@@ -27,6 +27,10 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Version history
 
+v1.28
+- FIX: Some TCurlFtpClass methods (RenameFile, DeleteFile, CreateDir, RenameDir) required CLIPped parameters, otherwise you could get "Qouta command returned error".
+- Updated [Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps).
+
 v1.27
 - NEW: TCurlFtpClass.IsDirExist() checks remote directory existance; returns CURLE_OK if dir exists.
 - NEW: TCurlFtpClass.CreateMissingDirs() ("create missing dirs for FTP and SFTP"), pass one of the following parameters:

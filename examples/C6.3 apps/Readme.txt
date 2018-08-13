@@ -44,6 +44,14 @@ Contains two App's.
 a) FTPDownload app is very basic with No Debug Information, uses local libcurl control template.
 b) FTPDownloadDebug app is more advanced and Debug Information also displayed on the screen, uses local libcurl control template, require some Global Embed Code.
 
+8) FTPUpload (File Upload via FTP/SFTP with Creation of Remote Directories/Folders)
+For SSH connections can handle: Any, PublicKey, Password, Host, Keyboard, Agent.
+Contains two App's.
+a) FTPUploadDirs app is very basic with No Debug Information, uses local libcurl control template.
+b) FTPUploadDirsDebug app is more advanced and Debug Information also displayed on the screen, uses local libcurl control template, require some Global Embed Code.
+You can have as many or as little Directories/Folders to create as you need.
+This example was made with 5 Directories/Folders but you can leave any of them empty except the first one and the Directories/Folders will be created from 1 to 5.
+If the Directory/Folder already exists libcurl will just return a error and continue creating the rest of the Directories/Folders.
 
 All App's have been made as simple as possible and easy to follow to allow quick and easy implementation into your own app.
 I hope it will help others.

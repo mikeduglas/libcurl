@@ -36,6 +36,7 @@ curl.AddEmbeddedImage('d:\Images\logo.jpg', 'myLogo')  !- 'myLogo' is an image i
 curl.ContentType('text/html')  !- not required in this case (embedded images force to use text/html)
 curl.AltBody('This is an alternative plain text. Embedded images will appear as attachments.')  !- for those email clients not supporting html.
 ```
+
 **Thank you Guillermo!**
 
 v1.28

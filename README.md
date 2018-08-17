@@ -30,12 +30,12 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 v1.29
 - NEW: TCurlClass.SetPostFields(STRING pPostFields)
 - NEW: TCurlMailClass now allows to send html emails with embedded (inline) images:
-'''
+```
 curl.Body('<html><body><p>HTML content</p><img src="cid:myLogo"/><p>with embedded images.</p></body></html>')
 curl.AddEmbeddedImage('d:\Images\logo.jpg', 'myLogo')  !- 'myLogo' is an image id and appears in html "src" attribute: <img src="cid:myLogo"/>
 curl.ContentType('text/html')  !- not required in this case (embedded images force to use text/html)
 curl.AltBody('This is an alternative plain text. Embedded images will appear as attachments.')  !- for those email clients not supporting html.
-'''
+```
 **Thank you Guillermo!**
 
 v1.28

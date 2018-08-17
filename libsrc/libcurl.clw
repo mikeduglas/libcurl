@@ -1,7 +1,6 @@
-!** libcurl for Clarion v1.25
-!** 02.08.2018
+!** libcurl for Clarion v1.29
+!** 16.08.2018
 !** mikeduglas66@gmail.com
-
 
   MEMBER
 
@@ -929,23 +928,13 @@ res                             CURLcode, AUTO
   RETURN SELF.Perform()
 
 TCurlClass.SendRequest        PROCEDURE(STRING pUrl, <STRING pPostFields>, *IDynStr pDynStr, <curl::ProgressDataProcType xferproc>)
-pf                              CSTRING(LEN(pPostFields) + 1)
-res                             CURLcode, AUTO
   CODE
-  IF pPostFields <> ''
-    pf = CLIP(pPostFields)
-    res = SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pf))
-    IF res <> CURLE_OK
-      RETURN res
-    END
-  END
-
+  SELF.SetPostFields(pPostFields)
   RETURN SELF.SendRequest(pUrl, pDynStr, xferproc)
 
 TCurlClass.SendRequest        PROCEDURE(STRING pUrl, <STRING pPostFields>, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>)
 res                             CURLcode, AUTO
 fs                              LIKE(TCurlFileStruct)
-pf                              CSTRING(LEN(pPostFields) + 1)
   CODE
   IF pResponseFile <> ''
     fs.Init(pResponseFile)
@@ -969,13 +958,7 @@ pf                              CSTRING(LEN(pPostFields) + 1)
   END
 
 !  /* Now specify the POST data */ 
-  IF pPostFields <> ''
-    pf = CLIP(pPostFields)
-    res = SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pf))
-    IF res <> CURLE_OK
-      RETURN res
-    END
-  END
+  SELF.SetPostFields(pPostFields)
   
   ! perform request
   RETURN SELF.Perform()
@@ -983,7 +966,6 @@ pf                              CSTRING(LEN(pPostFields) + 1)
 TCurlClass.SendRequestStr     PROCEDURE(STRING pUrl, <STRING pPostFields>, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>)
 res                             CURLcode, AUTO
 ss                              LIKE(TCurlStringStruct)
-pf                              CSTRING(LEN(pPostFields) + 1)
   CODE
   IF NOT OMITTED(pResponseBuf)
     ss.buffer = ADDRESS(pResponseBuf)
@@ -1009,13 +991,7 @@ pf                              CSTRING(LEN(pPostFields) + 1)
   END
   
 !  /* Now specify the POST data */ 
-  IF pPostFields <> ''
-    pf = CLIP(pPostFields)
-    res = SELF.SetOpt(CURLOPT_POSTFIELDS, ADDRESS(pf))
-    IF res <> CURLE_OK
-      RETURN res
-    END
-  END
+  SELF.SetPostFields(pPostFields)
 
   ! perform request
   RETURN SELF.Perform()
@@ -1231,5 +1207,20 @@ TCurlClass.SetDefaultProtocol PROCEDURE(STRING pSchema)
   CODE
   RETURN SELF.SetOpt(CURLOPT_DEFAULT_PROTOCOL, pSchema)
   
+TCurlClass.SetPostFields      PROCEDURE(STRING pPostFields)
+res                             CURLcode, AUTO
+  CODE                            
+  res = SELF.SetOpt(CURLOPT_POSTFIELDS, pPostFields)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.SetOpt(CURLOPT_POSTFIELDSIZE, LEN(CLIP(pPostFields)))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  RETURN CURLE_OK
+
 !!!endregion
   

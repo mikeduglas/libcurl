@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.27
-!** 11.08.2018
+!** libcurl for Clarion v1.29
+!** 16.08.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -882,6 +882,7 @@ PreQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !cal
 PostQuote                       PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
 
 SetDefaultProtocol              PROCEDURE(STRING pSchema), CURLcode, PROC
+SetPostFields                   PROCEDURE(STRING pPostFields), CURLcode, PROC
                               END
 
 !---------------------------- TCurlFtpClass -----------------------------!
@@ -950,8 +951,10 @@ mailto                          &TCurlSList, PRIVATE
 mailsubject                     &STRING, PRIVATE
 bEncodeSubject                  BOOL, PRIVATE
 mailbody                        &STRING, PRIVATE
+mailaltbody                     &STRING, PRIVATE
 attachments                     &TCurlMailAttachments, PRIVATE
 boundary                        STRING(28), PRIVATE
+boundary2                       STRING(28), PRIVATE
 
 customHeaderLines               &TCurlMailHeaderLines, PRIVATE
 
@@ -972,6 +975,7 @@ SetOptions                      PROCEDURE(), CURLcode, PROC, VIRTUAL, PROTECTED
 CreateHeader                    PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateBody                      PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateAttachments               PROCEDURE(*TCurlMailData mail), PRIVATE
+HasInlineAttachments            PROCEDURE(), BOOL, PRIVATE
 
 Server                          PROCEDURE(STRING pServer, LONG pPort, <STRING pHelo>)     !smtp.gmail.com, 587
 Account                         PROCEDURE(STRING pUsername, STRING pPwd)                  !username: username@gmail.com
@@ -993,12 +997,14 @@ AddCustomHeader                 PROCEDURE(STRING pKey, STRING pValue)
 
 !Default content type: "text/plain"
 Body                            PROCEDURE(STRING pBody)
+AltBody                         PROCEDURE(STRING pBody)                                   !forces to use 'text/html' content-type
 ContentType                     PROCEDURE(STRING pContentType)
 Charset                         PROCEDURE(STRING pCharset)
 
 !Examples of content types include "text/plain", "text/html", "text/css", "image/png", "image/gif", "image/jpeg", "video/mpeg", "audio/basic"
 !See GetMIMETypeFromFileExt()
 AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
+AddEmbeddedImage                PROCEDURE(STRING pFilename, STRING pCid, <STRING pName>)  !forces to use 'text/html' content-type
 
 Send                            PROCEDURE(), CURLcode, PROC
 

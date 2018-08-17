@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.24
-!** 13.05.2018
+!** libcurl for Clarion v1.29
+!** 16.08.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -21,6 +21,8 @@
     Base64::Encode(STRING input_buf), STRING, PRIVATE
     !read email callback
     curl::EmailRead(LONG buffer, size_t bufsize, size_t nmemb, LONG userp), size_t, C, PRIVATE
+
+    AddBody(*TCurlMailData mail, STRING pType, STRING pharset, CONST *STRING pBody, <STRING pBoundary>), PRIVATE
   END
 
 TCurlMailData                 CLASS, TYPE
@@ -38,6 +40,8 @@ filename                        CSTRING(256)
 shortname                       CSTRING(256)
 contentType                     CSTRING(256)
 charset                         CSTRING(33)
+inline                          BOOL
+cid                             CSTRING(256)
                               END
 
 TCurlMailAttachments          QUEUE(TCurlMailAttachment), TYPE
@@ -475,6 +479,25 @@ n_block                         LONG, AUTO    !block number
   
   RETURN CLIP(output_buf)
   
+AddBody                       PROCEDURE(*TCurlMailData mail, STRING pType, STRING pharset, CONST *STRING pBody, <STRING pBoundary>)
+  CODE
+  IF pBoundary
+    mail.AddLine(pBoundary)
+  END
+  
+  !Content-Type, charset
+  mail.AddLine('Content-Type: '& pType &''& CHOOSE(pharset <> '', '; charset='& pharset &'', ''))
+  !Encoding
+  mail.AddLine('Content-Transfer-Encoding: '& 'base64')
+  !empty line to divide headers from body, see RFC5322 
+  mail.AddLine()
+  !body
+  mail.AddLine(Base64::Encode(ConvertToCodePage(pBody)))
+
+  IF pBoundary
+    mail.AddLine()
+  END
+
 !!!endregion
   
 !!!region callbacks
@@ -549,12 +572,15 @@ TCurlMailClass.Construct      PROCEDURE()
   SELF.mailsubject = ' '
   SELF.mailbody &= NEW STRING(1)
   SELF.mailbody = ' '
+  SELF.mailaltbody &= NEW STRING(1)
+  SELF.mailaltbody = ' '
 
   SELF.bodyContentType = 'text/plain'
   SELF.bodyCharset = 'UTF-8'
   
-  SELF.boundary = '001a11444b948e1888052560b246'
-  
+  SELF.boundary  = '001a11444b948e1888052560b246'
+  SELF.boundary2 = '002a11444b948e1888052560b246'
+
   SELF.customHeaderLines &= NEW TCurlMailHeaderLines
 
 TCurlMailClass.Destruct       PROCEDURE()
@@ -566,6 +592,7 @@ TCurlMailClass.Destruct       PROCEDURE()
   DISPOSE(SELF.customHeaderLines)
   DISPOSE(SELF.attachments)
   DISPOSE(SELF.mailbody)
+  DISPOSE(SELF.mailaltbody)
   DISPOSE(SELF.mailsubject)
   DISPOSE(SELF.mailto)
   
@@ -614,10 +641,23 @@ TCurlMailClass.AddRecipient   PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING
     END
     SELF.BCCStr = CLIP(SELF.BCCStr) & pBCC
   END
+  
+TCurlMailClass.HasInlineAttachments   PROCEDURE()
+qIndex                                  LONG, AUTO
+  CODE
+  LOOP qIndex = 1 TO RECORDS(SELF.attachments)
+    GET(SELF.attachments, qIndex)
+    IF SELF.attachments.inline
+      RETURN TRUE
+    END
+  END
+  RETURN FALSE
 
 TCurlMailClass.AddAttachment  PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
 trailingSlashPos                LONG, AUTO
   CODE
+  CLEAR(SELF.attachments.filename)
+  
   SELF.attachments.filename = CLIP(pFilename)
   
   trailingSlashPos = INSTRING('\', SELF.attachments.filename, -1, LEN(SELF.attachments.filename))
@@ -632,12 +672,38 @@ trailingSlashPos                LONG, AUTO
   SELF.attachments.charset = CLIP(pCharset)
   
   ADD(SELF.attachments)
+
+TCurlMailClass.AddEmbeddedImage   PROCEDURE(STRING pFilename, STRING pCid, <STRING pName>)
+trailingSlashPos                    LONG, AUTO
+  CODE
+  CLEAR(SELF.attachments.filename)
   
+  SELF.attachments.filename = CLIP(pFilename)
+  
+  IF pName
+    SELF.attachments.shortname = CLIP(pName)
+  ELSE
+    trailingSlashPos = INSTRING('\', SELF.attachments.filename, -1, LEN(SELF.attachments.filename))
+    SELF.attachments.shortname = SELF.attachments.filename[trailingSlashPos + 1 : LEN(SELF.attachments.filename)]
+  END
+  
+  SELF.attachments.contentType = GetMIMETypeFromFileExt(SELF.attachments.shortname)
+  SELF.attachments.inline = TRUE
+  SELF.attachments.cid = CLIP(pCid)
+  
+  ADD(SELF.attachments)
+
 TCurlMailClass.Subject        PROCEDURE(STRING pSubject, BOOL pEncode = TRUE)
   CODE
+  ASSERT(pSubject <> '')
   DISPOSE(SELF.mailsubject)
-  SELF.mailsubject &= NEW STRING(LEN(CLIP(pSubject)))
-  SELF.mailsubject = CLIP(pSubject)
+  IF pSubject <> ''
+    SELF.mailsubject &= NEW STRING(LEN(CLIP(pSubject)))
+    SELF.mailsubject = CLIP(pSubject)
+  ELSE
+    SELF.mailsubject &= NEW STRING(1)
+    SELF.mailsubject = ' '
+  END
   SELF.bEncodeSubject = pEncode
 
 TCurlMailClass.AddCustomHeader    PROCEDURE(STRING pKey, STRING pValue)
@@ -648,17 +714,34 @@ TCurlMailClass.AddCustomHeader    PROCEDURE(STRING pKey, STRING pValue)
   
 TCurlMailClass.Body           PROCEDURE(STRING pBody)
   CODE
-  DISPOSE(SELF.mailbody)
-  SELF.mailbody &= NEW STRING(LEN(CLIP(pBody)))
-  SELF.mailbody = CLIP(pBody)
+  ASSERT(pBody <> '')
+  IF pBody <> ''
+    SELF.mailbody &= NEW STRING(LEN(CLIP(pBody)))
+    SELF.mailbody = CLIP(pBody)
+  ELSE
+    SELF.mailbody &= NEW STRING(1)
+    SELF.mailbody = ' '
+  END
   
+TCurlMailClass.AltBody        PROCEDURE(STRING pBody)
+  CODE
+  ASSERT(pBody <> '')
+  DISPOSE(SELF.mailaltbody)
+  IF pBody <> ''
+    SELF.mailaltbody &= NEW STRING(LEN(CLIP(pBody)))
+    SELF.mailaltbody = CLIP(pBody)
+  ELSE
+    SELF.mailaltbody &= NEW STRING(1)
+    SELF.mailaltbody = ' '
+  END
+
 TCurlMailClass.ContentType    PROCEDURE(STRING pContentType)
   CODE
   SELF.bodyContentType = CLIP(pContentType)
   IF SELF.bodyContentType = 'text/plain' AND NOT SELF.bodyCharset
     SELF.bodyCharset = 'UTF-8'
   END
-  
+
 TCurlMailClass.Charset        PROCEDURE(STRING pCharset)
   CODE
   SELF.bodyCharset = CLIP(pCharset)
@@ -722,6 +805,9 @@ TCurlMailClass.CreateHeader   PROCEDURE(*TCurlMailData mail)
 sname                           STRING(256)
 qIndex                          LONG, AUTO
   CODE
+  !MIME-Version
+  mail.AddLine('MIME-Version: '& '1.0')
+
   !TO
   sname = ExtractName(SELF.ToStr)
   IF NOT sname
@@ -773,18 +859,44 @@ qIndex                          LONG, AUTO
   END
 
 TCurlMailClass.CreateBody     PROCEDURE(*TCurlMailData mail)
+boundary                        STRING(28), AUTO
   CODE
-  !Content-Type, charset
-  mail.AddLine('Content-Type: '& SELF.bodyContentType &''& CHOOSE(SELF.bodyCharset <> '', '; charset='& SELF.bodyCharset &'', ''))
+  !set 'text/html' content type if there are wheter altBody or inline images
+  IF SELF.mailaltbody OR SELF.HasInlineAttachments()
+    SELF.ContentType('text/html')
+  END
+
+  IF RECORDS(SELF.attachments) > 0
+    !attachments
     
-  !Encoding
-  mail.AddLine('Content-Transfer-Encoding: '& 'base64')
-    
-  !empty line to divide headers from body, see RFC5322 
-  mail.AddLine()
+    IF SELF.HasInlineAttachments()
+      mail.AddLine('Content-Type: multipart/related; type="text/html"; boundary='& SELF.boundary)
+    ELSE
+      mail.AddLine('Content-Type: multipart/mixed; boundary='& SELF.boundary)
+    END
+
+    mail.AddLine()
+    mail.AddLine('--'& SELF.boundary)
+ 
+    boundary = SELF.boundary2
+  ELSE
+    boundary = SELF.boundary
+  END
+
+  IF SELF.mailaltbody = ''
+    AddBody(mail, SELF.bodyContentType, SELF.bodyCharset, SELF.mailbody)
+    mail.AddLine()
+  ELSE
+    !alternative contents
+
+    mail.AddLine('Content-Type: multipart/alternative; boundary=' & boundary) 
+    mail.AddLine()
   
-  !body
-  mail.AddLine(Base64::Encode(ConvertToCodePage(SELF.mailbody)))
+    AddBody(mail, 'text/plain',          SELF.bodyCharset, SELF.mailaltbody, '--'& boundary)
+    AddBody(mail, SELF.bodyContentType,  SELF.bodyCharset, SELF.mailbody,    '--'& boundary)
+    
+    mail.AddLine('--'& boundary &'--')  !end of last part
+  END
   
 TCurlMailClass.CreateAttachments  PROCEDURE(*TCurlMailData mail)
 qIndex                              LONG, AUTO
@@ -792,25 +904,24 @@ sIndex                              LONG, AUTO
 filedata                            &STRING
 encdata                             &STRING
   CODE
-  !boundary to divide attachments from body
-!  mail.AddLine('--'& SELF.boundary)
-
   LOOP qIndex = 1 TO RECORDS(SELF.attachments)
     GET(SELF.attachments, qIndex)
-    IF EXISTS(SELF.attachments.filename)
-
-      !boundary to divide attachments from body or another attachment
-      mail.AddLine('--'& SELF.boundary)
-
-      mail.AddLine('Content-Type: '& SELF.attachments.contentType &''& CHOOSE(SELF.attachments.charset <> '', '; charset='& SELF.attachments.charset &'', '') &'; name="'& SELF.attachments.shortname &'"')
-      mail.AddLine('Content-Disposition: attachment; filename="'& SELF.attachments.shortname &'"')
-      mail.AddLine('Content-Transfer-Encoding: base64')
-      mail.AddLine()
-    
+    IF EXISTS(SELF.attachments.filename)    
       !attachment contents
       filedata &= curl::GetFileContents(SELF.attachments.filename)
       IF NOT filedata &= NULL
-          
+        !boundary to divide attachments from body or another attachment
+        mail.AddLine('--'& SELF.boundary)
+    
+        mail.AddLine('Content-Type: '& SELF.attachments.contentType &''& CHOOSE(SELF.attachments.charset <> '', '; charset='& SELF.attachments.charset &'', '') &'; name="'& SELF.attachments.shortname &'"')
+        IF SELF.attachments.inline
+          mail.AddLine('Content-ID:<' & SELF.attachments.cid & '>')
+        ELSE
+          mail.AddLine('Content-Disposition: attachment; filename="'& SELF.attachments.shortname &'"')
+        END
+        mail.AddLine('Content-Transfer-Encoding: base64')
+        mail.AddLine()
+
         encdata &= NEW STRING((LEN(filedata)/DECODED_BUF_SIZE + 1) * ENCODED_BUF_SIZE)
         encdata = Base64::Encode(filedata)
           
@@ -818,14 +929,11 @@ encdata                             &STRING
         LOOP sIndex = 1 TO (LEN(encdata) - 1) / ENCODED_BUF_SIZE
           mail.AddLine(SUB(encdata, (sIndex - 1) * ENCODED_BUF_SIZE + 1, ENCODED_BUF_SIZE))
         END
-          
+
         DISPOSE(encdata)
         encdata &= NULL
         DISPOSE(filedata)
         filedata &= NULL
-
-!        !boundary to divide one attachment from another
-!        mail.AddLine('--'& SELF.boundary)
       END
     END
   END
@@ -839,28 +947,14 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
-  !MIME-Version
-  mail.AddLine('MIME-Version: '& '1.0')
-
   !header
   SELF.CreateHeader(mail)
-  
-  IF RECORDS(SELF.attachments)
-    mail.AddLine('Content-Type: multipart/mixed; boundary='& SELF.boundary)
-    mail.AddLine()
-
-    !boundary
-    mail.AddLine('--'& SELF.boundary)
-  END
 
   !body
   SELF.CreateBody(mail)
   
-  IF RECORDS(SELF.attachments)
-    SELF.CreateAttachments(mail)
-  END
-  
-!  mail.AddLine(, FALSE)
+  !attachments
+  SELF.CreateAttachments(mail)
   
   !pass mail to callback
   res = SELF.SetOpt(CURLOPT_READFUNCTION, curl::EmailRead)
@@ -895,9 +989,14 @@ TCurlMailClass.Reset          PROCEDURE()
   SELF.FreeRecipients()
   SELF.FreeAttachments()
   SELF.FreeCustomHeaders()
+  
+  CLEAR(SELF.mailsubject)
+  CLEAR(SELF.mailbody)
+  CLEAR(SELF.mailaltbody)
+
   SELF.bodyContentType = 'text/plain'
   SELF.bodyCharset = 'UTF-8'
-  
+
   PARENT.Reset()
   
 !!!endregion

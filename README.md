@@ -29,15 +29,16 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 v1.29
 - NEW: TCurlClass.SetPostFields(STRING pPostFields)
-- NEW: TCurlMailClass now allows to send html emails with embedded (inline) images:
+- NEW: TCurlMailClass now allows to send html emails with embedded (inline) images, just call .AddEmbeddedImage method:
 ```
 curl.Body('<html><body><p>HTML content</p><img src="cid:myLogo"/><p>with embedded images.</p></body></html>')
 curl.AddEmbeddedImage('d:\Images\logo.jpg', 'myLogo')  !- 'myLogo' is an image id and appears in html "src" attribute: <img src="cid:myLogo"/>
 curl.ContentType('text/html')  !- not required in this case (embedded images force to use text/html)
 curl.AltBody('This is an alternative plain text. Embedded images will appear as attachments.')  !- for those email clients not supporting html.
 ```
+new .AltBody method allows to define an alternative plain text body.
 
-**Thank you Guillermo!**
+**Thank to Guillermo who has provided these changes in TCurlMailClass**
 
 v1.28
 - FIX: Some TCurlFtpClass methods (RenameFile, DeleteFile, CreateDir, RenameDir) required CLIPped parameters, otherwise you could get "Qouta command returned error".

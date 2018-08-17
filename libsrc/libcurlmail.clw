@@ -656,7 +656,7 @@ qIndex                                  LONG, AUTO
 TCurlMailClass.AddAttachment  PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
 trailingSlashPos                LONG, AUTO
   CODE
-  CLEAR(SELF.attachments.filename)
+  CLEAR(SELF.attachments)
   
   SELF.attachments.filename = CLIP(pFilename)
   
@@ -676,7 +676,7 @@ trailingSlashPos                LONG, AUTO
 TCurlMailClass.AddEmbeddedImage   PROCEDURE(STRING pFilename, STRING pCid, <STRING pName>)
 trailingSlashPos                    LONG, AUTO
   CODE
-  CLEAR(SELF.attachments.filename)
+  CLEAR(SELF.attachments)
   
   SELF.attachments.filename = CLIP(pFilename)
   
@@ -956,6 +956,11 @@ res                             CURLcode, AUTO
   !attachments
   SELF.CreateAttachments(mail)
   
+  !-- add "close boundary"
+  IF RECORDS(SELF.attachments) OR SELF.mailaltbody
+    mail.AddLine('--'& SELF.boundary &'--')
+  END
+
   !pass mail to callback
   res = SELF.SetOpt(CURLOPT_READFUNCTION, curl::EmailRead)
   IF res <> CURLE_OK

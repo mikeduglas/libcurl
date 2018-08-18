@@ -27,6 +27,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Version history
 
+v1.30
+- FIX: new TCurlClass.SetPostFields method could affect the behavior of other stuff, now it is changed and sets post fields only if passed argument is not empty. To clear post fields use SetOpt calls.
+
 v1.29
 - NEW: TCurlClass.SetPostFields(STRING pPostFields)
 - NEW: TCurlMailClass now allows to send html emails with embedded (inline) images:

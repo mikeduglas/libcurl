@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.29
-!** 16.08.2018
+!** libcurl for Clarion v1.30
+!** 18.08.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -1209,15 +1209,17 @@ TCurlClass.SetDefaultProtocol PROCEDURE(STRING pSchema)
   
 TCurlClass.SetPostFields      PROCEDURE(STRING pPostFields)
 res                             CURLcode, AUTO
-  CODE                            
-  res = SELF.SetOpt(CURLOPT_POSTFIELDS, pPostFields)
-  IF res <> CURLE_OK
-    RETURN res
-  END
+  CODE                 
+  IF pPostFields
+    res = SELF.SetOpt(CURLOPT_POSTFIELDS, pPostFields)
+    IF res <> CURLE_OK
+      RETURN res
+    END
 
-  res = SELF.SetOpt(CURLOPT_POSTFIELDSIZE, LEN(CLIP(pPostFields)))
-  IF res <> CURLE_OK
-    RETURN res
+    res = SELF.SetOpt(CURLOPT_POSTFIELDSIZE, LEN(CLIP(pPostFields)))
+    IF res <> CURLE_OK
+      RETURN res
+    END
   END
   
   RETURN CURLE_OK

@@ -4,6 +4,7 @@ libcurl for Clarion
 ## Required C6.3 and newer.
 
 [libcurl home page](https://curl.haxx.se/libcurl/)
+[Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps)
 
 ## How to install
 Hit the 'Clone or Download' button and select 'Download Zip'.
@@ -29,6 +30,7 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 v1.30
 - FIX: new TCurlClass.SetPostFields method could affect the behavior of other stuff, now it is changed and sets post fields only if passed argument is not empty. To clear post fields use SetOpt calls.
+- Updated [Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps).
 
 v1.29
 - NEW: TCurlClass.SetPostFields(STRING pPostFields)

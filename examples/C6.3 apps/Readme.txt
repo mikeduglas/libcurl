@@ -13,10 +13,11 @@ a) File Upload via HTTP.
 b) File Download via HTTP.
 c) Web Services.
 
-3) HTTPDownload (File Download via HTTP)
-Contains two App's.
+3) HTTPDownload (File Download via HTTP/HTTPS)
+Contains three App's.
 a) HTTPDownloadNoProgress app is very basic with No Progress indicators.
-b) HTTPDownloadProgress app is more advanced and have a Progress indicator.
+b) HTTPDownloadProgress app is more advanced and have a Progress indicator, some hand code.
+c) HTTPDownloadProgressDebug app is more advanced and have a Progress indicator as well as uses local libcurl control template. Can handle HTTP/HTTPS downloads.
 
 4) HTTPUpload (File Upload via HTTP)
 Contains two App's.

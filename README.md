@@ -28,6 +28,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Version history
 
+v1.31
+- FIX: TCurlMailClass failed if encoded body size was exceeded 16K (original body size of ~12885 bytes or larger).
+
 v1.30
 - FIX: new TCurlClass.SetPostFields method could affect the behavior of other stuff, now it is changed and sets post fields only if passed argument is not empty. To clear post fields use SetOpt calls.
 - Updated [Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps).

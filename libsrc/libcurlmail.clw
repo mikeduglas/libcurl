@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.29
-!** 16.08.2018
+!** libcurl for Clarion v1.31
+!** 21.08.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -23,6 +23,7 @@
     curl::EmailRead(LONG buffer, size_t bufsize, size_t nmemb, LONG userp), size_t, C, PRIVATE
 
     AddBody(*TCurlMailData mail, STRING pType, STRING pharset, CONST *STRING pBody, <STRING pBoundary>), PRIVATE
+    AddBody(*TCurlMailData mail, STRING pEncodedBody), PRIVATE
   END
 
 TCurlMailData                 CLASS, TYPE
@@ -478,7 +479,6 @@ n_block                         LONG, AUTO    !block number
   END
   
   RETURN CLIP(output_buf)
-  
 AddBody                       PROCEDURE(*TCurlMailData mail, STRING pType, STRING pharset, CONST *STRING pBody, <STRING pBoundary>)
   CODE
   IF pBoundary
@@ -491,12 +491,45 @@ AddBody                       PROCEDURE(*TCurlMailData mail, STRING pType, STRIN
   mail.AddLine('Content-Transfer-Encoding: '& 'base64')
   !empty line to divide headers from body, see RFC5322 
   mail.AddLine()
+  
   !body
-  mail.AddLine(Base64::Encode(ConvertToCodePage(pBody)))
-
+  AddBody(mail, Base64::Encode(ConvertToCodePage(pBody)))
+  
   IF pBoundary
     mail.AddLine()
   END
+
+AddBody                       PROCEDURE(*TCurlMailData mail, STRING pEncodedBody)
+CURL_MAX_WRITE_SIZE             EQUATE(16384)
+nBodySize                       LONG, AUTO
+startPos                        LONG, AUTO
+endPos                          LONG, AUTO
+ndx                             LONG, AUTO
+  CODE
+  nBodySize = LEN(pEncodedBody)
+  
+  !- body size <= 16K
+  IF nBodySize <= CURL_MAX_WRITE_SIZE
+    mail.AddLine(pEncodedBody)
+    RETURN
+  END
+  
+  !- write 16K chunks
+  LOOP ndx = 1 TO  nBodySize / CURL_MAX_WRITE_SIZE
+    startPos = (ndx - 1) * CURL_MAX_WRITE_SIZE + 1
+    endPos = ndx * CURL_MAX_WRITE_SIZE
+    mail.AddLine(pEncodedBody[startPos : endPos], FALSE)
+  END
+  
+  !- add final chunk
+  IF endPos < nBodySize
+    startPos = endPos + 1
+    endPos = nBodySize
+    mail.AddLine(pEncodedBody[startPos : endPos], FALSE)
+  END
+  
+  !- final CRLF
+  mail.AddLine('<13,10>', FALSE)
 
 !!!endregion
   
@@ -514,6 +547,7 @@ mailData                        &TCurlMailData
   
   mailData &= (userp)
   RETURN mailData.ReadNext(buffer)
+  
 !!!endregion
   
 !!!region TCurlMailDataQueue
@@ -722,7 +756,7 @@ TCurlMailClass.Body           PROCEDURE(STRING pBody)
     SELF.mailbody &= NEW STRING(1)
     SELF.mailbody = ' '
   END
-  
+
 TCurlMailClass.AltBody        PROCEDURE(STRING pBody)
   CODE
   ASSERT(pBody <> '')

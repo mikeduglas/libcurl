@@ -57,4 +57,4 @@ AltBody(STRING pBody)    !forces to use 'text/html' content-type
 **Thank to Guillermo who has provided these changes in TCurlMailClass**
 
 
-[Full version history](https://github.com/mikeduglas/history/changes.md)
+[Full version history](https://github.com/mikeduglas/history)

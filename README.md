@@ -27,6 +27,8 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Version history
+v1.32
+- CHG: TCurlMailClass now adds Date header field (ex.: "Date: Wed, 22 Aug 2018 12:32:25 +0300").
 
 v1.31
 - FIX: TCurlMailClass failed if encoded body size was exceeded 16K (original body size of ~12885 bytes or larger).

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.31
-!** 21.08.2018
+!** libcurl for Clarion v1.32
+!** 23.08.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -9,6 +9,8 @@
   MAP
     MODULE('WinAPI')
       curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
+      winapi::GetLocalTime(LONG lpSystemTime), PASCAL, NAME('GetLocalTime')
+      winapi::GetTimeZoneInformation(LONG lpTimeZoneInformation), ULONG, PROC, PASCAL, NAME('GetTimeZoneInformation')
     END
 
     ConvertToCodePage(STRING pStr, SIGNED pCodePage = CP_UTF8), STRING, PRIVATE  ! convert ASCII to UTF8
@@ -24,6 +26,8 @@
 
     AddBody(*TCurlMailData mail, STRING pType, STRING pharset, CONST *STRING pBody, <STRING pBoundary>), PRIVATE
     AddBody(*TCurlMailData mail, STRING pEncodedBody), PRIVATE
+
+    GetDateTime(), STRING, PRIVATE  !Returns the current local date and time as string "Wed, 22 Aug 2018 12:32:25 +0300"
   END
 
 TCurlMailData                 CLASS, TYPE
@@ -531,6 +535,79 @@ ndx                             LONG, AUTO
   !- final CRLF
   mail.AddLine('<13,10>', FALSE)
 
+GetDateTime                   PROCEDURE()
+TSYSTEMTYPE                     GROUP, TYPE
+wYear                             SHORT
+wMonth                            SHORT
+wDayOfWeek                        SHORT
+wDay                              SHORT
+wHour                             SHORT
+wMinute                           SHORT
+wSecond                           SHORT
+wMilliseconds                     SHORT
+                                END
+TTIME_ZONE_INFORMATION          GROUP, TYPE
+Bias                              LONG
+StandardName                      STRING(64)
+StandardDate                      LIKE(TSYSTEMTYPE)
+StandardBias                      LONG
+DaylightName                      STRING(64)
+DaylightDate                      LIKE(TSYSTEMTYPE)
+DaylightBias                      LONG
+                                END
+
+lt                              LIKE(TSYSTEMTYPE), AUTO
+tz                              LIKE(TTIME_ZONE_INFORMATION), AUTO
+
+weekDay                         STRING(3), AUTO
+monthName                       STRING(3), AUTO
+timezone                        STRING(5), AUTO
+  CODE
+  !Date and Time Specification
+  !https://tools.ietf.org/html/rfc2822#section-3.3
+  
+  !- read local time and time zne info
+  winapi::GetLocalTime(ADDRESS(lt))
+  winapi::GetTimeZoneInformation(ADDRESS(tz))
+  
+  !- return date time in format of "Wed, 22 Aug 2018 12:32:25 +0300"
+  
+  EXECUTE lt.wDayOfWeek + 1 
+    weekDay = 'Sun'
+    weekDay = 'Mon'
+    weekDay = 'Tue'
+    weekDay = 'Wed'
+    weekDay = 'Thu'
+    weekDay = 'Fri'
+    weekDay = 'Sat'
+  END
+  
+  EXECUTE lt.wMonth
+    monthName = 'Jan'
+    monthName = 'Feb'
+    monthName = 'Mar'
+    monthName = 'Apr'
+    monthName = 'May'
+    monthName = 'Jun'
+    monthName = 'Jul'
+    monthName = 'Aug'
+    monthName = 'Sep'
+    monthName = 'Oct'
+    monthName = 'Nov'
+    monthName = 'Dec'
+  END
+  
+  !- The zone specifies the offset from Coordinated Universal Time (UTC).
+  !- The "+" or "-" indicates whether the time-of-day is ahead of (i.e., east of) or behind (i.e., west of) Universal Time.
+  !- The first two digits indicate the number of hours difference from Universal Time, 
+  !- and the last two digits indicate the number of minutes difference from Universal Time.
+  timezone = CHOOSE(tz.Bias < 0, '+', '-') & FORMAT(ABS(tz.Bias) / 60, @n02) & FORMAT(ABS(tz.Bias) % 60, @n02)
+  
+  RETURN weekDay &', '& | 
+    lt.wDay &' '& monthName &' '& lt.wYear &' '& | 
+    FORMAT(lt.wHour, @n02) &':'& FORMAT(lt.wMinute, @n02) &':'& FORMAT(lt.wSecond, @n02) &' '& | 
+    timezone
+  
 !!!endregion
   
 !!!region callbacks
@@ -842,6 +919,8 @@ qIndex                          LONG, AUTO
   !MIME-Version
   mail.AddLine('MIME-Version: '& '1.0')
 
+  !DATE
+  mail.AddLine('Date: '& GetDateTime())
   !TO
   sname = ExtractName(SELF.ToStr)
   IF NOT sname

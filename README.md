@@ -29,8 +29,7 @@ You should see 'Class LibcurlTpl - Libcurl template' and the LibcurlGloExt and L
 Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
-## reent changes
-
+## Recent changes
 v1.32
 - CHG: TCurlMailClass now adds Date header field (ex.: "Date: Wed, 22 Aug 2018 12:32:25 +0300").
 

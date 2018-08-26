@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.29
-!** 16.08.2018
+!** libcurl for Clarion v1.33
+!** 25.08.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -332,10 +332,20 @@ CURLOPT_SSH_KEYDATA           EQUATE(185 + CURLOPTTYPE_OBJECTPOINT)     !set the
 CURLOPT_HTTPHEADER            EQUATE(23 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of headers, struct curl_slist kind. This list is also used for RTSP (in spite of its name)
 CURLOPT_HTTPGET               EQUATE(80 + CURLOPTTYPE_LONG)             !Set this to force the HTTP request to get back to GET. Only really usable if POST, PUT or a custom request have been used first.
 
+CURLOPT_HTTP_VERSION          EQUATE(84 + CURLOPTTYPE_LONG)             !Specify which HTTP version to use! This must be set to one of the CURL_HTTP_VERSION* enums set below.
+!  /* These enums are for use with the CURLOPT_HTTP_VERSION option. */ 
+CURL_HTTP_VERSION_NONE              EQUATE(0)                           !setting this means we don't care, and that we'd like the library to choose the best possible for us!
+CURL_HTTP_VERSION_1_0               EQUATE(1)                           !please use HTTP 1.0 in the request
+CURL_HTTP_VERSION_1_1               EQUATE(2)                           !please use HTTP 1.1 in the request
+CURL_HTTP_VERSION_2_0               EQUATE(3)                           !please use HTTP 2 in the request
+CURL_HTTP_VERSION_2TLS              EQUATE(4)                           !use version 2 for HTTPS, version 1.1 for HTTP
+CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE EQUATE(5)                           !please use HTTP 2 without HTTP/1.1 Upgrade
+CURL_HTTP_VERSION_LAST              EQUATE(6)                           !*ILLEGAL* http version
+
 !  /* set to zero to disable the libcurl's decoding and thus pass the raw body
 !     data to the application even when it is encoded/compressed */
 CURLOPT_HTTP_TRANSFER_DECODING  EQUATE(157 + CURLOPTTYPE_LONG)
-CURLOPT_HTTP_CONTENT_DECODING EQUATE(158 + CURLOPTTYPE_LONG)
+CURLOPT_HTTP_CONTENT_DECODING   EQUATE(158 + CURLOPTTYPE_LONG)
     
 CURLOPT_CUSTOMREQUEST         EQUATE(36 + CURLOPTTYPE_STRINGPOINT)      !Custom request, for customizing the get command like HTTP: DELETE, TRACE and others, FTP: to use a different list command 
 

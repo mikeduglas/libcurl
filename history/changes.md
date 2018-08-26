@@ -1,5 +1,19 @@
 ## Version history
 
+v1.33
+- NEW: Added an option to specify which HTTP version to use, and constants for use with the CURLOPT_HTTP_VERSION option:
+```
+CURLOPT_HTTP_VERSION          EQUATE(84 + CURLOPTTYPE_LONG)             !Specify which HTTP version to use! This must be set to one of the CURL_HTTP_VERSION* enums set below.
+!  /* These enums are for use with the CURLOPT_HTTP_VERSION option. */ 
+CURL_HTTP_VERSION_NONE              EQUATE(0)                           !setting this means we don't care, and that we'd like the library to choose the best possible for us!
+CURL_HTTP_VERSION_1_0               EQUATE(1)                           !please use HTTP 1.0 in the request
+CURL_HTTP_VERSION_1_1               EQUATE(2)                           !please use HTTP 1.1 in the request
+CURL_HTTP_VERSION_2_0               EQUATE(3)                           !please use HTTP 2 in the request
+CURL_HTTP_VERSION_2TLS              EQUATE(4)                           !use version 2 for HTTPS, version 1.1 for HTTP
+CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE EQUATE(5)                           !please use HTTP 2 without HTTP/1.1 Upgrade
+CURL_HTTP_VERSION_LAST              EQUATE(6)                           !*ILLEGAL* http version
+```
+
 v1.32
 - CHG: TCurlMailClass now adds Date header field (ex.: "Date: Wed, 22 Aug 2018 12:32:25 +0300").
 

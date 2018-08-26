@@ -1,5 +1,5 @@
 !** libcurl for Clarion v1.33
-!** 25.08.2018
+!** 26.08.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -893,6 +893,7 @@ PostQuote                       PROCEDURE(TCurlSList plist), CURLcode, PROC !cal
 
 SetDefaultProtocol              PROCEDURE(STRING pSchema), CURLcode, PROC
 SetPostFields                   PROCEDURE(STRING pPostFields), CURLcode, PROC
+SetPostFields                   PROCEDURE(*IDynStr pPostFields), CURLcode, PROC
                               END
 
 !---------------------------- TCurlFtpClass -----------------------------!

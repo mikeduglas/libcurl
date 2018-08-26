@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.30
-!** 18.08.2018
+!** libcurl for Clarion v1.33
+!** 26.08.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -1220,6 +1220,27 @@ res                             CURLcode, AUTO
     IF res <> CURLE_OK
       RETURN res
     END
+  END
+  
+  RETURN CURLE_OK
+  
+TCurlClass.SetPostFields      PROCEDURE(*IDynStr pPostFields)
+res                             CURLcode, AUTO
+  CODE                 
+  IF NOT pPostFields &= NULL
+    IF pPostFields.StrLen() > 0
+      res = SELF.SetOpt(CURLOPT_POSTFIELDS, pPostFields.CStrRef())
+      IF res <> CURLE_OK
+        RETURN res
+      END
+
+      res = SELF.SetOpt(CURLOPT_POSTFIELDSIZE, pPostFields.StrLen())
+      IF res <> CURLE_OK
+        RETURN res
+      END
+    END
+  ELSE
+    curl::DebugInfo('SetPostFields: NULL reference passed')
   END
   
   RETURN CURLE_OK

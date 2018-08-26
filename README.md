@@ -43,6 +43,7 @@ CURL_HTTP_VERSION_2TLS              EQUATE(4)                           !use ver
 CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE EQUATE(5)                           !please use HTTP 2 without HTTP/1.1 Upgrade
 CURL_HTTP_VERSION_LAST              EQUATE(6)                           !*ILLEGAL* http version
 ```
+- NEW: TCurlClass.SetPostFields(*IDynStr pPostFields)
 
 v1.32
 - CHG: TCurlMailClass now adds Date header field (ex.: "Date: Wed, 22 Aug 2018 12:32:25 +0300").

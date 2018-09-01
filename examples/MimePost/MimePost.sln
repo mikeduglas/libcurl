@@ -1,0 +1,18 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+# Clarion 2.1.0.2447
+Project("{12B76EC0-1D7B-4FA7-A7D0-C524288B48A1}") = "MimePost", "MimePost.cwproj", "{D171C71A-4BB1-4351-9DD3-C229432DB1DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D171C71A-4BB1-4351-9DD3-C229432DB1DD}.Debug|Win32.Build.0 = Debug|Win32
+		{D171C71A-4BB1-4351-9DD3-C229432DB1DD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D171C71A-4BB1-4351-9DD3-C229432DB1DD}.Release|Win32.Build.0 = Release|Win32
+		{D171C71A-4BB1-4351-9DD3-C229432DB1DD}.Release|Win32.ActiveCfg = Release|Win32
+	EndGlobalSection
+EndGlobal

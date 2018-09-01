@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.33
-!** 26.08.2018
+!** libcurl for Clarion v1.34
+!** 01.09.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -193,6 +193,8 @@
     END
 
   END
+
+curl::UserAgent               CSTRING('curl/7.61.0')
 
 !!!region static functions
 curl::DebugInfo               PROCEDURE(STRING s)
@@ -612,6 +614,7 @@ TCurlClass.Init               PROCEDURE()
   CODE
   SELF.curl = curl_easy_init()
   SELF.AddErrors(curl::DefaultErrors)
+  SELF.SetUserAgent(curl::UserAgent)
   
 TCurlClass.Cleanup            PROCEDURE()
   CODE
@@ -628,6 +631,10 @@ TCurlClass.Reset              PROCEDURE()
     curl_easy_reset(SELF.curl)
   END
 
+TCurlClass.GetHandle          PROCEDURE()
+  CODE
+  RETURN SELF.curl
+  
 TCurlClass.AddError           PROCEDURE(CURLE Id, *STRING Message)
 !critProc                        CriticalProcedure
   CODE
@@ -1223,7 +1230,7 @@ res                             CURLcode, AUTO
   END
   
   RETURN CURLE_OK
-  
+
 TCurlClass.SetPostFields      PROCEDURE(*IDynStr pPostFields)
 res                             CURLcode, AUTO
   CODE                 
@@ -1241,9 +1248,30 @@ res                             CURLcode, AUTO
     END
   ELSE
     curl::DebugInfo('SetPostFields: NULL reference passed')
+    RETURN -1
   END
   
   RETURN CURLE_OK
 
+TCurlClass.SetUserAgent       PROCEDURE(STRING pUserAgent)
+res                             CURLcode, AUTO
+  CODE
+  res = SELF.SetOpt(CURLOPT_USERAGENT, pUserAgent)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  RETURN CURLE_OK
+
+TCurlClass.SetMimePost        PROCEDURE(TCurlMimeClass mime)
+res                             CURLcode, AUTO
+  CODE
+  res = SELF.SetOpt(CURLOPT_MIMEPOST, mime.GetMime())
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  RETURN CURLE_OK
+  
 !!!endregion
   

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.32
-!** 23.08.2018
+!** libcurl for Clarion v1.34
+!** 01.09.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -62,7 +62,6 @@ Value                           STRING(256)
                               END
 
 cb64                          STRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
-szUserAgent                   CSTRING('curl/7.52.1')
 
 DECODED_BUF_SIZE              EQUATE(54)    !54 characters per line
 ENCODED_BUF_SIZE              EQUATE(72)    !54 * 4 / 3
@@ -872,11 +871,6 @@ res                             CURLcode, AUTO
   END
 
   res = SELF.SetUserPwd(SELF.username, SELF.pwd)
-  IF res <> CURLE_OK
-    RETURN res
-  END
-
-  res = SELF.SetOpt(CURLOPT_USERAGENT, szUserAgent)
   IF res <> CURLE_OK
     RETURN res
   END

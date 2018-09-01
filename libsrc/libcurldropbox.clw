@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.19
-!** 13.01.2018
+!** libcurl for Clarion v1.34
+!** 01.09.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -50,7 +50,7 @@ TCurlDropboxClass.Destruct    PROCEDURE()
 TCurlDropboxClass.AccessToken PROCEDURE(STRING pAccessToken)
   CODE
   ASSERT(pAccessToken)
-  SELF._accessToken = pAccessToken
+  SELF._accessToken = CLIP(pAccessToken)
   
 TCurlDropboxClass.AccessToken PROCEDURE()
   CODE
@@ -101,12 +101,9 @@ access_token:end                LONG, AUTO
   RETURN FALSE
 
 TCurlDropboxClass.Send        PROCEDURE(STRING pDomain, STRING pNamespace, STRING pFunction)
-UserAgent                       CSTRING('curl/7.52.1')
   CODE
   !-- POST request
   SELF.SetCustomRequest('POST')
-  !-- user agent
-  SELF.SetOpt(CURLOPT_USERAGENT, UserAgent)
   !-- insecure
   SELF.SetSSLVerifyPeer(FALSE)
   SELF.SetSSLVerifyHost(FALSE)
@@ -140,17 +137,17 @@ rc                                  CURLcode, AUTO
   IF SELF._accessToken = ''
     RETURN CURLE_HTTP_POST_ERROR
   END
-  
+
   !-- http header
   SELF.FreeHttpHeaders()
-  SELF.AddHttpHeader('Authorization: Bearer '& CLIP(SELF._accessToken))
+  SELF.AddHttpHeader('Authorization: Bearer '& SELF._accessToken)
   SELF.AddHttpHeader('Content-Type: application/json')
   SELF.AddHttpHeader('Expect: ')
   rc = SELF.SetHttpHeaders()
   IF rc <> CURLE_OK
     RETURN rc
   END
-  
+    
   !-- arguments
   SELF.SetOpt(CURLOPT_POSTFIELDS, pJsonArgs)
   SELF.SetOpt(CURLOPT_POSTFIELDSIZE, LEN(CLIP(pJsonArgs)))
@@ -163,17 +160,17 @@ rc                                              CURLcode, AUTO
   IF SELF._accessToken = ''
     RETURN CURLE_HTTP_POST_ERROR
   END
-  
+
   !-- http header
   SELF.FreeHttpHeaders()
-  SELF.AddHttpHeader('Authorization: Bearer '& CLIP(SELF._accessToken))
+  SELF.AddHttpHeader('Authorization: Bearer '& SELF._accessToken)
   SELF.AddHttpHeader('Content-Type: application/octet-stream')
   SELF.AddHttpHeader('Dropbox-API-Arg: '& CLIP(pJsonArgs))  !-- arguments
   rc = SELF.SetHttpHeaders()
   IF rc <> CURLE_OK
     RETURN rc
   END
-
+  
   !-- reset postfields
   SELF.SetOpt(CURLOPT_POSTFIELDS, '')
   SELF.SetOpt(CURLOPT_POSTFIELDSIZE, 0)
@@ -189,14 +186,14 @@ rc                                              CURLcode, AUTO
   
   !-- http header
   SELF.FreeHttpHeaders()
-  SELF.AddHttpHeader('Authorization: Bearer '& CLIP(SELF._accessToken))
+  SELF.AddHttpHeader('Authorization: Bearer '& SELF._accessToken)
   SELF.AddHttpHeader('Content-Type: ')  !- empty Content-Type required by this api
   SELF.AddHttpHeader('Dropbox-API-Arg: '& CLIP(pJsonArgs))  !-- arguments
   rc = SELF.SetHttpHeaders()
   IF rc <> CURLE_OK
     RETURN rc
   END
-  
+
   !-- reset postfields
   SELF.SetOpt(CURLOPT_POSTFIELDS, '')
   SELF.SetOpt(CURLOPT_POSTFIELDSIZE, 0)

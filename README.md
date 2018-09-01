@@ -30,48 +30,41 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
-v1.33
-- NEW: Added an option to specify which HTTP version to use, and constants for use with the CURLOPT_HTTP_VERSION option:
-```
-CURLOPT_HTTP_VERSION          EQUATE(84 + CURLOPTTYPE_LONG)             !Specify which HTTP version to use! This must be set to one of the CURL_HTTP_VERSION* enums set below.
-!  /* These enums are for use with the CURLOPT_HTTP_VERSION option. */ 
-CURL_HTTP_VERSION_NONE              EQUATE(0)                           !setting this means we don't care, and that we'd like the library to choose the best possible for us!
-CURL_HTTP_VERSION_1_0               EQUATE(1)                           !please use HTTP 1.0 in the request
-CURL_HTTP_VERSION_1_1               EQUATE(2)                           !please use HTTP 1.1 in the request
-CURL_HTTP_VERSION_2_0               EQUATE(3)                           !please use HTTP 2 in the request
-CURL_HTTP_VERSION_2TLS              EQUATE(4)                           !use version 2 for HTTPS, version 1.1 for HTTP
-CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE EQUATE(5)                           !please use HTTP 2 without HTTP/1.1 Upgrade
-CURL_HTTP_VERSION_LAST              EQUATE(6)                           !*ILLEGAL* http version
-```
-- NEW: TCurlClass.SetPostFields(*IDynStr pPostFields)
+v1.34
 
-v1.32
-- CHG: TCurlMailClass now adds Date header field (ex.: "Date: Wed, 22 Aug 2018 12:32:25 +0300").
+CHG: Now uses libcurl v7.61.0, see [changelog](https://curl.haxx.se/changes.html) for details. Old binaries were moved to bin_v_7.52.1 subfolder.  
+CHG: Now uses OpenSSL v1.1.0i.  
 
-v1.31
-- FIX: TCurlMailClass failed if encoded body size was exceeded 16K (original body size of ~12885 bytes or larger).
-
-v1.30
-- FIX: new TCurlClass.SetPostFields method could affect the behavior of other stuff, now it is changed and sets post fields only if passed argument is not empty. To clear post fields use SetOpt calls.
-- Updated [Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps).
-
-v1.29
-- NEW: TCurlClass.SetPostFields(STRING pPostFields)
-- NEW: TCurlMailClass now allows to send html emails with embedded (inline) images:
+NEW: bitmasks for CURLOPT_HTTPAUTH and CURLOPT_PROXYAUTH options have been added: 
 ```
-curl.Body('<html><body><p>HTML content</p><img src="cid:myLogo"/><p>with embedded images.</p></body></html>')
-curl.AddEmbeddedImage('d:\Images\logo.jpg', 'myLogo')  !- 'myLogo' is an image id and appears in html "src" attribute: <img src="cid:myLogo"/>
-curl.ContentType('text/html')  !- not required in this case (embedded images force to use text/html)
-curl.AltBody('This is an alternative plain text. Embedded images will appear as attachments.')  !- for those email clients not supporting html.
-```
+CURLAUTH_NTLM                 EQUATE(8)
+CURLAUTH_DIGEST_IE            EQUATE(16)
+CURLAUTH_NTLM_WB              EQUATE(32)
+CURLAUTH_BEARER               EQUATE(64)
+CURLAUTH_ONLY                 EQUATE(080000000h)
+CURLAUTH_ANY                  EQUATE(0FFFFFFEFh)
+CURLAUTH_ANYSAFE              EQUATE(0FFFFFFEEh)
 
-new TCurlMailClass methods:
 ```
-AddEmbeddedImage(STRING pFilename, STRING pCid, <STRING pName>)  !forces to use 'text/html' content-type
-AltBody(STRING pBody)    !forces to use 'text/html' content-type
+NEW: bitmasks for CURLOPT_SSLVERSION option have been added: 
 ```
+CURL_SSLVERSION_MAX_DEFAULT   EQUATE(010000h)  !CURL_SSLVERSION_TLSv1   << 16
+CURL_SSLVERSION_MAX_TLSv1_0   EQUATE(040000h)  !CURL_SSLVERSION_TLSv1_0 << 16
+CURL_SSLVERSION_MAX_TLSv1_1   EQUATE(050000h)  !CURL_SSLVERSION_TLSv1_1 << 16
+CURL_SSLVERSION_MAX_TLSv1_2   EQUATE(060000h)  !CURL_SSLVERSION_TLSv1_2 << 16
+CURL_SSLVERSION_MAX_TLSv1_3   EQUATE(070000h)  !CURL_SSLVERSION_TLSv1_3 << 16
+```
+NEW: CURLOPT_REQUEST_TARGET (the request target, instead of extracted from the URL)  
+NEW: CURLOPT_MIMEPOST (Post MIME data)  
 
-**Thank to Guillermo who has provided these changes in TCurlMailClass**
+NEW: TCurlClass methods:
+```
+SetUserAgent  PROCEDURE(STRING pUserAgent), CURLcode, PROC    !default user-agent: curl/7.61.0
+GetHandle     PROCEDURE(), CURL                               ! returns curl handle
+SetMimePost   PROCEDURE(TCurlMimeClass mime), CURLcode, PROC  !set post/send data from mime structure
+```
+NEW: TCurlMimeClass (libcurlmime.clw) implements new curl mime api.  
+NEW: MimePost example.  
 
 
 [Full version history](https://github.com/mikeduglas/libcurl/blob/master/history/changes.md)

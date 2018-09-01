@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.33
-!** 26.08.2018
+!** libcurl for Clarion v1.34
+!** 01.09.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -27,6 +27,17 @@ curl_slist                    GROUP, TYPE
 pdata                           LONG  !&CSTRING
 pnext                           LONG  !&curl_slist
                               END
+
+
+!/* Mime/form handling support. */
+!typedef struct curl_mime_s      curl_mime;      /* Mime context. */
+!typedef struct curl_mimepart_s  curl_mimepart;  /* Mime part context. */
+curl_mime                     EQUATE(LONG)
+curl_mimepart                 EQUATE(LONG)
+
+!/* Special size_t value signaling a zero-terminated string. */
+!#define CURL_ZERO_TERMINATED ((size_t) -1) 
+CURL_ZERO_TERMINATED          EQUATE(-1)
 
 
 CURLE                         EQUATE(CURLcode)
@@ -450,7 +461,13 @@ CURLAUTH_NONE                 EQUATE(0)
 CURLAUTH_BASIC                EQUATE(1)
 CURLAUTH_DIGEST               EQUATE(2)
 CURLAUTH_NEGOTIATE            EQUATE(4)
-
+CURLAUTH_NTLM                 EQUATE(8)
+CURLAUTH_DIGEST_IE            EQUATE(16)
+CURLAUTH_NTLM_WB              EQUATE(32)
+CURLAUTH_BEARER               EQUATE(64)
+CURLAUTH_ONLY                 EQUATE(080000000h)
+CURLAUTH_ANY                  EQUATE(0FFFFFFEFh)
+CURLAUTH_ANYSAFE              EQUATE(0FFFFFFEEh)
 
 CURL_SSLVERSION_ENUM          EQUATE(LONG)
 CURL_SSLVERSION_DEFAULT       EQUATE(0)
@@ -461,6 +478,13 @@ CURL_SSLVERSION_TLSv1_0       EQUATE(4)
 CURL_SSLVERSION_TLSv1_1       EQUATE(5)
 CURL_SSLVERSION_TLSv1_2       EQUATE(6)
 CURL_SSLVERSION_TLSv1_3       EQUATE(7)
+!CURL_SSLVERSION_MAX_xxx constants
+CURL_SSLVERSION_MAX_DEFAULT   EQUATE(010000h)  !CURL_SSLVERSION_TLSv1   << 16
+CURL_SSLVERSION_MAX_TLSv1_0   EQUATE(040000h)  !CURL_SSLVERSION_TLSv1_0 << 16
+CURL_SSLVERSION_MAX_TLSv1_1   EQUATE(050000h)  !CURL_SSLVERSION_TLSv1_1 << 16
+CURL_SSLVERSION_MAX_TLSv1_2   EQUATE(060000h)  !CURL_SSLVERSION_TLSv1_2 << 16
+CURL_SSLVERSION_MAX_TLSv1_3   EQUATE(070000h)  !CURL_SSLVERSION_TLSv1_3 << 16
+
 
 CURLOPT_SSLVERSION            EQUATE(32 + CURLOPTTYPE_LONG)             !What version to specifically try to use. 
 
@@ -521,6 +545,10 @@ CURLOPT_TCP_KEEPALIVE         EQUATE(213 + CURLOPTTYPE_LONG)          !Set TCP k
 ! CURLOPT_ENCODING
 CURLOPT_ACCEPT_ENCODING       EQUATE(102 + CURLOPTTYPE_STRINGPOINT)
 
+CURLOPT_REQUEST_TARGET        EQUATE(266 + CURLOPTTYPE_STRINGPOINT)     !The request target, instead of extracted from the URL
+CURLOPT_XOAUTH2_BEARER        EQUATE(220 + CURLOPTTYPE_STRINGPOINT)     !The XOAUTH2 bearer token
+CURLOPT_MIMEPOST              EQUATE(269 + CURLOPTTYPE_OBJECTPOINT)     !Post MIME data
+
 CURLOPT_FTP_ALTERNATIVE_TO_USER   EQUATE(147 + CURLOPTTYPE_STRINGPOINT) !Pointer to command string to send if USER/PASS fails.
 
 ! FTP Option that causes missing dirs to be created on the remote server.
@@ -574,6 +602,7 @@ CURLFINFOFLAG_KNOWN_GID       EQUATE(32)          !(1<<5)
 CURLFINFOFLAG_KNOWN_SIZE      EQUATE(64)          !(1<<6)
 CURLFINFOFLAG_KNOWN_HLINKCOUNT    EQUATE(128)         !(1<<7)
  
+
 
 !/* Content of this structure depends on information which is known and is
 !   achievable (e.g. by FTP LIST parsing). Please see the url_easy_setopt(3) man
@@ -717,6 +746,12 @@ filled                          LONG  !bytes written
 !   string matches the pattern, return CURL_FNMATCHFUNC_MATCH value, etc. */ 
     curl::FnMatchProc(LONG ptr, *CSTRING pattern, *CSTRING string), LONG, C, TYPE
 
+!int seekfunc(void *arg, curl_off_t offset, int origin); 
+    curl::SeekProcType(LONG arg, curl_off_t offset, LONG origin), LONG, C, TYPE
+
+!void freefunc(void *arg);
+    curl::FreeProcType(LONG arg), C, TYPE
+
     MODULE('libcurl')
       curl::DebugInfo(STRING s)
       curl::GetFileContents(STRING pFile), *STRING
@@ -819,6 +854,8 @@ Init                            PROCEDURE(), VIRTUAL
 Cleanup                         PROCEDURE(), VIRTUAL
 Reset                           PROCEDURE(), VIRTUAL
 
+GetHandle                       PROCEDURE(), CURL                  ! returns curl handle
+
 SetOpt                          PROCEDURE(CURLoption option, LONG param), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, *STRING param), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, *CSTRING param), CURLcode, PROC
@@ -894,6 +931,10 @@ PostQuote                       PROCEDURE(TCurlSList plist), CURLcode, PROC !cal
 SetDefaultProtocol              PROCEDURE(STRING pSchema), CURLcode, PROC
 SetPostFields                   PROCEDURE(STRING pPostFields), CURLcode, PROC
 SetPostFields                   PROCEDURE(*IDynStr pPostFields), CURLcode, PROC
+
+SetUserAgent                    PROCEDURE(STRING pUserAgent), CURLcode, PROC
+
+SetMimePost                     PROCEDURE(TCurlMimeClass mime), CURLcode, PROC  !set post/send data from mime structure
                               END
 
 !---------------------------- TCurlFtpClass -----------------------------!
@@ -1312,4 +1353,78 @@ Thumbnail                       PROCEDURE(STRING pPath, TDbxThumbnailFormat pFor
 DropboxResponse                 PROCEDURE(), STRING !- HTTP response
 CurlResponse                    PROCEDURE(), CURLcode
 !GetResponseCode                 PROCEDURE(), LONG  !- HTTP response code (defined in parent class)
+                              END
+
+
+!---------------------------- TCurlMimeClass ----------------------------!
+!https://curl.haxx.se/libcurl/c/allfuncs.html
+!see curl_mime_xxx functions
+
+TCurlMimeClass                CLASS, TYPE, MODULE('libcurlmime.clw'), LINK('libcurlmime.clw')
+mime                            curl_mime, PROTECTED
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), VIRTUAL
+
+!!!<summary>create a mime handle</summary>
+!!!<param name="curl">Curl instance</param>
+Init                            PROCEDURE(*TCurlClass curl), VIRTUAL
+
+!!!<summary>free a previously built mime structure</summary>
+Kill                            PROCEDURE(), VIRTUAL
+
+!!!<summary>returns this mime handle</summary>
+GetMime                         PROCEDURE(), curl_mime
+
+!!!<summary>creates and appends a new empty part to the given mime structure and returns a handle to it</summary>
+AddPart                         PROCEDURE(), curl_mimepart
+
+!!!<summary>set a mime part's body data from memory</summary>
+!!!<param name="pData">data bytes, those are copied to the part and their storage may safely be reused after call. </param>
+SetData                         PROCEDURE(curl_mimepart part, STRING pData), CURLcode, PROC
+
+!!!<summary>set a mime part's body data from a file contents.
+!!! As a side effect, the part's remote file name is set to the base name of the given filename if it is a valid named file. 
+!!! This can be undone or overridden by a subsequent call to SetFileName.
+!!!</summary>
+!!!<param name="pFileName">file's path name</param>
+SetFileData                     PROCEDURE(curl_mimepart part, STRING pFileName), CURLcode, PROC
+
+!!!<summary>set a mime part's name. This is the way HTTP form fields are named.</summary>
+!!!<param name="pName">a mime part's name</param>
+SetName                         PROCEDURE(curl_mimepart part, STRING pName), CURLcode, PROC
+
+!!!<summary>set a mime part's encoder and content transfer encoding.</summary>
+!!!<param name="pEncoding">encoding scheme. Supported encoding schemes are: 
+!!! "binary": the data is left unchanged, the header is added. 
+!!! "8bit": header added, no data change. 
+!!! "7bit": the data is unchanged, but is each byte is checked to be a 7-bit value; if not, a read error occurs.
+!!! "base64": Data is converted to base64 encoding, then split in CRLF-terminated lines of at most 76 characters. 
+!!! "quoted-printable": data is encoded in quoted printable lines of at most 76 characters. 
+!!!</param>
+SetEncoder                      PROCEDURE(curl_mimepart part, STRING pEncoding), CURLcode, PROC
+
+!!!<summary>set a mime part's content type.</summary>
+!!!<param name="pType">mime type</param>
+SetType                         PROCEDURE(curl_mimepart part, STRING pType), CURLcode, PROC
+
+!!!<summary>set a mime part's remote file name.
+!!! When remote file name is set, content data is processed as a file, whatever is the part's content source. 
+!!! A part's remote file name is transmitted to the server in the associated Content-Disposition generated header.
+!!!</summary>
+!!!<param name="pRemoteFileName">mime part's remote file name</param>
+SetFileName                     PROCEDURE(curl_mimepart part, STRING pRemoteFileName), CURLcode, PROC
+
+!!!<summary>set a mime part's custom headers.</summary>
+!!!<param name="headers">list of custom headers.</param>
+!!!<param name="take_ownership">when TRUE, causes the list to be freed upon replacement or mime structure deletion;
+!!! in this case the list must not be freed explicitly.</param>
+SetHeaders                      PROCEDURE(curl_mimepart part, TCurlSList headers, BOOL take_ownership = FALSE), CURLcode, PROC
+
+!!!<summary>sets a multipart mime part's content from a mime structure.
+!!! After SetSubparts succeeds, the mime structure handle belongs to the multipart part and must not be freed explicitly.
+!!! It may however be updated by subsequent calls to mime API functions.
+!!!</summary>
+!!!<param name="subparts">a mime class instance holding the subparts.</param>
+SetSubparts                     PROCEDURE(curl_mimepart part, TCurlMimeClass subparts), CURLcode, PROC
                               END

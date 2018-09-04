@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.34
-!** 01.09.2018
+!** libcurl for Clarion v1.35
+!** 04.09.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -143,9 +143,80 @@
       !                                       int take_ownership); 
       curl_mime_headers(curl_mimepart part, LONG headers, LONG take_ownership), CURLcode, C, RAW, NAME('curl_mime_headers')
     END
+
+    MODULE('WinAPI')
+      curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
+    END
+
+    !- callbacks
+    !https://curl.haxx.se/libcurl/c/curl_mime_data_cb.html
+    curl::MimeRead(LONG buffer, size_t bufsize, size_t nitems, LONG arg), size_t, C
+    curl::MimeSeek(LONG arg, curl_off_t offset, SIGNED origin), LONG, C
+    curl::MimeFree(LONG arg), C
+
   END
 
-!region static functions
+
+TMimeDataCtl                  CLASS, TYPE
+buffer                          LONG  !- ADDRESS(data to send)
+size                            UNSIGNED  !LIKE(curl_off_t)
+position                        UNSIGNED  !LIKE(curl_off_t)
+doDispose                       BOOL
+                              END
+
+!region callbacks
+curl::MimeRead                PROCEDURE(LONG buffer, size_t bufsize, size_t nitems, LONG arg)
+ptr                             &TMimeDataCtl
+sz                              UNSIGNED, AUTO  !LIKE(curl_off_t)
+  CODE
+  ptr &= (arg)
+  sz = ptr.size - ptr.position
+  nitems *= bufsize
+  IF sz > nitems
+    sz = nitems
+  END
+  IF sz
+    curl::memcpy(buffer, ptr.buffer + ptr.position, sz)
+  END
+  ptr.position += sz
+  RETURN sz
+  
+curl::MimeSeek                PROCEDURE(LONG arg, curl_off_t offset, SIGNED origin)
+ptr                             &TMimeDataCtl
+!- C constants for fseek/lseek functions
+C_SEEK_SET                      EQUATE(0)
+C_SEEK_CUR                      EQUATE(1)
+C_SEEK_END                      EQUATE(2)
+!- These are the return codes for the seek callbacks
+CURL_SEEKFUNC_OK                EQUATE(0)
+CURL_SEEKFUNC_FAIL              EQUATE(1) !- fail the entire transfer
+CURL_SEEKFUNC_CANTSEEK          EQUATE(2) !- tell libcurl seeking can't be done, so libcurl might try other means instead
+  CODE
+  ptr &= (arg)
+  CASE origin
+  OF C_SEEK_END
+!    offset += ptr.size
+    offset.lo += ptr.size
+  OF C_SEEK_CUR
+!    offset += ptr.position
+    offset.lo += ptr.position
+  END
+!  IF offset < 0
+  IF offset.lo < 0
+    RETURN CURL_SEEKFUNC_FAIL
+  END
+!  ptr.position = offset
+  ptr.position = offset.lo
+  RETURN CURL_SEEKFUNC_OK
+  
+curl::MimeFree                PROCEDURE(LONG arg)
+ptr                             &TMimeDataCtl
+  CODE
+  ptr &= (arg)
+  IF ptr.doDispose
+    DISPOSE(ptr)
+  END
+  
 !endregion
 
 !region TCurlMimeClass
@@ -236,4 +307,17 @@ TCurlMimeClass.SetSubparts    PROCEDURE(curl_mimepart part, TCurlMimeClass subpa
   CODE
   RETURN curl_mime_subparts(part, subparts.GetMime())
   
+TCurlMimeClass.SetDataCB      PROCEDURE(curl_mimepart part, CONST *STRING pHugeData, BOOL pDoDispose = FALSE)
+ptr                             &TMimeDataCtl
+size64                          LIKE(curl_off_t), AUTO
+  CODE
+  ptr &= NEW TMimeDataCtl
+  ptr.buffer = ADDRESS(pHugeData)
+  ptr.size = LEN(CLIP(pHugeData))
+  ptr.position = 0
+  ptr.doDispose = pDoDispose
+  !- fill curl_off_t (int64)
+  size64.lo = ptr.size
+  size64.hi = 0
+  RETURN curl_mime_data_cb(part, size64, curl::MimeRead, curl::MimeSeek, curl::MimeFree, ADDRESS(ptr))
 !endregion

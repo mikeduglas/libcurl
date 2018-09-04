@@ -30,6 +30,11 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.35
+
+- NEW: TCurlMimeClass.SetDataCB method sets a callback-based data source for a mime part's body.  
+- CHG: MimePost example now demonstrates both SetData and SetDataCB approaches.
+
 v1.34
 
 - CHG: Now uses libcurl v7.61.0, see [changelog](https://curl.haxx.se/changes.html) for details. Old binaries were moved to bin_v_7.52.1 subfolder.  

@@ -1,4 +1,8 @@
 ## Version history
+v1.35
+
+- NEW: TCurlMimeClass.SetDataCB method sets a callback-based data source for a mime part's body.  
+- CHG: MimePost example now demonstrates both SetData and SetDataCB approaches.
 
 v1.34
 

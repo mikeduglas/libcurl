@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.34
-!** 01.09.2018
+!** libcurl for Clarion v1.35
+!** 04.09.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -1373,14 +1373,14 @@ Init                            PROCEDURE(*TCurlClass curl), VIRTUAL
 !!!<summary>free a previously built mime structure</summary>
 Kill                            PROCEDURE(), VIRTUAL
 
-!!!<summary>returns this mime handle</summary>
+!!!<summary>returns this mime handle.</summary>
 GetMime                         PROCEDURE(), curl_mime
 
-!!!<summary>creates and appends a new empty part to the given mime structure and returns a handle to it</summary>
+!!!<summary>creates and appends a new empty part to the given mime structure and returns a handle to it.</summary>
 AddPart                         PROCEDURE(), curl_mimepart
 
 !!!<summary>set a mime part's body data from memory</summary>
-!!!<param name="pData">data bytes, those are copied to the part and their storage may safely be reused after call. </param>
+!!!<param name="pData">data bytes, those are copied to the part and their storage may safely be reused after call.</param>
 SetData                         PROCEDURE(curl_mimepart part, STRING pData), CURLcode, PROC
 
 !!!<summary>set a mime part's body data from a file contents.
@@ -1427,4 +1427,9 @@ SetHeaders                      PROCEDURE(curl_mimepart part, TCurlSList headers
 !!!</summary>
 !!!<param name="subparts">a mime class instance holding the subparts.</param>
 SetSubparts                     PROCEDURE(curl_mimepart part, TCurlMimeClass subparts), CURLcode, PROC
+
+!!!<summary>set a callback-based data source for a mime part's body.</summary>
+!!!<param name="pHugeData">pointer to the data bytes.</param>
+!!!<param name="pDoDispose">call DISPOSE(pHugeData) after the transfer terminates.</param>
+SetDataCB                       PROCEDURE(curl_mimepart part, CONST *STRING pHugeData, BOOL pDoDispose = FALSE), CURLcode, PROC
                               END

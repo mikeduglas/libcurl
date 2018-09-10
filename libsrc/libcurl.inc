@@ -1007,8 +1007,6 @@ bEncodeSubject                  BOOL, PRIVATE
 mailbody                        &STRING, PRIVATE
 mailaltbody                     &STRING, PRIVATE
 attachments                     &TCurlMailAttachments, PRIVATE
-boundary                        STRING(28), PRIVATE
-boundary2                       STRING(28), PRIVATE
 
 customHeaderLines               &TCurlMailHeaderLines, PRIVATE
 

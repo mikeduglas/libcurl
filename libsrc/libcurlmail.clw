@@ -594,9 +594,6 @@ TCurlMailClass.Construct      PROCEDURE()
 
   SELF.bodyContentType = 'text/plain'
   SELF.bodyCharset = 'UTF-8'
-  
-  SELF.boundary  = '001a11444b948e1888052560b246'
-  SELF.boundary2 = '002a11444b948e1888052560b246'
 
   SELF.customHeaderLines &= NEW TCurlMailHeaderLines
 

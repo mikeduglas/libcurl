@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.34
-!** 01.09.2018
+!** libcurl for Clarion v1.36
+!** 10.09.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -227,6 +227,11 @@ bRead                           BOOL
   END
 
   RETURN sData
+  
+curl::StrError                PROCEDURE(CURLcode errcode)
+  CODE
+  RETURN curl_easy_strerror(errcode)
+
 !!!endregion
   
 !!!region curl global functions

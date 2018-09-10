@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.35
-!** 04.09.2018
+!** libcurl for Clarion v1.36
+!** 10.09.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -156,11 +156,54 @@
 
   END
 
+!ENCODING_BUFFER_SIZE          EQUATE(256) !Encoding temp buffers size.
+!
+!!Content transfer encoder state.
+!mime_encoder_state            GROUP, TYPE
+!pos                             size_t    !Position on output line.
+!bufbeg                          size_t    !Next data index in input buffer.
+!bufend                          size_t    !First unused byte index in input buffer.
+!buf                             STRING(ENCODING_BUFFER_SIZE)  !Input buffer.
+!                              END
+!!A mime multipart.
+!curl_mime_s                   GROUP, TYPE
+!easy                            CURL      !The associated easy handle.
+!parentpart                      LONG      !Parent part.
+!firstpart                       LONG      !First part.
+!lastpart                        LONG      !last part.
+!boundary                        LONG      !The part boundary.
+!state                           LONG      !Current readback state.
+!                              END
+!!A mime part.
+!curl_mimepart_s               GROUP, TYPE
+!easy                            CURL      !The associated easy handle.
+!parentpart                      LONG      !Parent mime structure.
+!nextpart                        LONG      !Forward linked list.
+!kind                            LONG      !The part kind.
+!sdata                           LONG      !Memory data or file name.
+!readfunc                        LONG      !Read function.
+!seekfunc                        LONG      !Seek function.
+!freefunc                        LONG      !Argument free function.
+!arg                             LONG      !Argument to callback functions.
+!fp                              LONG      !File pointer.
+!curlheaders                     LONG      !Part headers.
+!userheaders                     LONG      !Part headers.
+!mimetype                        LONG      !Part mime type.
+!filename                        LONG      !Remote file name.
+!name                            LONG      !Data name.
+!datasize                        LIKE(curl_off_t)  !Expected data size.
+!flags                           UNSIGNED  !Flags.
+!state                           LONG      !Current readback state.
+!encoder                         LONG      !Content data encoder.
+!encstate                        LIKE(mime_encoder_state)  !Data encoder state.
+!                              END
+
+
 
 TMimeDataCtl                  CLASS, TYPE
-buffer                          LONG  !- ADDRESS(data to send)
-size                            UNSIGNED  !LIKE(curl_off_t)
-position                        UNSIGNED  !LIKE(curl_off_t)
+buffer                          LONG      !- ADDRESS(data to send)
+size                            UNSIGNED  !32bit, for 64bit use LIKE(curl_off_t)
+position                        UNSIGNED  !32bit, for 64bit use LIKE(curl_off_t)
 doDispose                       BOOL
                               END
 
@@ -211,9 +254,14 @@ CURL_SEEKFUNC_CANTSEEK          EQUATE(2) !- tell libcurl seeking can't be done,
   
 curl::MimeFree                PROCEDURE(LONG arg)
 ptr                             &TMimeDataCtl
+buffer                          &STRING
   CODE
-  ptr &= (arg)
-  IF ptr.doDispose
+  IF arg
+    ptr &= (arg)
+    IF ptr.doDispose AND ptr.buffer
+      buffer &= (ptr.buffer)
+      DISPOSE(buffer)
+    END
     DISPOSE(ptr)
   END
   

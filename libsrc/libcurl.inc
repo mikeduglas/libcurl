@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.35
-!** 04.09.2018
+!** libcurl for Clarion v1.36
+!** 10.09.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -777,6 +777,8 @@ filled                          LONG  !bytes written
 
       curl::GlobalInit(CURL_GLOBAL_ENUM pFlag = CURL_GLOBAL_DEFAULT), CURLcode, PROC 
       curl::GlobalCleanup()
+
+      curl::StrError(CURLcode errcode), STRING
     END
 
     ! CreateFile, WriteFile, CloseHandle etc
@@ -1027,6 +1029,7 @@ SetOptions                      PROCEDURE(), CURLcode, PROC, VIRTUAL, PROTECTED
 CreateHeader                    PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateBody                      PROCEDURE(*TCurlMailData mail), PRIVATE
 CreateAttachments               PROCEDURE(*TCurlMailData mail), PRIVATE
+
 HasInlineAttachments            PROCEDURE(), BOOL, PRIVATE
 
 Server                          PROCEDURE(STRING pServer, LONG pPort, <STRING pHelo>)     !smtp.gmail.com, 587
@@ -1432,4 +1435,6 @@ SetSubparts                     PROCEDURE(curl_mimepart part, TCurlMimeClass sub
 !!!<param name="pHugeData">pointer to the data bytes.</param>
 !!!<param name="pDoDispose">call DISPOSE(pHugeData) after the transfer terminates.</param>
 SetDataCB                       PROCEDURE(curl_mimepart part, CONST *STRING pHugeData, BOOL pDoDispose = FALSE), CURLcode, PROC
+
+
                               END

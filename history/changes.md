@@ -1,4 +1,10 @@
 ## Version history
+v1.36
+
+- NEW: curl::StrError(CURLcode errcode) static function returns  meaningful error message.  
+- FIX: TCurlMimeClass.SetDataCB(part,hugedata,TRUE) did not dispose allocated memory for hugedata.  
+- CHG: TCurlMailClass now uses curl mime api.  
+
 v1.35
 
 - NEW: TCurlMimeClass.SetDataCB method sets a callback-based data source for a mime part's body.  

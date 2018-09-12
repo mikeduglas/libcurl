@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.36
-!** 10.09.2018
+!** libcurl for Clarion v1.37
+!** 12.09.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -958,11 +958,12 @@ Name                            STRING(255)
                               END
 
 TSSHSettings                  GROUP, TYPE, PRE(TSSHSettings)
-AuthMethod                      CURLSSH_AUTH_ENUM
-PublicKeyFile                   STRING(256)
-PrivateKeyFile                  STRING(256)
-KnownHosts                      STRING(256)
-KeyPassword                     STRING(40)
+AuthMethod                      CURLSSH_AUTH_ENUM     !allowed SSH authentication methods
+PublicKeyFile                   STRING(256)           !Used by scp/sftp to do public/private key authentication
+PrivateKeyFile                  STRING(256)           !Used by scp/sftp to do public/private key authentication
+KnownHosts                      STRING(256)           !set the SSH knownhost file name to use
+KeyPassword                     STRING(40)            !password for the SSL or SSH private key
+PublicKeyMD5                    STRING(32)            !used by scp/sftp to verify the host's public key
                               END
 
 !*** Important ***!

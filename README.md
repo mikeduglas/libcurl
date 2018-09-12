@@ -30,6 +30,20 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.37
+
+- CHG: TCurlFtpClass: PublicKeyMD5 field was added to TSSHSettings group  
+```
+TSSHSettings                  GROUP, TYPE, PRE(TSSHSettings)
+AuthMethod                      CURLSSH_AUTH_ENUM     !allowed SSH authentication methods
+PublicKeyFile                   STRING(256)           !Used by scp/sftp to do public/private key authentication
+PrivateKeyFile                  STRING(256)           !Used by scp/sftp to do public/private key authentication
+KnownHosts                      STRING(256)           !set the SSH knownhost file name to use
+KeyPassword                     STRING(40)            !password for the SSL or SSH private key
+PublicKeyMD5                    STRING(32)            !used by scp/sftp to verify the host's public key
+                              END
+```
+
 v1.36
 
 - NEW: curl::StrError(CURLcode errcode) static function returns  meaningful error message.  

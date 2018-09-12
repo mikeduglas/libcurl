@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.34
-!** 01.09.2018
+!** libcurl for Clarion v1.37
+!** 12.09.2018
 !** mikeduglas66@gmail.com
 
 
@@ -233,6 +233,13 @@ res                             CURLcode, AUTO
   
   IF pSSH.KeyPassword
     res = SELF.SetOpt(CURLOPT_KEYPASSWD, pSSH.KeyPassword)
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+  
+  IF pSSH.PublicKeyMD5
+    res = SELF.SetOpt(CURLOPT_SSH_HOST_PUBLIC_KEY_MD5, pSSH.PublicKeyMD5)
     IF res <> CURLE_OK
       RETURN res
     END

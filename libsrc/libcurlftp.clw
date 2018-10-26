@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.37
-!** 12.09.2018
+!** libcurl for Clarion v1.38
+!** 26.10.2018
 !** mikeduglas66@gmail.com
 
 
@@ -200,6 +200,11 @@ iTime                           LONG, AUTO
 !!!endregion
  
 !!!region TCurlFtpClass
+TCurlFtpClass.Init            PROCEDURE()
+  CODE
+  PARENT.Init()
+  SELF.SetDefaultProtocol('ftp')
+  
 TCurlFtpClass.SSHAuth         PROCEDURE(TSSHSettings pSSH)
 res                             CURLcode, AUTO
   CODE

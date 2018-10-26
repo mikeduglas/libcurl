@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.36
-!** 10.09.2018
+!** libcurl for Clarion v1.38
+!** 26.10.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -610,6 +610,11 @@ TCurlMailClass.Destruct       PROCEDURE()
   DISPOSE(SELF.mailsubject)
   DISPOSE(SELF.mailto)
   
+TCurlMailClass.Init           PROCEDURE()
+  CODE
+  PARENT.Init()
+  SELF.SetDefaultProtocol('smtp')
+
 TCurlMailClass.Server         PROCEDURE(STRING pServer, LONG pPort, <STRING pHelo>)
   CODE
   IF NOT pHelo

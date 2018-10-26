@@ -30,6 +30,10 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.38
+- CHG: TCurlFtpClass uses 'ftp' default protocol; TCurlMailClass uses 'smtp' default protocol.
+
+
 v1.37
 
 - CHG: TCurlFtpClass: PublicKeyMD5 field was added to TSSHSettings group  

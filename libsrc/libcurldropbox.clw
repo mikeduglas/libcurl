@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.34
-!** 01.09.2018
+!** libcurl for Clarion v1.38
+!** 26.10.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -45,6 +45,7 @@ TCurlDropboxClass.Construct   PROCEDURE()
 
 TCurlDropboxClass.Destruct    PROCEDURE()
   CODE
+  SELF._response.Kill()
   DisposeDynStr(SELF._response)
     
 TCurlDropboxClass.AccessToken PROCEDURE(STRING pAccessToken)

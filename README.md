@@ -32,7 +32,7 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 ## Recent changes
 v1.38
 - CHG: TCurlFtpClass uses 'ftp' default protocol; TCurlMailClass uses 'smtp' default protocol.
-
+- FIX: possible memory leak in TCurlFtpClass and TCurlDropboxClass.
 
 v1.37
 

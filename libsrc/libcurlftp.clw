@@ -276,6 +276,8 @@ qIndex                          LONG, AUTO
   END
   
   ParseFullListResponse(ds.Str(), RespQ)
+  
+  ds.Kill()
   DisposeDynStr(ds)
   
   !http://superuser.com/questions/482763/what-do-different-things-mean-in-ftp-dir-output
@@ -355,6 +357,8 @@ res                             CURLcode, AUTO
   FREE(barelist)
 
   ParseBareListResponse(ds.Str(), barelist)
+  
+  ds.Kill()
   DisposeDynStr(ds)
   
   RETURN CURLE_OK

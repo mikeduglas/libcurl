@@ -1,4 +1,19 @@
 ## Version history
+v1.39
+
+- CHG: Now uses libcurl v7.61.1, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 7.61.1_8 was built and statically linked with
+> 
+> OpenSSL 1.1.1
+> brotli 1.0.7
+> libssh2 1.8.0
+> nghttp2 1.34.0
+> zlib 1.2.11
+
+v1.38
+- CHG: TCurlFtpClass uses 'ftp' default protocol; TCurlMailClass uses 'smtp' default protocol.
+- FIX: possible memory leak in TCurlFtpClass and TCurlDropboxClass.
+
 v1.37
 
 - CHG: TCurlFtpClass: PublicKeyMD5 field was added to TSSHSettings group  

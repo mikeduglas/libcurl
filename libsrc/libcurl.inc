@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.38
-!** 26.10.2018
+!** libcurl for Clarion v1.40
+!** 04.12.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -563,6 +563,11 @@ CURLFTP_CREATE_DIR            EQUATE(1) !(FTP/SFTP) if CWD (Change working direc
 CURLFTP_CREATE_DIR_RETRY      EQUATE(2) !(FTP only) if CWD fails, try MKD and then CWD again  even if MKD failed!
 CURLFTP_CREATE_DIR_LAST       EQUATE(4) !not an option, never use
           
+! Permission used when creating new files and directories on the remote
+! server for protocols that support it, SFTP/SCP/FILE
+CURLOPT_NEW_FILE_PERMS        EQUATE(159 + CURLOPTTYPE_LONG)  !The default value is 0644, but any valid value can be used.
+CURLOPT_NEW_DIRECTORY_PERMS   EQUATE(160 + CURLOPTTYPE_LONG)  !The default value is 0755, but any valid value can be used.
+
 !return codes for CURLOPT_CHUNK_BGN_FUNCTION
 CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)
 CURL_CHUNK_BGN_FUNC_FAIL      EQUATE(1)             !tell the lib to end the task

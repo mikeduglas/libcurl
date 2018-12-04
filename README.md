@@ -30,6 +30,12 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.40
+- NEW: added 2 options CURLOPT_NEW_FILE_PERMS and CURLOPT_NEW_DIRECTORY_PERMS:
+```
+Permission used when creating new files and directories on the remote server for protocols that support it, SFTP/SCP/FILE
+```
+
 v1.39
 
 - CHG: Now uses libcurl v7.61.1, see [changelog](https://curl.haxx.se/changes.html) for details.

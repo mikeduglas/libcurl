@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.40
-!** 04.12.2018
+!** libcurl for Clarion v1.41
+!** 07.12.2018
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -411,6 +411,11 @@ CURLOPT_MAIL_FROM             EQUATE(186 + CURLOPTTYPE_STRINGPOINT) !set the SMT
 CURLOPT_MAIL_RCPT             EQUATE(187 + CURLOPTTYPE_OBJECTPOINT) !set the list of SMTP mail receiver(s)
 CURLOPT_MAIL_AUTH             EQUATE(217 + CURLOPTTYPE_OBJECTPOINT) !set the SMTP auth originator
 
+! Provide defines for really old option names
+CURLOPT_FILE                  EQUATE(CURLOPT_WRITEDATA)
+CURLOPT_INFILE                EQUATE(CURLOPT_READDATA)
+CURLOPT_WRITEHEADER           EQUATE(CURLOPT_HEADERDATA)
+
 !  /* If the CURLOPT_INFILE is used, this can be used to inform libcurl about
 !  * how large the file being sent really is. That allows better error
 !  * checking and better verifies that the upload was successful. -1 means
@@ -421,7 +426,10 @@ CURLOPT_MAIL_AUTH             EQUATE(217 + CURLOPTTYPE_OBJECTPOINT) !set the SMT
 !  * sizes to handle larger files.  See below for INFILESIZE_LARGE.
 !  */
 CURLOPT_INFILESIZE            EQUATE(14 + CURLOPTTYPE_LONG)
- 
+
+! Pass a long set to 1 to get the date of the requested document (if possible)! Pass a zero to shut it off.
+CURLOPT_FILETIME              EQUATE(69 + CURLOPTTYPE_LONG)
+
 !  /* Set this to a bitmask value to enable the particular authentications
 !     methods you like. Use this in combination with CURLOPT_USERPWD.
 !     Note that setting multiple bits may cause extra network round-trips. */
@@ -923,6 +931,7 @@ SetCAInfo                       PROCEDURE(STRING pCert), CURLcode, PROC
 SetSSLVersion                   PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion), CURLcode, PROC
 
 GetInfo                         PROCEDURE(CURLINFO info, *LONG value), CURLcode, PROC
+GetInfo                         PROCEDURE(CURLINFO info, *REAL value), CURLcode, PROC
 GetInfo::LONG                   PROCEDURE(CURLINFO info), LONG
 GetInfo::SLIST                  PROCEDURE(CURLINFO info), LONG
 GetInfo::STRING                 PROCEDURE(CURLINFO info), STRING

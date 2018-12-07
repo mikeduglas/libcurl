@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.36
-!** 10.09.2018
+!** libcurl for Clarion v1.41
+!** 07.12.2018
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -37,6 +37,7 @@
 !CURL_EXTERN CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ...); 
       curl_easy_getinfo(CURL curl, CURLINFO info, LONG arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
       curl_easy_getinfo(CURL curl, CURLINFO info, *CSTRING arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
+      curl_easy_getinfo(CURL curl, CURLINFO info, *REAL arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
 
       curl_easy_init(), CURL, C, RAW, NAME('curl_easy_init')
 
@@ -1139,6 +1140,17 @@ res                             CURLcode, AUTO
   END
   
   RETURN res
+
+TCurlClass.GetInfo            PROCEDURE(CURLINFO info, *REAL value)
+refval                          REAL, AUTO
+res                             CURLcode, AUTO
+  CODE
+  res = curl_easy_getinfo(SELF.curl, info, refval)
+  IF res = CURLE_OK
+    value = refval
+  END
+  
+  RETURN res
   
 TCurlClass.GetInfo::LONG      PROCEDURE(CURLINFO info)
 lVal                            LONG, AUTO
@@ -1160,19 +1172,19 @@ sVal                            &CSTRING
   CODE
   ASSERT(BAND(info, CURLINFO_TYPEMASK) = CURLINFO_STRING)
   IF SELF.GetInfo(info, lVal) = CURLE_OK
-    sVal &= (lVal)
-    RETURN CLIP(sVal)
+    IF lVal
+      sVal &= (lVal)
+      RETURN CLIP(sVal)
+    END
   END
   
   RETURN ''
 
 TCurlClass.GetInfo::DOUBLE    PROCEDURE(CURLINFO info)
-lVal                            LONG, AUTO
-rVal                            &REAL
+rVal                            REAL
   CODE
   ASSERT(BAND(info, CURLINFO_TYPEMASK) = CURLINFO_DOUBLE)
-  IF SELF.GetInfo(info, lVal) = CURLE_OK
-    rVal &= (lVal)
+  IF SELF.GetInfo(info, rVal) = CURLE_OK
     RETURN rVal
   END
   
@@ -1189,16 +1201,6 @@ res                             CURLcode, AUTO
   
   RETURN ''
   
-!TCurlClass.GetResponseCode    PROCEDURE()
-!respcode                        LONG
-!res                             CURLcode, AUTO
-!  CODE
-!  res = curl_easy_getinfo(SELF.curl, CURLINFO_RESPONSE_CODE, ADDRESS(respcode))
-!  IF res = CURLE_OK
-!    RETURN respcode
-!  END
-!  
-!  RETURN 0
 TCurlClass.GetResponseCode    PROCEDURE()
   CODE
   RETURN SELF.GetInfo::LONG(CURLINFO_RESPONSE_CODE)

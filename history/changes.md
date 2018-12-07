@@ -1,4 +1,8 @@
 ## Version history
+v1.41
+- NEW: CURLOPT_FILETIME, CURLOPT_FILE, CURLOPT_INFILE, CURLOPT_WRITEHEADER options.
+- FIX: TCurlClass.GetInfo::DOUBLE() method called curl_easy_getinfo() with wrong parameters. 
+
 v1.40
 - NEW: added 2 options CURLOPT_NEW_FILE_PERMS and CURLOPT_NEW_DIRECTORY_PERMS:
 ```

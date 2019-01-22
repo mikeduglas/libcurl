@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.41
-!** 07.12.2018
+!** libcurl for Clarion v1.42
+!** 22.01.2019
 !** mikeduglas66@gmail.com
 
   INCLUDE('DynStr.inc'), ONCE
@@ -791,6 +791,11 @@ filled                          LONG  !bytes written
       curl::GlobalInit(CURL_GLOBAL_ENUM pFlag = CURL_GLOBAL_DEFAULT), CURLcode, PROC 
       curl::GlobalCleanup()
 
+      ! Provided for de-allocation in the same translation unit that did the
+      ! allocation. Added in libcurl 7.10
+      curl::free(LONG p)
+      curl::free(*CSTRING p)
+
       curl::StrError(CURLcode errcode), STRING
     END
 
@@ -1452,6 +1457,72 @@ SetSubparts                     PROCEDURE(curl_mimepart part, TCurlMimeClass sub
 !!!<param name="pHugeData">pointer to the data bytes.</param>
 !!!<param name="pDoDispose">call DISPOSE(pHugeData) after the transfer terminates.</param>
 SetDataCB                       PROCEDURE(curl_mimepart part, CONST *STRING pHugeData, BOOL pDoDispose = FALSE), CURLcode, PROC
+                              END
+
+!---------------------------- TCurlUrlApiClass ----------------------------!
+!https://github.com/curl/curl/wiki/URL-API
+
+!the error codes for the URL API
+CURLUcode                     EQUATE(LONG)
+                              ITEMIZE
+CURLUE_OK                       EQUATE(0)
+CURLUE_BAD_HANDLE               EQUATE(1)
+CURLUE_BAD_PARTPOINTER          EQUATE(2)
+CURLUE_MALFORMED_INPUT          EQUATE(3)
+CURLUE_BAD_PORT_NUMBER          EQUATE(4)
+CURLUE_UNSUPPORTED_SCHEME       EQUATE(5)
+CURLUE_URLDECODE                EQUATE(6)
+CURLUE_OUT_OF_MEMORY            EQUATE(7)
+CURLUE_USER_NOT_ALLOWED         EQUATE(8)
+CURLUE_UNKNOWN_PART             EQUATE(9)
+CURLUE_NO_SCHEME                EQUATE(10)
+CURLUE_NO_USER                  EQUATE(11)
+CURLUE_NO_PASSWORD              EQUATE(12)
+CURLUE_NO_OPTIONS               EQUATE(13)
+CURLUE_NO_HOST                  EQUATE(14)
+CURLUE_NO_PORT                  EQUATE(15)
+CURLUE_NO_QUERY                 EQUATE(16)
+CURLUE_NO_FRAGMENT              EQUATE(17)
+                              END
 
 
+CURLUPart                     EQUATE(LONG)
+                              ITEMIZE(0)
+CURLUPART_URL                   EQUATE
+CURLUPART_SCHEME                EQUATE
+CURLUPART_USER                  EQUATE
+CURLUPART_PASSWORD              EQUATE
+CURLUPART_OPTIONS               EQUATE
+CURLUPART_HOST                  EQUATE
+CURLUPART_PORT                  EQUATE
+CURLUPART_PATH                  EQUATE
+CURLUPART_QUERY                 EQUATE
+CURLUPART_FRAGMENT              EQUATE
+                              END
+
+CURLU_DEFAULT_PORT            EQUATE(0b)          !return default port number
+CURLU_NO_DEFAULT_PORT         EQUATE(10b)         !act as if no port number was set, if the port number matches the default for the scheme
+CURLU_DEFAULT_SCHEME          EQUATE(100b)        !return default scheme if missing
+CURLU_NON_SUPPORT_SCHEME      EQUATE(1000b)       !allow non-supported scheme
+CURLU_PATH_AS_IS              EQUATE(10000b)      !leave dot sequences
+CURLU_DISALLOW_USER           EQUATE(100000b)     !no user+password allowed
+CURLU_URLDECODE               EQUATE(1000000b)    !URL decode on get
+CURLU_URLENCODE               EQUATE(10000000b)   !URL encode on set
+CURLU_APPENDQUERY             EQUATE(100000000b)  !append a form style part
+CURLU_GUESS_SCHEME            EQUATE(1000000000b) !legacy curl-style guessing
+
+
+CURLU                         EQUATE(LONG)
+
+TCurlUrlApiClass              CLASS, TYPE, MODULE('libcurlurl.clw'), LINK('libcurlurl.clw')
+urlp                            CURLU, PRIVATE
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), VIRTUAL
+
+Init                            PROCEDURE()
+Cleanup                         PROCEDURE()
+Dup                             PROCEDURE(TCurlUrlApiClass src)
+GetPart                         PROCEDURE(CURLUPart what, *STRING part, UNSIGNED flags = 0), CURLUcode, PROC
+SetPart                         PROCEDURE(CURLUPart what, STRING part, UNSIGNED flags = 0), CURLUcode, PROC
                               END

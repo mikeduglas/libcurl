@@ -1,4 +1,16 @@
 ## Version history
+v1.42
+- CHG: Now uses libcurl v7.63.0, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 7.63.0 was built and statically linked with
+> 
+> * OpenSSL 1.1.1a
+> * brotli 1.0.7
+> * libssh2 1.8.0
+> * nghttp2 1.35.1
+> * zlib 1.2.11
+- NEW: TCurlUrlApiClass supports new [URL API](https://github.com/curl/curl/wiki/URL-API).
+- NEW: URL API example.
+
 v1.41
 - NEW: CURLOPT_FILETIME, CURLOPT_FILE, CURLOPT_INFILE, CURLOPT_WRITEHEADER options.
 - FIX: TCurlClass.GetInfo::DOUBLE() method called curl_easy_getinfo() with wrong parameters. 

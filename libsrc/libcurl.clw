@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.41
-!** 07.12.2018
+!** libcurl for Clarion v1.42
+!** 22.01.2019
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -124,7 +124,13 @@
 
 
 !      curl_formget @17
+
 !      curl_free @18
+      ! Provided for de-allocation in the same translation unit that did the
+      ! allocation. Added in libcurl 7.10
+      curl_free(LONG p), C, RAW, NAME('curl_free')
+      curl_free(*CSTRING p), C, RAW, NAME('curl_free')
+
 !      curl_getdate @19
 !      curl_getenv @20
 
@@ -243,6 +249,15 @@ curl::GlobalInit              PROCEDURE(CURL_GLOBAL_ENUM pFlag = CURL_GLOBAL_DEF
 curl::GlobalCleanup           PROCEDURE()
   CODE
   curl_global_cleanup()
+!!!endregion
+  
+curl::free                    PROCEDURE(LONG p)
+  CODE
+  curl_free(p)
+  
+curl::free                    PROCEDURE(*CSTRING p)
+  CODE
+  curl_free(p)
 
 !!!endregion
 

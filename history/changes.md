@@ -2,6 +2,13 @@
 V1.43
 - FIX: TCurlFtpClass.LoadDir and TCurlFtpClass.LoadDirListOnly did not dispose IDynStr instance if SendRequest failed.
 - CHG: Now uses libcurl v7.65.3, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 7.65.3 was built and statically linked with
+> 
+> * OpenSSL 1.1.1c
+> * brotli 1.0.7
+> * libssh2 1.9.0
+> * nghttp2 1.39.1
+> * zlib 1.2.11
 
 v1.42
 - CHG: Now uses libcurl v7.63.0, see [changelog](https://curl.haxx.se/changes.html) for details.

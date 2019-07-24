@@ -1,4 +1,8 @@
 ## Version history
+V1.43
+- FIX: TCurlFtpClass.LoadDir and TCurlFtpClass.LoadDirListOnly did not dispose IDynStr instance if SendRequest failed.
+- CHG: Now uses libcurl v7.65.3, see [changelog](https://curl.haxx.se/changes.html) for details.
+
 v1.42
 - CHG: Now uses libcurl v7.63.0, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 7.63.0 was built and statically linked with

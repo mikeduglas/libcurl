@@ -30,6 +30,10 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.43
+- FIX: TCurlFtpClass.LoadDir and TCurlFtpClass.LoadDirListOnly did not dispose IDynStr instance if SendRequest failed.
+- CHG: Now uses libcurl v7.65.3, see [changelog](https://curl.haxx.se/changes.html) for details.
+
 v1.42
 - CHG: Now uses libcurl v7.63.0, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 7.63.0 was built and statically linked with
@@ -51,47 +55,6 @@ v1.40
 ```
 Permission used when creating new files and directories on the remote server for protocols that support it, SFTP/SCP/FILE
 ```
-
-v1.39
-
-- CHG: Now uses libcurl v7.61.1, see [changelog](https://curl.haxx.se/changes.html) for details.
-> curl 7.61.1_8 was built and statically linked with
-> 
-> * OpenSSL 1.1.1
-> * brotli 1.0.7
-> * libssh2 1.8.0
-> * nghttp2 1.34.0
-> * zlib 1.2.11
-
-v1.38
-- CHG: TCurlFtpClass uses 'ftp' default protocol; TCurlMailClass uses 'smtp' default protocol.
-- FIX: possible memory leak in TCurlFtpClass and TCurlDropboxClass.
-
-v1.37
-
-- CHG: TCurlFtpClass: PublicKeyMD5 field was added to TSSHSettings group  
-```
-TSSHSettings                  GROUP, TYPE, PRE(TSSHSettings)
-AuthMethod                      CURLSSH_AUTH_ENUM     !allowed SSH authentication methods
-PublicKeyFile                   STRING(256)           !Used by scp/sftp to do public/private key authentication
-PrivateKeyFile                  STRING(256)           !Used by scp/sftp to do public/private key authentication
-KnownHosts                      STRING(256)           !set the SSH knownhost file name to use
-KeyPassword                     STRING(40)            !password for the SSL or SSH private key
-PublicKeyMD5                    STRING(32)            !used by scp/sftp to verify the host's public key
-                              END
-```
-
-v1.36
-
-- NEW: curl::StrError(CURLcode errcode) static function returns  meaningful error message.  
-- FIX: TCurlMimeClass.SetDataCB(part,hugedata,TRUE) did not dispose allocated memory for hugedata.  
-- CHG: TCurlMailClass now internally uses curl mime api.  
-- CHG: TCurlMailClass allows both '\\' and '/' in attached file names.  
-
-v1.35
-
-- NEW: TCurlMimeClass.SetDataCB method sets a callback-based data source for a mime part's body.  
-- CHG: MimePost example now demonstrates both SetData and SetDataCB approaches.
 
 
 [Full version history](https://github.com/mikeduglas/libcurl/blob/master/history/changes.md)

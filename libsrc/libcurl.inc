@@ -1,6 +1,9 @@
-!** libcurl for Clarion v1.42
-!** 22.01.2019
+!** libcurl for Clarion v1.43
+!** 24.07.2019
 !** mikeduglas66@gmail.com
+
+!** TODO: implement CURLOPT_TRAILERFUNCTION, CURLOPT_TRAILERDATA
+
 
   INCLUDE('DynStr.inc'), ONCE
 
@@ -234,9 +237,11 @@ CURLUSESSL_LAST                 EQUATE    !/* not an option, never use */
 CURLoption                    EQUATE(LONG)
 CURLOPTTYPE_LONG              EQUATE(0)
 CURLOPTTYPE_OBJECTPOINT       EQUATE(10000)
-CURLOPTTYPE_STRINGPOINT       EQUATE(CURLOPTTYPE_OBJECTPOINT) !STRINGPOINT is an alias for OBJECTPOINT to allow tools to extract the string options from the header file
 CURLOPTTYPE_FUNCTIONPOINT     EQUATE(20000)
 CURLOPTTYPE_OFF_T             EQUATE(30000)
+!/* handy aliases that make no run-time difference */
+CURLOPTTYPE_STRINGPOINT       EQUATE(CURLOPTTYPE_OBJECTPOINT) !STRINGPOINT is an alias for OBJECTPOINT to allow tools to extract the string options from the header file
+CURLOPTTYPE_SLISTPOINT        EQUATE(CURLOPTTYPE_OBJECTPOINT) !STRINGPOINT is an alias for OBJECTPOINT to allow tools to extract the slist options from the header file
 
 CURLOPT_URL                   EQUATE(2 + CURLOPTTYPE_STRINGPOINT)       !The full URL to get/put
 CURLOPT_PORT                  EQUATE(3 + CURLOPTTYPE_LONG)              !Port number to connect to, if other than default
@@ -292,10 +297,10 @@ CURLOPT_ISSUERCERT            EQUATE(170 + CURLOPTTYPE_STRINGPOINT)     !Issuer 
 
 CURLOPT_KEYPASSWD             EQUATE(26 + CURLOPTTYPE_STRINGPOINT)      !password for the SSL or SSH private key
 
-CURLOPT_QUOTE                 EQUATE(28 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of QUOTE commands
+CURLOPT_QUOTE                 EQUATE(28 + CURLOPTTYPE_SLISTPOINT)       !send linked-list of QUOTE commands
 CURLOPT_HEADERDATA            EQUATE(29 + CURLOPTTYPE_OBJECTPOINT)      !send FILE * or void * to store headers to, if you use a callback it is simply passed to the callback unmodified
-CURLOPT_PREQUOTE              EQUATE(93 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of pre-transfer QUOTE commands
-CURLOPT_POSTQUOTE             EQUATE(39 + CURLOPTTYPE_OBJECTPOINT)      !send linked-list of post-transfer QUOTE commands
+CURLOPT_PREQUOTE              EQUATE(93 + CURLOPTTYPE_SLISTPOINT)       !send linked-list of pre-transfer QUOTE commands
+CURLOPT_POSTQUOTE             EQUATE(39 + CURLOPTTYPE_SLISTPOINT)       !send linked-list of post-transfer QUOTE commands
 
 CURLOPT_DEBUGFUNCTION         EQUATE(94 + CURLOPTTYPE_FUNCTIONPOINT)    !set the debug function
 CURLOPT_DEBUGDATA             EQUATE(95 + CURLOPTTYPE_OBJECTPOINT)      !set the data for the debug function
@@ -340,7 +345,7 @@ CURLOPT_SSH_KNOWNHOSTS        EQUATE(183 + CURLOPTTYPE_STRINGPOINT)     !set the
 CURLOPT_SSH_KEYFUNCTION       EQUATE(184 + CURLOPTTYPE_FUNCTIONPOINT)   !set the SSH host key callback, must point to a curl_sshkeycallback function
 CURLOPT_SSH_KEYDATA           EQUATE(185 + CURLOPTTYPE_OBJECTPOINT)     !set the SSH host key callback custom pointer
 
-CURLOPT_HTTPHEADER            EQUATE(23 + CURLOPTTYPE_OBJECTPOINT)      !This points to a linked list of headers, struct curl_slist kind. This list is also used for RTSP (in spite of its name)
+CURLOPT_HTTPHEADER            EQUATE(23 + CURLOPTTYPE_SLISTPOINT)       !This points to a linked list of headers, struct curl_slist kind. This list is also used for RTSP (in spite of its name)
 CURLOPT_HTTPGET               EQUATE(80 + CURLOPTTYPE_LONG)             !Set this to force the HTTP request to get back to GET. Only really usable if POST, PUT or a custom request have been used first.
 
 CURLOPT_HTTP_VERSION          EQUATE(84 + CURLOPTTYPE_LONG)             !Specify which HTTP version to use! This must be set to one of the CURL_HTTP_VERSION* enums set below.
@@ -408,7 +413,7 @@ CURLOPT_PROXYPASSWORD         EQUATE(176 + CURLOPTTYPE_STRINGPOINT)
 CURLOPT_NOPROXY               EQUATE(177 + CURLOPTTYPE_STRINGPOINT)
 
 CURLOPT_MAIL_FROM             EQUATE(186 + CURLOPTTYPE_STRINGPOINT) !set the SMTP mail originator
-CURLOPT_MAIL_RCPT             EQUATE(187 + CURLOPTTYPE_OBJECTPOINT) !set the list of SMTP mail receiver(s)
+CURLOPT_MAIL_RCPT             EQUATE(187 + CURLOPTTYPE_SLISTPOINT)  !set the list of SMTP mail receiver(s)
 CURLOPT_MAIL_AUTH             EQUATE(217 + CURLOPTTYPE_OBJECTPOINT) !set the SMTP auth originator
 
 ! Provide defines for really old option names

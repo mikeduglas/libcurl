@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.38
-!** 26.10.2018
+!** libcurl for Clarion v1.43
+!** 24.07.2019
 !** mikeduglas66@gmail.com
 
 
@@ -264,6 +264,8 @@ DirItem                         GROUP(TFtpDirListItem), PRE(DirItem)
                                 END
 qIndex                          LONG, AUTO
   CODE
+  FREE(dirlist)
+  
   res = SELF.SetOpt(CURLOPT_FTPLISTONLY, 0)
   IF res <> CURLE_OK
     RETURN res
@@ -271,14 +273,16 @@ qIndex                          LONG, AUTO
 
   ds &= NewDynStr()
   res = SELF.SendRequest(pUrl, ds)
-  IF res <> CURLE_OK
-    RETURN res
+  IF res = CURLE_OK
+    ParseFullListResponse(ds.Str(), RespQ)
   END
-  
-  ParseFullListResponse(ds.Str(), RespQ)
   
   ds.Kill()
   DisposeDynStr(ds)
+  
+  IF res <> CURLE_OK
+    RETURN res
+  END
   
   !http://superuser.com/questions/482763/what-do-different-things-mean-in-ftp-dir-output
   
@@ -294,8 +298,6 @@ qIndex                          LONG, AUTO
   !The 2 here is the number of _immediate_ subdirectories it has plus its parent directory and itself. 
   !So in this case it suggests directory Andrew has no subdirectories. 
 
-  FREE(dirlist)
-  
   LOOP qIndex = 1 TO RECORDS(RespQ)
     GET(RespQ, qIndex)
     ParseFullListItem(RespQ.Item, DirItem)
@@ -343,6 +345,8 @@ TCurlFtpClass.LoadDirListOnly PROCEDURE(STRING pUrl, *TFtpDirList barelist)
 ds                              &IDynStr
 res                             CURLcode, AUTO
   CODE
+  FREE(barelist)
+
   res = SELF.SetOpt(CURLOPT_FTPLISTONLY, 1)
   IF res <> CURLE_OK
     RETURN res
@@ -350,18 +354,14 @@ res                             CURLcode, AUTO
 
   ds &= NewDynStr()
   res = SELF.SendRequest(pUrl, ds)
-  IF res <> CURLE_OK
-    RETURN res
+  IF res = CURLE_OK
+    ParseBareListResponse(ds.Str(), barelist)
   END
-
-  FREE(barelist)
-
-  ParseBareListResponse(ds.Str(), barelist)
   
   ds.Kill()
   DisposeDynStr(ds)
   
-  RETURN CURLE_OK
+  RETURN res
   
 !pUrl is ftp://user@95.96.97.98, pFilename is /home/files/testfile.txt
 TCurlFtpClass.DeleteFile      PROCEDURE(STRING pUrl, STRING pFilename)

@@ -1,5 +1,9 @@
 ## Version history
-V1.43
+v1.44
+- NEW: TCurlMultiClass: Enables multiple simultaneous transfers in the same thread without making it complicated for the application.
+- NEW: 10-at-a-time example: Download many files in parallel, in the same thread. 
+  
+v1.43
 - FIX: TCurlFtpClass.LoadDir and TCurlFtpClass.LoadDirListOnly did not dispose IDynStr instance if SendRequest failed.
 - CHG: Now uses libcurl v7.65.3, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 7.65.3 was built and statically linked with

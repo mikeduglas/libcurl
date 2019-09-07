@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.43
-!** 24.07.2019
+!** libcurl for Clarion v1.44
+!** 07.09.2019
 !** mikeduglas66@gmail.com
 
 !** TODO: implement CURLOPT_TRAILERFUNCTION, CURLOPT_TRAILERDATA
@@ -19,7 +19,6 @@ hi                              LONG
 curl_off_t                    EQUATE(TLONGLONG)
 
 CURLcode                      EQUATE(LONG)
-
 
 !/* linked-list structure for the CURLOPT_QUOTE option (and other) */
 !struct curl_slist {
@@ -146,6 +145,7 @@ CURLE_SSL_INVALIDCERTSTATUS   EQUATE(91)  !invalid certificate status
 CURLE_HTTP2_STREAM            EQUATE(92)  !stream error in HTTP/2 framing layer
 
 !CURL_LAST /* never use! */ 
+
 
 CURLINFO_STRING               EQUATE(0100000h)
 CURLINFO_LONG                 EQUATE(0200000h)
@@ -581,6 +581,9 @@ CURLFTP_CREATE_DIR_LAST       EQUATE(4) !not an option, never use
 CURLOPT_NEW_FILE_PERMS        EQUATE(159 + CURLOPTTYPE_LONG)  !The default value is 0644, but any valid value can be used.
 CURLOPT_NEW_DIRECTORY_PERMS   EQUATE(160 + CURLOPTTYPE_LONG)  !The default value is 0755, but any valid value can be used.
 
+CURLOPT_PRIVATE               EQUATE(103 + CURLOPTTYPE_OBJECTPOINT) !Set pointer to private data
+
+
 !return codes for CURLOPT_CHUNK_BGN_FUNCTION
 CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)
 CURL_CHUNK_BGN_FUNC_FAIL      EQUATE(1)             !tell the lib to end the task
@@ -803,6 +806,7 @@ filled                          LONG  !bytes written
 
       curl::StrError(CURLcode errcode), STRING
     END
+
 
     ! CreateFile, WriteFile, CloseHandle etc
 !    INCLUDE('svapifnc.inc')
@@ -1530,4 +1534,143 @@ Cleanup                         PROCEDURE()
 Dup                             PROCEDURE(TCurlUrlApiClass src)
 GetPart                         PROCEDURE(CURLUPart what, *STRING part, UNSIGNED flags = 0), CURLUcode, PROC
 SetPart                         PROCEDURE(CURLUPart what, STRING part, UNSIGNED flags = 0), CURLUcode, PROC
+                              END
+
+
+!---------------------------- multi interface ----------------------------!
+
+CURLM                         EQUATE(LONG)
+
+CURLMcode                     EQUATE(LONG)
+CURLMcodeEnum                 ITEMIZE
+CURLM_CALL_MULTI_PERFORM        EQUATE(-1)  !/* please call curl_multi_perform() or curl_multi_socket*() soon */
+CURLM_OK                        EQUATE
+CURLM_BAD_HANDLE                EQUATE      !/* the passed-in handle is not a valid CURLM handle */
+CURLM_BAD_EASY_HANDLE           EQUATE      !/* an easy handle was not good/valid */
+CURLM_OUT_OF_MEMORY             EQUATE      !/* if you ever get this, you're in deep sh*t */
+CURLM_INTERNAL_ERROR            EQUATE      !/* this is a libcurl bug */
+CURLM_BAD_SOCKET                EQUATE      !/* the passed in socket argument did not match */
+CURLM_UNKNOWN_OPTION            EQUATE      !/* curl_multi_setopt() with unsupported option */
+CURLM_ADDED_ALREADY             EQUATE      !/* an easy handle already added to a multi handle was attempted to get added - again */
+CURLM_RECURSIVE_API_CALL        EQUATE      !/* an api function was called from inside a callback */ 
+                              END
+
+  MAP
+    MODULE('libcurlmulti')
+      curlm::StrError(CURLMcode errcode), STRING
+    END
+  END
+
+!/* just to make code nicer when using curl_multi_socket() you can now check
+!   for CURLM_CALL_MULTI_SOCKET too in the same style it works for
+!   curl_multi_perform() and CURLM_CALL_MULTI_PERFORM */ 
+CURLM_CALL_MULTI_SOCKET       EQUATE(CURLM_CALL_MULTI_PERFORM)
+
+!/* bitmask bits for CURLMOPT_PIPELINING */
+CURLPIPE_NOTHING              EQUATE(0)
+CURLPIPE_HTTP1                EQUATE(1)
+CURLPIPE_MULTIPLEX            EQUATE(2)
+ 
+
+CURLMSG                       EQUATE(LONG)
+CURLMSGenum                   ITEMIZE
+CURLMSG_NONE                    EQUATE(0) !/* first, not used */ 
+CURLMSG_DONE                    EQUATE    !/* This easy handle has completed. 'result' contains the CURLcode of the transfer */
+CURLMSG_LAST                    EQUATE    !/* last, not used */
+                              END
+
+TCURLMsg                      GROUP, TYPE
+msg                             CURLMSG   !/* what this message means */
+easy_handle                     CURL      !/* the handle it concerns */ 
+whatever                        LONG      !/* message-specific data */
+result                          CURLcode, OVER(whatever)  !/* return code for transfer */ 
+                              END
+
+!/* Based on poll(2) structure and values.
+! * We don't use pollfd and POLL* constants explicitly
+! * to cover platforms without poll(). */
+CURL_WAIT_POLLIN              EQUATE(0001h)
+CURL_WAIT_POLLPRI             EQUATE(0002h)
+CURL_WAIT_POLLOUT             EQUATE(0004h)
+
+CURLMoption                   EQUATE(LONG)
+
+!/* This is the socket callback function pointer */
+CURLMOPT_SOCKETFUNCTION       EQUATE(1 + CURLOPTTYPE_FUNCTIONPOINT)
+
+!/* This is the argument passed to the socket callback */
+CURLMOPT_SOCKETDATA           EQUATE(2 + CURLOPTTYPE_OBJECTPOINT)
+
+!/* set to 1 to enable pipelining for this multi handle */
+CURLMOPT_PIPELINING           EQUATE(3 +  CURLOPTTYPE_LONG)
+
+!/* This is the timer callback function pointer */
+CURLMOPT_TIMERFUNCTION        EQUATE(4 +  CURLOPTTYPE_FUNCTIONPOINT)
+
+!/* This is the argument passed to the timer callback */
+CURLMOPT_TIMERDATA            EQUATE(5 + CURLOPTTYPE_OBJECTPOINT)
+
+!/* maximum number of entries in the connection cache */
+CURLMOPT_MAXCONNECTS          EQUATE(6 + CURLOPTTYPE_LONG)
+
+!/* maximum number of (pipelining) connections to one host */
+CURLMOPT_MAX_HOST_CONNECTIONS EQUATE(7 + CURLOPTTYPE_LONG)
+
+!/* maximum number of requests in a pipeline */
+CURLMOPT_MAX_PIPELINE_LENGTH  EQUATE(8 + CURLOPTTYPE_LONG)
+
+!/* a connection with a content-length longer than this will not be considered for pipelining */
+CURLMOPT_CONTENT_LENGTH_PENALTY_SIZE  EQUATE(9 + CURLOPTTYPE_OFF_T)
+
+!/* a connection with a chunk length longer than this will not be considered for pipelining */
+CURLMOPT_CHUNK_LENGTH_PENALTY_SIZE    EQUATE(10 + CURLOPTTYPE_OFF_T)
+
+!/* a list of site names(+port) that are blacklisted from pipelining */
+CURLMOPT_PIPELINING_SITE_BL   EQUATE(11 + CURLOPTTYPE_OBJECTPOINT)
+
+!/* a list of server types that are blacklisted from pipelining */
+CURLMOPT_PIPELINING_SERVER_BL EQUATE(12 + CURLOPTTYPE_OBJECTPOINT)
+
+!/* maximum number of open connections in total */
+CURLMOPT_MAX_TOTAL_CONNECTIONS    EQUATE(13 + CURLOPTTYPE_LONG)
+
+!/* This is the server push callback function pointer */
+CURLMOPT_PUSHFUNCTION         EQUATE(14 + CURLOPTTYPE_FUNCTIONPOINT)
+
+!/* This is the argument passed to the server push callback */
+CURLMOPT_PUSHDATA             EQUATE(15 + CURLOPTTYPE_OBJECTPOINT)
+
+TCurlInstances                QUEUE, TYPE
+ce                              &TCurlClass
+eh                              CURL
+                              END
+
+
+TCurlMultiClass               CLASS, TYPE, MODULE('libcurlmulti.clw'), LINK('libcurlmulti.clw')
+handle                          CURLM, PROTECTED
+list                            &TCurlInstances, PROTECTED
+lasterr                         CURLMcode
+
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), VIRTUAL
+
+Init                            PROCEDURE(), VIRTUAL
+Cleanup                         PROCEDURE(), VIRTUAL
+
+GetHandle                       PROCEDURE(), CURLM                 ! returns curl handle
+
+SetOpt                          PROCEDURE(CURLMoption option, LONG param), CURLMcode, PROC
+SetOpt                          PROCEDURE(CURLMoption option, *STRING param), CURLMcode, PROC
+SetOpt                          PROCEDURE(CURLMoption option, *CSTRING param), CURLMcode, PROC
+
+Add                             PROCEDURE(), *TCurlClass, PROC, VIRTUAL
+Remove                          PROCEDURE(CURL eh), CURLMcode, PROC, VIRTUAL
+
+Perform                         PROCEDURE(), LONG
+Wait                            PROCEDURE(LONG timeout_ms), CURLMcode, PROC
+
+ReadInfo                        PROCEDURE(*TCURLMsg pMsg, <*LONG msgs_in_queue>), BOOL, PROC
+Find                            PROCEDURE(CURL eh), *TCurlClass
+
+StrError                        PROCEDURE(CURLMcode errcode), STRING, VIRTUAL
                               END

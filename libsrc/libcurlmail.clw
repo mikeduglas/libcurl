@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.38
-!** 26.10.2018
+!** libcurl for Clarion v1.44
+!** 07.09.2019
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -777,7 +777,19 @@ res                             CURLcode, AUTO
   IF res <> CURLE_OK
     RETURN res
   END
-
+!  IF SELF.username
+!    res = SELF.SetOpt(CURLOPT_USERNAME, SELF.username)
+!    IF res <> CURLE_OK
+!      RETURN res
+!    END
+!  END
+!  IF SELF.pwd
+!    res = SELF.SetOpt(CURLOPT_PASSWORD, SELF.pwd)
+!    IF res <> CURLE_OK
+!      RETURN res
+!    END
+!  END
+  
   res = SELF.SetOpt(CURLOPT_MAXREDIRS, 50)
   IF res <> CURLE_OK
     RETURN res

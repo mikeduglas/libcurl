@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.42
-!** 22.01.2019
+!** libcurl for Clarion v1.44
+!** 07.09.2019
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -275,7 +275,7 @@ bytesWritten                    size_t
   
   ! create file
   IF NOT fs.CreateFile()
-    curl::DebugInfo('CreateFile('& fs.GetFileName() &' error')
+    curl::DebugInfo('CreateFile('& fs.GetFileName() &') error')
     RETURN -1
   END
   
@@ -283,7 +283,8 @@ bytesWritten                    size_t
     RETURN bytesWritten
   END
   
-  curl::DebugInfo('WriteFile('& fs.GetFileName() &' error')
+  curl::DebugInfo('WriteFile('& fs.GetFileName() &') error '& winapi::GetLastError())
+  
   RETURN -1 !error
   
 curl::FileRead                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
@@ -306,7 +307,7 @@ bytesRead                       size_t
     RETURN bytesRead
   END
   
-  curl::DebugInfo('ReadFile('& fs.GetFileName() &' error')
+  curl::DebugInfo('ReadFile('& fs.GetFileName() &' error '& winapi::GetLastError())
   RETURN -1 !error
 
 curl::StringWrite             PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pStringStruct)

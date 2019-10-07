@@ -1,0 +1,18 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+# Clarion 2.1.0.2447
+Project("{12B76EC0-1D7B-4FA7-A7D0-C524288B48A1}") = "google_translate_lite", "google_translate_lite.cwproj", "{270D30A3-140B-4442-A3B7-44D53DA27B74}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{270D30A3-140B-4442-A3B7-44D53DA27B74}.Debug|Win32.Build.0 = Debug|Win32
+		{270D30A3-140B-4442-A3B7-44D53DA27B74}.Debug|Win32.ActiveCfg = Debug|Win32
+		{270D30A3-140B-4442-A3B7-44D53DA27B74}.Release|Win32.Build.0 = Release|Win32
+		{270D30A3-140B-4442-A3B7-44D53DA27B74}.Release|Win32.ActiveCfg = Release|Win32
+	EndGlobalSection
+EndGlobal

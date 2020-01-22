@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.43
-!** 24.07.2019
+!** libcurl for Clarion v1.45
+!** 22.01.2020
 !** mikeduglas66@gmail.com
 
 
@@ -375,7 +375,7 @@ res                             CURLcode, AUTO
     szcmd = 'rm '
   END
   
-  ftpcmd.Append(szcmd & CLIP(pFilename))
+  ftpcmd.AppendData(szcmd & CLIP(pFilename))
   res = SELF.SetQuote(ftpcmd)  
   IF res <> CURLE_OK
     RETURN res
@@ -412,7 +412,7 @@ res                             CURLcode, AUTO
     szcmd = 'mkdir '
   END
   
-  ftpcmd.Append(szcmd & CLIP(pDirname))
+  ftpcmd.AppendData(szcmd & CLIP(pDirname))
   res = SELF.SetQuote(ftpcmd)  
   IF res <> CURLE_OK
     RETURN res
@@ -454,10 +454,10 @@ ftpcmd                          TCurlSList
 res                             CURLcode, AUTO
   CODE
   IF SELF.AuthMethod = CURLSSH_AUTH_NONE
-    ftpcmd.Append('RNFR '& CLIP(pOldname))
-    ftpcmd.Append('RNTO '& CLIP(pNewname))
+    ftpcmd.AppendData('RNFR '& CLIP(pOldname))
+    ftpcmd.AppendData('RNTO '& CLIP(pNewname))
   ELSE
-    ftpcmd.Append('rename '& CLIP(pOldname) &' '& CLIP(pNewname))
+    ftpcmd.AppendData('rename '& CLIP(pOldname) &' '& CLIP(pNewname))
   END
 
 !  res = SELF.SetQuote(ftpcmd)  
@@ -478,10 +478,10 @@ ftpcmd                          TCurlSList
 res                             CURLcode, AUTO
   CODE
   IF SELF.AuthMethod = CURLSSH_AUTH_NONE
-    ftpcmd.Append('RNFR '& CLIP(pOldname))
-    ftpcmd.Append('RNTO '& CLIP(pNewname))
+    ftpcmd.AppendData('RNFR '& CLIP(pOldname))
+    ftpcmd.AppendData('RNTO '& CLIP(pNewname))
   ELSE
-    ftpcmd.Append('rmdir '& CLIP(pOldname) &' '& CLIP(pNewname))
+    ftpcmd.AppendData('rmdir '& CLIP(pOldname) &' '& CLIP(pNewname))
   END
   
 !  res = SELF.SetQuote(ftpcmd)  

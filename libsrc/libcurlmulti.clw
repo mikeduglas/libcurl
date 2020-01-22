@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.44
-!** 07.09.2019
+!** libcurl for Clarion v1.45
+!** 22.01.2020
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -91,7 +91,7 @@ TCurlMultiClass.SetOpt        PROCEDURE(CURLMoption option, *CSTRING param)
   ReportError(SELF.lasterr)
   RETURN SELF.lasterr
 
-TCurlMultiClass.Add           PROCEDURE()
+TCurlMultiClass.AddCurl       PROCEDURE()
 ce                              &TCurlClass
   CODE
   ce &= NEW TCurlClass

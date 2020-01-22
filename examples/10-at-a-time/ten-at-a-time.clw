@@ -232,7 +232,7 @@ ce                              &TCurlClass
   CODE
   GET(q, i)
   IF NOT ERRORCODE()
-    ce &= cm.Add()
+    ce &= cm.AddCurl()
     IF NOT ce &= NULL
       ce.SetUrl(q.url)
       ce.SetSSLVerifyHost(FALSE)

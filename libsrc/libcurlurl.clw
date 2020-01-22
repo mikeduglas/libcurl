@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.42
-!** 22.01.2019
+!** libcurl for Clarion v1.45
+!** 22.01.2020
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -71,7 +71,7 @@ TCurlUrlApiClass.Cleanup      PROCEDURE()
     SELF.urlp = 0
   END
 
-TCurlUrlApiClass.Dup          PROCEDURE(TCurlUrlApiClass src)
+TCurlUrlApiClass.Clone        PROCEDURE(TCurlUrlApiClass src)
   CODE
   SELF.Cleanup()
   SELF.urlp = curl_url_dup(src.urlp)

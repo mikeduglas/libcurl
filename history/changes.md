@@ -1,4 +1,10 @@
 ## Version history
+v1.45
+- FIX: changed some method names to avoid "Redefine system intrinsic" compiler warnings and related "No matching prototype available" compiler errors in C6.3:
+  - TCurlSList.Append renamed to TCurlSList.AppendData
+  - TCurlUrlApiClass.Dup renamed to TCurlUrlApiClass.Clone
+  - TCurlMultiClass.Add renamed to TCurlMultiClass.AddCurl
+
 v1.44
 - NEW: TCurlMultiClass: Enables multiple simultaneous transfers in the same thread without making it complicated for the application.
 - NEW: 10-at-a-time example: Download many files in parallel, in the same thread. 

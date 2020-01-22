@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.44
-!** 07.09.2019
+!** libcurl for Clarion v1.45
+!** 22.01.2020
 !** mikeduglas66@gmail.com
 
 !** TODO: implement CURLOPT_TRAILERFUNCTION, CURLOPT_TRAILERDATA
@@ -840,7 +840,7 @@ Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), VIRTUAL
 
 AssignPtr                       PROCEDURE(LONG pListPtr)
-Append                          PROCEDURE(STRING pData)
+AppendData                      PROCEDURE(STRING pData)
 Free                            PROCEDURE()
 GetList                         PROCEDURE(), LONG
 GetQueue                        PROCEDURE(*TCurlSQueue pQ)
@@ -1531,7 +1531,7 @@ Destruct                        PROCEDURE(), VIRTUAL
 
 Init                            PROCEDURE()
 Cleanup                         PROCEDURE()
-Dup                             PROCEDURE(TCurlUrlApiClass src)
+Clone                           PROCEDURE(TCurlUrlApiClass src)
 GetPart                         PROCEDURE(CURLUPart what, *STRING part, UNSIGNED flags = 0), CURLUcode, PROC
 SetPart                         PROCEDURE(CURLUPart what, STRING part, UNSIGNED flags = 0), CURLUcode, PROC
                               END
@@ -1663,7 +1663,7 @@ SetOpt                          PROCEDURE(CURLMoption option, LONG param), CURLM
 SetOpt                          PROCEDURE(CURLMoption option, *STRING param), CURLMcode, PROC
 SetOpt                          PROCEDURE(CURLMoption option, *CSTRING param), CURLMcode, PROC
 
-Add                             PROCEDURE(), *TCurlClass, PROC, VIRTUAL
+AddCurl                         PROCEDURE(), *TCurlClass, PROC, VIRTUAL
 Remove                          PROCEDURE(CURL eh), CURLMcode, PROC, VIRTUAL
 
 Perform                         PROCEDURE(), LONG

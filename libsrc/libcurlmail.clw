@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.44
-!** 07.09.2019
+!** libcurl for Clarion v1.45
+!** 22.01.2020
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -635,7 +635,7 @@ TCurlMailClass.From           PROCEDURE(STRING pFrom)
 TCurlMailClass.AddRecipient   PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING pBCC>)
   CODE
   IF pRecipient
-    SELF.mailto.Append(ExtractMailAddress(pRecipient))
+    SELF.mailto.AppendData(ExtractMailAddress(pRecipient))
       
     IF SELF.ToStr
       SELF.ToStr = CLIP(SELF.ToStr) &';'
@@ -644,7 +644,7 @@ TCurlMailClass.AddRecipient   PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING
   END
   
   IF pCC
-    SELF.mailto.Append(ExtractMailAddress(pCC))
+    SELF.mailto.AppendData(ExtractMailAddress(pCC))
   
     IF SELF.CCStr
       SELF.CCStr = CLIP(SELF.CCStr) &';'
@@ -653,7 +653,7 @@ TCurlMailClass.AddRecipient   PROCEDURE(STRING pRecipient, <STRING pCC>, <STRING
   END
   
   IF pBCC
-    SELF.mailto.Append(ExtractMailAddress(pBCC))
+    SELF.mailto.AppendData(ExtractMailAddress(pBCC))
  
     IF SELF.BCCStr
       SELF.BCCStr = CLIP(SELF.BCCStr) &';'
@@ -875,7 +875,7 @@ mimeHeaders                     TCurlSList
   part = mail.mime.AddPart()
   mail.mime.SetSubparts(part, mail.alt)
   mail.alt.SetType(part, 'multipart/alternative')
-  mimeHeaders.Append('Content-Disposition: inline')
+  mimeHeaders.AppendData('Content-Disposition: inline')
   mail.alt.SetHeaders(part, mimeHeaders, TRUE) !dispose slist when mime will be destoyed
   mimeHeaders.AssignPtr(0)  !don't dispose slist right now
 
@@ -926,8 +926,8 @@ filedata                            &STRING
         END
         
         !- set part's headers
-        fileHeaders.Append('Content-Disposition: render')
-        fileHeaders.Append('Content-ID:<' & SELF.attachments.cid & '>')
+        fileHeaders.AppendData('Content-Disposition: render')
+        fileHeaders.AppendData('Content-ID:<' & SELF.attachments.cid & '>')
         mail.rel.SetHeaders(part, fileHeaders, TRUE) !inner slist will be destroyed by mime itself
         fileHeaders.AssignPtr(0)  !next Append will create new slist
 

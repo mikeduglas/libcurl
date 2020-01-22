@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.44
-!** 07.09.2019
+!** libcurl for Clarion v1.45
+!** 22.01.2020
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -551,7 +551,7 @@ TCurlSList.AssignPtr          PROCEDURE(LONG pListPtr)
   CODE
   SELF.plist = pListPtr
   
-TCurlSList.Append             PROCEDURE(STRING pData)
+TCurlSList.AppendData         PROCEDURE(STRING pData)
 szData                          CSTRING(LEN(pData) + 1)
   CODE
   szData = pData
@@ -1096,7 +1096,7 @@ TCurlClass.TalkCallback       PROCEDURE(CURL_INFOTYPE ptype, STRING ptext)
   
 TCurlClass.AddHttpHeader      PROCEDURE(STRING pHeader)
   CODE
-  SELF.headers.Append(pHeader)
+  SELF.headers.AppendData(pHeader)
   
 TCurlClass.FreeHttpHeaders    PROCEDURE()
   CODE

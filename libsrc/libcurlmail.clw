@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.45
-!** 22.01.2020
+!** libcurl for Clarion v1.46
+!** 23.04.2020
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -8,7 +9,6 @@
 
   MAP
     MODULE('WinAPI')
-      curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
       winapi::GetLocalTime(LONG lpSystemTime), PASCAL, NAME('GetLocalTime')
       winapi::GetTimeZoneInformation(LONG lpTimeZoneInformation), ULONG, PROC, PASCAL, NAME('GetTimeZoneInformation')
     END

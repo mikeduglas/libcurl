@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.36
-!** 10.09.2018
+!** libcurl for Clarion v1.46
+!** 23.04.2020
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -142,10 +143,6 @@
       !                                       struct curl_slist *headers,
       !                                       int take_ownership); 
       curl_mime_headers(curl_mimepart part, LONG headers, LONG take_ownership), CURLcode, C, RAW, NAME('curl_mime_headers')
-    END
-
-    MODULE('WinAPI')
-      curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
     END
 
     !- callbacks

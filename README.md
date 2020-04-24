@@ -30,12 +30,18 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.46
+- FIX: TCurlClass.GetContentType() returned invalid data.
+- NEW: CURLOPT_HEADERFUNCTION option
+- NEW: TCurlClass.SetHeaderCallback method enables a callback that receives header data.
+- NEW: TCurlClass.HeaderCallback(STRING headerLine) virtual method to store headers.
+- CHG: default UserAgent changed to 'curl/7.65.3'
+
 v1.45
 - FIX: changed some method names to avoid "Redefine system intrinsic" compiler warnings and related "No matching prototype available" compiler errors in C6.3:
   - TCurlSList.Append renamed to TCurlSList.AppendData
   - TCurlUrlApiClass.Dup renamed to TCurlUrlApiClass.Clone
   - TCurlMultiClass.Add renamed to TCurlMultiClass.AddCurl
-
 
 v1.44
 - NEW: TCurlMultiClass: Enables multiple simultaneous transfers in the same thread without making it complicated for the application.
@@ -52,27 +58,5 @@ v1.43
 > * nghttp2 1.39.1
 > * zlib 1.2.11
   
-v1.42
-- CHG: Now uses libcurl v7.63.0, see [changelog](https://curl.haxx.se/changes.html) for details.
-> curl 7.63.0 was built and statically linked with
-> 
-> * OpenSSL 1.1.1a
-> * brotli 1.0.7
-> * libssh2 1.8.0
-> * nghttp2 1.35.1
-> * zlib 1.2.11
-- NEW: TCurlUrlApiClass supports new [URL API](https://github.com/curl/curl/wiki/URL-API).
-- NEW: URL API example.
-  
-v1.41
-- NEW: CURLOPT_FILETIME, CURLOPT_FILE, CURLOPT_INFILE, CURLOPT_WRITEHEADER options.
-- FIX: TCurlClass.GetInfo::DOUBLE() method called curl_easy_getinfo() with wrong parameters. 
-  
-v1.40
-- NEW: added 2 options CURLOPT_NEW_FILE_PERMS and CURLOPT_NEW_DIRECTORY_PERMS:
-```
-Permission used when creating new files and directories on the remote server for protocols that support it, SFTP/SCP/FILE
-```
-
 
 [Full version history](https://github.com/mikeduglas/libcurl/blob/master/history/changes.md)

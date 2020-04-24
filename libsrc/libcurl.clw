@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.45
-!** 22.01.2020
+!** libcurl for Clarion v1.46
+!** 23.04.2020
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -195,13 +196,12 @@
 
     MODULE('WinAPI')
       curl::OutputDebugString(*CSTRING lpOutputString), PASCAL, RAW, NAME('OutputDebugStringA')
-      curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
 !      curl::realloc(LONG lpmemblock,LONG size), LONG, PROC, NAME('_realloc')
     END
 
   END
 
-curl::UserAgent               CSTRING('curl/7.61.0')
+curl::UserAgent               CSTRING('curl/7.65.3')
 
 !!!region static functions
 curl::DebugInfo               PROCEDURE(STRING s)
@@ -461,6 +461,23 @@ fs                              &TCurlFileStruct
   END
   
   RETURN CURL_CHUNK_END_FUNC_OK
+
+curl::HeaderCallback          PROCEDURE(LONG buffer, size_t bufsize, size_t nitems, LONG userptr)
+curl                            &TCurlClass
+hdrSize                         LONG, AUTO
+hdrLine                         &STRING
+  CODE
+  hdrSize = bufsize*nitems
+  
+  IF userptr
+    curl &= (userptr)
+    hdrLine &= NEW STRING(hdrSize)
+    curl::memcpy(ADDRESS(hdrLine), buffer, hdrSize)
+    curl.HeaderCallback(hdrLine)
+    DISPOSE(hdrLine)
+  END
+    
+  RETURN hdrSize
   
 !!!endregion
 
@@ -629,7 +646,8 @@ TCurlClass.Construct          PROCEDURE()
 TCurlClass.Destruct           PROCEDURE()
   CODE
   SELF.Cleanup()
-  DISPOSE(SELF.Errors)
+
+  DISPOSE(SELF.headers)
   DISPOSE(SELF.headers)
   
 TCurlClass.Init               PROCEDURE()
@@ -844,6 +862,25 @@ res                             CURLcode, AUTO
     RETURN res
   END
     
+  RETURN CURLE_OK
+
+TCurlClass.SetHeaderCallback  PROCEDURE(<curl::HeaderProcType headerproc>)
+res                             CURLcode, AUTO
+  CODE
+  IF OMITTED(headerproc)
+    res = SELF.SetOpt(CURLOPT_HEADERFUNCTION, curl::HeaderCallback)
+  ELSE
+    res = SELF.SetOpt(CURLOPT_HEADERFUNCTION, headerproc)
+  END
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.SetOpt(CURLOPT_HEADERDATA, ADDRESS(SELF))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
   RETURN CURLE_OK
 
 TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
@@ -1093,7 +1130,10 @@ TCurlClass.DebugCallback      PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, ST
   
 TCurlClass.TalkCallback       PROCEDURE(CURL_INFOTYPE ptype, STRING ptext)
   CODE
-  
+    
+TCurlClass.HeaderCallback     PROCEDURE(STRING pHeaderLine)
+  CODE
+
 TCurlClass.AddHttpHeader      PROCEDURE(STRING pHeader)
   CODE
   SELF.headers.AppendData(pHeader)
@@ -1207,15 +1247,8 @@ rVal                            REAL
   RETURN 0.0
 
 TCurlClass.GetContentType     PROCEDURE()
-szct                            CSTRING(256)
-res                             CURLcode, AUTO
   CODE
-  res = curl_easy_getinfo(SELF.curl, CURLINFO_CONTENT_TYPE, szct)
-  IF res = CURLE_OK
-    RETURN szct
-  END
-  
-  RETURN ''
+  RETURN SELF.GetInfo::STRING(CURLINFO_CONTENT_TYPE)
   
 TCurlClass.GetResponseCode    PROCEDURE()
   CODE

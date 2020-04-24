@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.45
-!** 22.01.2020
+!** libcurl for Clarion v1.46
+!** 23.04.2020
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
 !** TODO: implement CURLOPT_TRAILERFUNCTION, CURLOPT_TRAILERDATA
@@ -298,7 +299,12 @@ CURLOPT_ISSUERCERT            EQUATE(170 + CURLOPTTYPE_STRINGPOINT)     !Issuer 
 CURLOPT_KEYPASSWD             EQUATE(26 + CURLOPTTYPE_STRINGPOINT)      !password for the SSL or SSH private key
 
 CURLOPT_QUOTE                 EQUATE(28 + CURLOPTTYPE_SLISTPOINT)       !send linked-list of QUOTE commands
+
+!  /* Function that will be called to store headers (instead of fwrite). The
+!   * parameters will use fwrite() syntax, make sure to follow them. */
+CURLOPT_HEADERFUNCTION        EQUATE(79 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_HEADERDATA            EQUATE(29 + CURLOPTTYPE_OBJECTPOINT)      !send FILE * or void * to store headers to, if you use a callback it is simply passed to the callback unmodified
+
 CURLOPT_PREQUOTE              EQUATE(93 + CURLOPTTYPE_SLISTPOINT)       !send linked-list of pre-transfer QUOTE commands
 CURLOPT_POSTQUOTE             EQUATE(39 + CURLOPTTYPE_SLISTPOINT)       !send linked-list of post-transfer QUOTE commands
 
@@ -773,6 +779,8 @@ filled                          LONG  !bytes written
 !void freefunc(void *arg);
     curl::FreeProcType(LONG arg), C, TYPE
 
+    curl::HeaderProcType(LONG buffer, size_t bufsize, size_t nitems, LONG userptr), size_t, C, TYPE
+
     MODULE('libcurl')
       curl::DebugInfo(STRING s)
       curl::GetFileContents(STRING pFile), *STRING
@@ -793,6 +801,7 @@ filled                          LONG  !bytes written
       curl::ChunkEndCallback(LONG ptr), LONG, C
       !curl_fnmatch_callback
 !      curl::FnMatchCallback(LONG ptr, *CSTRING pattern, *CSTRING string), LONG, C
+      curl::HeaderCallback(LONG buffer, size_t bufsize, size_t nitems, LONG userptr), size_t, C
 
       curl::DynStrWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pDynStr), size_t, C
 
@@ -826,6 +835,8 @@ filled                          LONG  !bytes written
         long lpMultiByteStr, long cbMultiByte, long lpDefaultChar, |
         long lpUsedDefaultChar),long,pascal,name('WideCharToMultiByte')
       winapi::ShellExecute(LONG phWnd, <*CSTRING pAction>, *CSTRING pFilename, <*CSTRING pParameters>, <*CSTRING pDirectory>, LONG pFlags=1), LONG, PASCAL, RAW, PROC, NAME('ShellExecuteA')
+
+      curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
     END
   END
 
@@ -875,6 +886,7 @@ SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG
 SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC
 SetXFerCallback                 PROCEDURE(<curl::ProgressDataProcType xferproc>), CURLcode, PROC
 SetDebugCallback                PROCEDURE(curl::DebugProcType debugproc), CURLcode, PROC
+SetHeaderCallback               PROCEDURE(<curl::HeaderProcType headerproc>), CURLcode, PROC
 
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), VIRTUAL
@@ -928,6 +940,8 @@ XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal
 !derive Debug to display debug info
 DebugCallback                   PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext), VIRTUAL
 TalkCallback                    PROCEDURE(CURL_INFOTYPE ptype, STRING ptext), VIRTUAL
+
+HeaderCallback                  PROCEDURE(STRING pHeaderLine), VIRTUAL
 
 AddHttpHeader                   PROCEDURE(STRING pHeader)
 FreeHttpHeaders                 PROCEDURE()

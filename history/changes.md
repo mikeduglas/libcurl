@@ -1,4 +1,11 @@
 ## Version history
+v1.46
+- FIX: TCurlClass.GetContentType() returned invalid data.
+- NEW: CURLOPT_HEADERFUNCTION option
+- NEW: TCurlClass.SetHeaderCallback method enables a callback that receives header data.
+- NEW: TCurlClass.HeaderCallback(STRING headerLine) virtual method to store headers.
+- CHG: default UserAgent changed to 'curl/7.65.3'
+
 v1.45
 - FIX: changed some method names to avoid "Redefine system intrinsic" compiler warnings and related "No matching prototype available" compiler errors in C6.3:
   - TCurlSList.Append renamed to TCurlSList.AppendData

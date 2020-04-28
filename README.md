@@ -30,6 +30,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.47
+- FIX: in TCurlHttpClass.FollowLocation() "pContentLength" parameter was removed. Add http header "Content-Length: 0" explicitly if it is required.
+
 v1.46
 - FIX: TCurlClass.GetContentType() returned invalid data.
 - NEW: CURLOPT_HEADERFUNCTION option

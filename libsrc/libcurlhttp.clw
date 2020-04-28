@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.34
-!** 01.09.2018
+!** libcurl for Clarion v1.47
+!** 27.04.2020
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -19,12 +20,16 @@ TCurlHttpClass.Destruct       PROCEDURE()
   CODE
   SELF.FormFree()
   
-TCurlHttpClass.FollowLocation PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0)
+!TCurlHttpClass.FollowLocation PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0)
+!  CODE
+!  IF pFollowLocation
+!    SELF.AddHttpHeader('Content-Length: '& pContentLength) !curl bug: "http error 411 (Length required)"; explicit 0 fixes this
+!    SELF.SetHttpHeaders()
+!  END
+!  
+!  RETURN SELF.SetOpt(CURLOPT_FOLLOWLOCATION, pFollowLocation)
+TCurlHttpClass.FollowLocation PROCEDURE(BOOL pFollowLocation = TRUE)
   CODE
-  IF pFollowLocation
-    SELF.AddHttpHeader('Content-Length: '& pContentLength) !curl bug: "http error 411 (Length required)"; explicit 0 fixes this
-  END
-  
   RETURN SELF.SetOpt(CURLOPT_FOLLOWLOCATION, pFollowLocation)
 
 TCurlHttpClass.MaxRedirs      PROCEDURE(LONG pValue)

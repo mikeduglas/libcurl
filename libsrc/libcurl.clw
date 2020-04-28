@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.46
-!** 23.04.2020
+!** libcurl for Clarion v1.47
+!** 27.04.2020
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1148,11 +1148,11 @@ TCurlClass.SetHttpHeaders     PROCEDURE()
   RETURN SELF.SetOpt(CURLOPT_HTTPHEADER, SELF.headers)
   
 TCurlClass.SetCustomRequest   PROCEDURE(STRING pCustomRequest)
-szreq                           CSTRING(LEN(pCustomRequest) + 1)
+szVerb                          CSTRING(LEN(CLIP(pCustomRequest)) + 1)
   CODE
   IF pCustomRequest
-    szreq = CLIP(pCustomRequest)
-    RETURN SELF.SetOpt(CURLOPT_CUSTOMREQUEST, ADDRESS(szreq))
+    szVerb = CLIP(pCustomRequest)
+    RETURN SELF.SetOpt(CURLOPT_CUSTOMREQUEST, ADDRESS(szVerb))
   END
   
   RETURN CURLE_OK

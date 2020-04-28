@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.46
-!** 23.04.2020
+!** libcurl for Clarion v1.47
+!** 27.04.2020
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1261,7 +1261,8 @@ postend                         LONG, PROTECTED
 
 Destruct                        PROCEDURE(), DERIVED
 
-FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
+!FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
+FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
 MaxRedirs                       PROCEDURE(LONG pValue), CURLcode, PROC
 GetRedirectUrl                  PROCEDURE(), STRING !if CURLOPT_FOLLOWLOCATION set to 1
 

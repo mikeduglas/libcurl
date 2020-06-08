@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.47
-!** 27.04.2020
+!** libcurl for Clarion v1.48
+!** 08.06.2020
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -239,6 +239,13 @@ curl::StrError                PROCEDURE(CURLcode errcode)
   CODE
   RETURN curl_easy_strerror(errcode)
 
+curl::UnixTime                PROCEDURE(LONG pClaDate, LONG pClaTime)
+Unix0                           EQUATE(61730)     !-- Unix zero date (1970-01-01)
+SecPerDay                       EQUATE(86400)     !-- seconds per day
+normilized_time                 ULONG, AUTO
+  CODE
+  normilized_time = CHOOSE(pClaTime > 1, pClaTime - 1, 0)
+  RETURN (pClaDate - Unix0) * SecPerDay + INT(normilized_time / 100)
 !!!endregion
   
 !!!region curl global functions
@@ -251,6 +258,7 @@ curl::GlobalCleanup           PROCEDURE()
   curl_global_cleanup()
 !!!endregion
   
+!!!region curl::free
 curl::free                    PROCEDURE(LONG p)
   CODE
   curl_free(p)

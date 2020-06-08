@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.47
-!** 27.04.2020
+!** libcurl for Clarion v1.48
+!** 08.06.2020
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -590,6 +590,21 @@ CURLOPT_NEW_DIRECTORY_PERMS   EQUATE(160 + CURLOPTTYPE_LONG)  !The default value
 CURLOPT_PRIVATE               EQUATE(103 + CURLOPTTYPE_OBJECTPOINT) !Set pointer to private data
 
 
+curl_TimeCond_Enum            ITEMIZE(0)
+CURL_TIMECOND_NONE              EQUATE
+CURL_TIMECOND_IFMODSINCE        EQUATE
+CURL_TIMECOND_IFUNMODSINCE      EQUATE
+CURL_TIMECOND_LASTMOD           EQUATE
+CURL_TIMECOND_LAST              EQUATE
+                              END
+
+CURLOPT_TIMECONDITION         EQUATE(33 + CURLOPTTYPE_LONG)   !What kind of HTTP time condition to use, see curl_TimeCond above.
+CURLOPT_TIMEVALUE             EQUATE(34 + CURLOPTTYPE_LONG)   !Time to use with the CURLOPT_TIMECONDITION. Specified in number of seconds since 1 Jan 1970
+CURLOPT_TIMEVALUE_LARGE       EQUATE(270 + CURLOPTTYPE_OFF_T) !Time to use with the CURLOPT_TIMECONDITION. Specified in number of seconds since 1 Jan 1970
+
+
+
+
 !return codes for CURLOPT_CHUNK_BGN_FUNCTION
 CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)
 CURL_CHUNK_BGN_FUNC_FAIL      EQUATE(1)             !tell the lib to end the task
@@ -814,6 +829,9 @@ filled                          LONG  !bytes written
       curl::free(*CSTRING p)
 
       curl::StrError(CURLcode errcode), STRING
+
+      !- returns Unix time specified in number of seconds since 1 Jan 1970
+      curl::UnixTime(LONG pClaDate, LONG pClaTime), ULONG
     END
 
 

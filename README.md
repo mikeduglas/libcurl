@@ -4,7 +4,7 @@ libcurl for Clarion
 ## Required C6.3 and newer.
 
 [libcurl home page](https://curl.haxx.se/libcurl/)  
-[changelog](https://curl.haxx.se/changes.html)
+[changelog](https://curl.haxx.se/changes.html)  
 [FAQ](https://clarionhub.com/t/libcurl-faq-https-github-com-mikeduglas-libcurl/1965)  
 [Full version history](https://github.com/mikeduglas/libcurl/blob/master/history/changes.md)  
 [Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps). Last update 2018-12-16.  

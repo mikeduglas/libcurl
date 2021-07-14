@@ -78,11 +78,11 @@ curl                          TCurlDropboxClass
   END
   
 Authorize                     PROCEDURE()
-appKey                          STRING(32)
-appSecret                       STRING(32)
+appKey                          STRING(32), AUTO
+appSecret                       STRING(32), AUTO
 
-authCode                        STRING(64)
-accessToken                     STRING(128)
+authCode                        STRING(64), AUTO
+accessToken                     STRING(1023), AUTO
 
 AuthWindow                      WINDOW('Dropbox File manager'),AT(,,298,146),CENTER,GRAY,SYSTEM, |
                                   FONT('Tahoma',8)

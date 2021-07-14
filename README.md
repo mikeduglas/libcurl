@@ -31,6 +31,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.49
+- FIX: The length of TCurlDropboxClass._accessToken increased to 1024 characters.
+
 v1.48
 - NEW: CURLOPT_TIMECONDITION, CURLOPT_TIMEVALUE, CURLOPT_TIMEVALUE_LARGE options.
 - NEW: static curl::UnixTime function, returning Unix time specified in number of seconds since 1 Jan 1970.

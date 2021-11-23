@@ -1,13 +1,5 @@
   PROGRAM
 
-OMIT('***')
- * Created with Clarion 10.0
- * User: Mike
- * Date: 22.01.2019
- * Time: 15:59
- ***
-
-  PRAGMA('project(#pragma link(libcurl.lib))')
   INCLUDE('libcurl.inc')
 
   MAP
@@ -24,7 +16,7 @@ rc                            CURLUcode, AUTO
 
   CODE
   !Create a handle that holds URL info and resources.
-  uapi.Init()
+  uapi.Init() !- comment this line to test new curl::url:StrError() function.
 
   !If successful, this stores the URL in its individual parts within the handle.
   rc = uapi.SetPart(CURLUPART_URL, url, 0)
@@ -55,7 +47,7 @@ rc                            CURLUcode, AUTO
     uapi.SetPart(CURLUPART_QUERY, 'candy=M&M', CURLU_APPENDQUERY+CURLU_URLENCODE)
     curl::DebugInfo('Encoded URL: '& GetUrlPart(CURLUPART_URL))
   ELSE
-    MESSAGE('Parse failed, error '& rc)
+    MESSAGE('Parse failed: '& curl::url:StrError(rc))
   END
   
   !When done with it, clean it up

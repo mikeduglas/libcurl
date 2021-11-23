@@ -1,4 +1,19 @@
 ## Version history
+v1.50
+- CHG: Now uses libcurl v7.80.0, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 7.80.0 was built and statically linked with
+> 
+> * OpenSSL 3.0.0
+> * brotli 1.0.9
+> * libgsasl 1.10.0
+> * libidn2 2.3.2
+> * libssh2 1.10.0
+> * nghttp2 1.46.0
+> * zlib 1.2.11
+> * zstd 1.5.0
+- CHG: Removed libcrypto-1_1.dll and libssl-1_1.dll from BIN folder.
+- NEW: curl::url:StrError(CURLUcode): turns a CURLUcode value into the equivalent human readable error string. This is useful for printing meaningful error messages.  
+
 v1.49
 - FIX: The length of TCurlDropboxClass._accessToken increased to 1024 characters.
 

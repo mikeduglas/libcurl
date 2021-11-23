@@ -1,9 +1,11 @@
-!** libcurl for Clarion v1.48
-!** 08.06.2020
+!** libcurl for Clarion v1.50
+!** 23.11.2021
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
+
+  PRAGMA('link(libcurl.lib)')
 
   INCLUDE('libcurl.inc')
   INCLUDE('libcurl.trn')

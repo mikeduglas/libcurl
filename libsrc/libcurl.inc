@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.49
-!** 14.07.2021
+!** libcurl for Clarion v1.50
+!** 23.11.2021
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -835,6 +835,7 @@ filled                          LONG  !bytes written
     END
 
 
+
     ! CreateFile, WriteFile, CloseHandle etc
 !    INCLUDE('svapifnc.inc')
     MODULE('WIN API')
@@ -1555,6 +1556,12 @@ CURLU_GUESS_SCHEME            EQUATE(1000000000b) !legacy curl-style guessing
 
 
 CURLU                         EQUATE(LONG)
+
+  MAP
+    MODULE('libcurlurl.clw')
+      curl::url:StrError(CURLUcode errcode), STRING
+    END
+  END
 
 TCurlUrlApiClass              CLASS, TYPE, MODULE('libcurlurl.clw'), LINK('libcurlurl.clw')
 urlp                            CURLU, PRIVATE

@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.45
-!** 22.01.2020
+!** libcurl for Clarion v1.50
+!** 23.11.2021
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -47,10 +48,24 @@
       !CURL_EXTERN CURLUcode curl_url_set(CURLU *handle, CURLUPart what,
       !    const char *part, unsigned int flags);
       curl_url_set(CURLU handle, CURLUPart what, *CSTRING part, UNSIGNED flags), CURLUcode, C, RAW, NAME('curl_url_set')
+
+      !/*
+      ! * curl_url_strerror() turns a CURLUcode value into the equivalent human
+      ! * readable error string.  This is useful for printing meaningful error
+      ! * messages.
+      ! */
+      !CURL_EXTERN const char *curl_url_strerror(CURLUcode); 
+      curl_url_strerror(CURLUcode pErrCode), *CSTRING, C, RAW, NAME('curl_url_strerror')
     END
   END
 
-!!! region TCurlUrlApiClass
+!!!region static functions
+curl::url:StrError            PROCEDURE(CURLUcode errcode)
+  CODE
+  RETURN curl_url_strerror(errcode)
+!!!endregion
+
+!!!region TCurlUrlApiClass
 TCurlUrlApiClass.Construct    PROCEDURE()
   CODE
   SELF.urlp = 0

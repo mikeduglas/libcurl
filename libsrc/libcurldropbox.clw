@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.38
-!** 26.10.2018
+!** libcurl for Clarion v1.50
+!** 23.11.2021
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
@@ -10,6 +11,7 @@
     MODULE('WinAPI')
       winapi::Sleep(LONG dwMilliseconds), PASCAL, PROC, NAME('Sleep')
     END
+    INCLUDE('printf.inc')
   END
 
 !!RPC endpoints
@@ -71,7 +73,8 @@ args                            CSTRING(1024)
 access_token:start              LONG, AUTO
 access_token:end                LONG, AUTO
   CODE
-  args = 'code='& CLIP(pAuthCode) &'&grant_type=authorization_code' &'&client_id='&CLIP(pAppKey) &'&client_secret='& CLIP(pAppSecret)
+!  args = 'code='& CLIP(pAuthCode) &'&grant_type=authorization_code' &'&client_id='&CLIP(pAppKey) &'&client_secret='& CLIP(pAppSecret)
+  args = printf('code=%s&grant_type=authorization_code&client_id=%s&client_secret=%s', pAuthCode, pAppKey, pAppSecret)
   SELF._lastCurlCode = SELF.SetAuthEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -205,7 +208,8 @@ TCurlDropboxClass.Copy        PROCEDURE(STRING pFromPath, STRING pToPath)
 func                            STRING('copy')
 args                            CSTRING(1024)
   CODE
-  args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
+!  args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
+  args = printf('{{"from_path":"%s","to_path":"%s"}', pFromPath, pToPath)
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -222,7 +226,8 @@ TCurlDropboxClass.Move        PROCEDURE(STRING pFromPath, STRING pToPath)
 func                            STRING('move')
 args                            CSTRING(1024)
   CODE
-  args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
+!  args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
+  args = printf('{{"from_path":"%s","to_path": "%s"}', pFromPath, pToPath)
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -239,7 +244,8 @@ TCurlDropboxClass.CreateFolder    PROCEDURE(STRING pPath)
 func                                STRING('create_folder')
 args                                CSTRING(512)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
+!  args = '{{"path": "'& CLIP(pPath) &'"}'
+  args = printf('{{"path":"%s"}', pPath)
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -256,7 +262,8 @@ TCurlDropboxClass.Delete      PROCEDURE(STRING pPath)
 func                            STRING('delete')
 args                            CSTRING(512)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
+!  args = '{{"path": "'& CLIP(pPath) &'"}'
+  args = printf('{{"path":"%s"}', pPath)
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -275,7 +282,8 @@ args                            CSTRING(512)
 fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pRemotePath) &'"}'
+!  args = '{{"path": "'& CLIP(pRemotePath) &'"}'
+  args = printf('{{"path":"%s"}', pRemotePath)
   SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -301,9 +309,11 @@ func                            STRING('upload')
 args                            CSTRING(1024)
 fileContent                     &STRING
   CODE
-  args = '{{"path": "'& CLIP(pRemotePath) &'"'
+!  args = '{{"path": "'& CLIP(pRemotePath) &'"'
+  args = printf('{{"path":"%s"', pRemotePath)
   IF pMode
-    args = args & ', "mode": "'& CLIP(pMode) &'"'
+!    args = args & ', "mode": "'& CLIP(pMode) &'"'
+    args = args & printf(',"mode":"%s"', pMode)
   END
   IF pAutorename
     args = args & ', "autorename": true'
@@ -342,7 +352,8 @@ TCurlDropboxClass.ListFolder  PROCEDURE(STRING pPath, BOOL pRecursive = FALSE)
 func                            STRING('list_folder')
 args                            CSTRING(512)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"'
+!  args = '{{"path": "'& CLIP(pPath) &'"'
+  args = printf('{{"path":"%s"', pPath)
   IF pRecursive
     args = args &', "recursive": true'
   END
@@ -364,7 +375,8 @@ TCurlDropboxClass.Get_Copy_Reference  PROCEDURE(STRING pPath)
 func                                    STRING('copy_reference/get')
 args                                    CSTRING(512)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
+!  args = '{{"path": "'& CLIP(pPath) &'"}'
+  args = printf('{{"path":"%s"}', pPath)
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -381,7 +393,8 @@ TCurlDropboxClass.Save_Copy_Reference PROCEDURE(STRING pPath, STRING pCopyRefere
 func                                    STRING('copy_reference/save')
 args                                    CSTRING(512)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'","copy_reference": "'& CLIP(pCopyReference) &'"}'
+!  args = '{{"path": "'& CLIP(pPath) &'","copy_reference": "'& CLIP(pCopyReference) &'"}'
+  args = printf('{{"path":"%s","copy_reference":"%s"}', pPath, pCopyReference)
   SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -403,7 +416,8 @@ fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
 rc                              BOOL(FALSE)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
+!  args = '{{"path": "'& CLIP(pPath) &'"}'
+  args = printf('{{"path":"%s"}', pPath)
   SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
@@ -439,7 +453,8 @@ fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
 rc                              BOOL(FALSE)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'", "format": "'& CLIP(pFormat) &'", "size": "'& CLIP(pSize) &'"}'
+!  args = '{{"path": "'& CLIP(pPath) &'", "format": "'& CLIP(pFormat) &'", "size": "'& CLIP(pSize) &'"}'
+  args = printf('{{"path":"%s","format":"%s","size":"%s"}', pPath, pFormat, pSize)
   SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE

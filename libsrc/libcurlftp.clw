@@ -1,5 +1,6 @@
-!** libcurl for Clarion v1.45
-!** 22.01.2020
+!** libcurl for Clarion v1.50
+!** 23.11.2021
+!** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
 

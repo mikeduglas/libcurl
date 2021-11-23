@@ -4,9 +4,9 @@
 #SHEET
   #TAB('About')
     #DISPLAY('Libcurl support')
-    #DISPLAY('(c) 2015-2020 by Mike Duglas')
+    #DISPLAY('(c) 2015-2021 by Mike Duglas')
     #DISPLAY('home page: https://github.com/mikeduglas/libcurl')
-    #DISPLAY('emails: mikeduglas@yandex.ru; mikeduglas66@gmail.com')
+    #DISPLAY('email: mikeduglas66@gmail.com')
     #DISPLAY('')
     #BUTTON('Check for Updates'), WHENACCEPTED(%curlOpenHomePageGrp())
     #ENDBUTTON
@@ -27,8 +27,8 @@
   #PROJECT('libcurl.lib')
   #IF(%CWVersion >= 8000)
     #PROJECT('None(libcurl.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(libcrypto-1_1.dll), CopyToOutputDirectory=PreserveNewest')
-    #PROJECT('None(libssl-1_1.dll), CopyToOutputDirectory=PreserveNewest')
+    #!PROJECT('None(libcrypto-1_1.dll), CopyToOutputDirectory=PreserveNewest')
+    #!PROJECT('None(libssl-1_1.dll), CopyToOutputDirectory=PreserveNewest')
   #ENDIF
 #ENDAT
 #! --------------------------------------------------------------------------

@@ -13,6 +13,7 @@ v1.50
 > * zstd 1.5.0
 - CHG: Removed libcrypto-1_1.dll and libssl-1_1.dll from BIN folder.
 - NEW: curl::url:StrError(CURLUcode): turns a CURLUcode value into the equivalent human readable error string. This is useful for printing meaningful error messages.  
+- CHG: libcurldropbox.clw depends on [printf project](https://github.com/mikeduglas/printf).
 
 v1.49
 - FIX: The length of TCurlDropboxClass._accessToken increased to 1024 characters.

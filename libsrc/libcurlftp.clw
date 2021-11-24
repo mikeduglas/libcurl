@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.50
-!** 23.11.2021
+!** libcurl for Clarion v1.51
+!** 24.11.2021
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -516,5 +516,4 @@ res                                 CURLcode, AUTO
 TCurlFtpClass.CreateMissingDirs   PROCEDURE(CURLFTP_CREATE_DIR_ENUM pValue)
   CODE
   RETURN SELF.SetOpt(CURLOPT_FTP_CREATE_MISSING_DIRS, pValue)
-  
 !!!endregion

@@ -31,6 +31,11 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.51 **experimental**
+- CHG: removed printf dependency.
+- FIX: recent libcurl.dll builds throw "Bad/illegal format or missing URL" error if an uri contains the characters which must be encoded (space, ampersand and so on).  
+**Any feedback is much appreciated!**
+
 v1.50
 - CHG: Now uses libcurl v7.80.0, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 7.80.0 was built and statically linked with

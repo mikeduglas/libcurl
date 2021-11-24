@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.50
-!** 23.11.2021
+!** libcurl for Clarion v1.51
+!** 24.11.2021
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -86,6 +86,10 @@ TCurlUrlApiClass.Cleanup      PROCEDURE()
     SELF.urlp = 0
   END
 
+TCurlUrlApiClass.GetPtr       PROCEDURE()
+  CODE
+  RETURN SELF.urlp
+  
 TCurlUrlApiClass.Clone        PROCEDURE(TCurlUrlApiClass src)
   CODE
   SELF.Cleanup()

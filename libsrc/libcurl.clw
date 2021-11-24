@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.50
-!** 23.11.2021
+!** libcurl for Clarion v1.51
+!** 24.11.2021
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -200,7 +200,6 @@
       curl::OutputDebugString(*CSTRING lpOutputString), PASCAL, RAW, NAME('OutputDebugStringA')
 !      curl::realloc(LONG lpmemblock,LONG size), LONG, PROC, NAME('_realloc')
     END
-
   END
 
 curl::UserAgent               CSTRING('curl/7.65.3')
@@ -652,17 +651,20 @@ TCurlClass.Construct          PROCEDURE()
   CODE
   SELF.headers &= NEW TCurlSList
   SELF.Errors &= NEW curl::ErrorEntry
+  SELF.urlp &= NEW TCurlUrlApiClass
   
 TCurlClass.Destruct           PROCEDURE()
   CODE
   SELF.Cleanup()
 
+  DISPOSE(SELF.urlp)
   DISPOSE(SELF.headers)
   DISPOSE(SELF.headers)
   
 TCurlClass.Init               PROCEDURE()
   CODE
   SELF.curl = curl_easy_init()
+  SELF.urlp.Init()
   SELF.AddErrors(curl::DefaultErrors)
   SELF.SetUserAgent(curl::UserAgent)
   
@@ -673,6 +675,7 @@ TCurlClass.Cleanup            PROCEDURE()
     curl_easy_cleanup(SELF.curl)
     SELF.curl = 0
   END
+  SELF.urlp.Cleanup()
 
 TCurlClass.Reset              PROCEDURE()
   CODE
@@ -759,11 +762,21 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, plist.GetList())
 
+!TCurlClass.SetUrl             PROCEDURE(STRING pUrl)
+!url                             CSTRING(LEN(pUrl) + 1)
+!  CODE
+!  url = CLIP(pUrl)
+!  RETURN SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
 TCurlClass.SetUrl             PROCEDURE(STRING pUrl)
-url                             CSTRING(LEN(pUrl) + 1)
+rcu                             CURLUcode, AUTO
   CODE
-  url = CLIP(pUrl)
-  RETURN SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
+  rcu = SELF.urlp.SetPart(CURLUPART_URL, pUrl, CURLU_ALLOW_SPACE)
+  IF rcu <> CURLUE_OK
+    curl::DebugInfo('TCurlClass.SetUrl('& CLIP(pUrl) &') error: '& curl::url:StrError(rcu))
+    RETURN CURLE_URL_MALFORMAT
+  END
+  
+  RETURN SELF.SetOpt(CURLOPT_CURLU, SELF.urlp.GetPtr())
 
 TCurlClass.Perform            PROCEDURE()
 res                             CURLcode, AUTO

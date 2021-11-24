@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.50
-!** 23.11.2021
+!** libcurl for Clarion v1.51
+!** 24.11.2021
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -602,8 +602,7 @@ CURLOPT_TIMECONDITION         EQUATE(33 + CURLOPTTYPE_LONG)   !What kind of HTTP
 CURLOPT_TIMEVALUE             EQUATE(34 + CURLOPTTYPE_LONG)   !Time to use with the CURLOPT_TIMECONDITION. Specified in number of seconds since 1 Jan 1970
 CURLOPT_TIMEVALUE_LARGE       EQUATE(270 + CURLOPTTYPE_OFF_T) !Time to use with the CURLOPT_TIMECONDITION. Specified in number of seconds since 1 Jan 1970
 
-
-
+CURLOPT_CURLU                 EQUATE(282 + CURLOPTTYPE_OBJECTPOINT) !Specify URL using CURL URL API.
 
 !return codes for CURLOPT_CHUNK_BGN_FUNCTION
 CURL_CHUNK_BGN_FUNC_OK        EQUATE(0)
@@ -893,6 +892,7 @@ curl::ErrorEntry              QUEUE(curl::ErrorEntryGroup), TYPE  ! List of all 
 !---------------------------- TCurlClass---- -----------------------------!
 TCurlClass                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
 curl                            CURL, PROTECTED
+urlp                            &TCurlUrlApiClass, PROTECTED
 
 !linked list of http headers
 headers                         &TCurlSList, PROTECTED
@@ -1543,17 +1543,18 @@ CURLUPART_QUERY                 EQUATE
 CURLUPART_FRAGMENT              EQUATE
                               END
 
-CURLU_DEFAULT_PORT            EQUATE(0b)          !return default port number
-CURLU_NO_DEFAULT_PORT         EQUATE(10b)         !act as if no port number was set, if the port number matches the default for the scheme
-CURLU_DEFAULT_SCHEME          EQUATE(100b)        !return default scheme if missing
-CURLU_NON_SUPPORT_SCHEME      EQUATE(1000b)       !allow non-supported scheme
-CURLU_PATH_AS_IS              EQUATE(10000b)      !leave dot sequences
-CURLU_DISALLOW_USER           EQUATE(100000b)     !no user+password allowed
-CURLU_URLDECODE               EQUATE(1000000b)    !URL decode on get
-CURLU_URLENCODE               EQUATE(10000000b)   !URL encode on set
-CURLU_APPENDQUERY             EQUATE(100000000b)  !append a form style part
-CURLU_GUESS_SCHEME            EQUATE(1000000000b) !legacy curl-style guessing
-
+CURLU_DEFAULT_PORT            EQUATE(0b)            !return default port number
+CURLU_NO_DEFAULT_PORT         EQUATE(10b)           !act as if no port number was set, if the port number matches the default for the scheme
+CURLU_DEFAULT_SCHEME          EQUATE(100b)          !return default scheme if missing
+CURLU_NON_SUPPORT_SCHEME      EQUATE(1000b)         !allow non-supported scheme
+CURLU_PATH_AS_IS              EQUATE(10000b)        !leave dot sequences
+CURLU_DISALLOW_USER           EQUATE(100000b)       !no user+password allowed
+CURLU_URLDECODE               EQUATE(1000000b)      !URL decode on get
+CURLU_URLENCODE               EQUATE(10000000b)     !URL encode on set
+CURLU_APPENDQUERY             EQUATE(100000000b)    !append a form style part
+CURLU_GUESS_SCHEME            EQUATE(1000000000b)   !legacy curl-style guessing
+CURLU_NO_AUTHORITY            EQUATE(10000000000b)  !Allow empty authority when the scheme is unknown.
+CURLU_ALLOW_SPACE             EQUATE(100000000000b) !Allow spaces in the URL
 
 CURLU                         EQUATE(LONG)
 
@@ -1571,6 +1572,7 @@ Destruct                        PROCEDURE(), VIRTUAL
 
 Init                            PROCEDURE()
 Cleanup                         PROCEDURE()
+GetPtr                          PROCEDURE(), CURLU
 Clone                           PROCEDURE(TCurlUrlApiClass src)
 GetPart                         PROCEDURE(CURLUPart what, *STRING part, UNSIGNED flags = 0), CURLUcode, PROC
 SetPart                         PROCEDURE(CURLUPart what, STRING part, UNSIGNED flags = 0), CURLUcode, PROC

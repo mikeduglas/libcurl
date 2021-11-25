@@ -5,7 +5,8 @@ libcurl for Clarion
 
 [libcurl home page](https://curl.haxx.se/libcurl/)  
 [changelog](https://curl.haxx.se/changes.html)  
-[FAQ](https://clarionhub.com/t/libcurl-faq-https-github-com-mikeduglas-libcurl/1965)  
+[FAQ](https://github.com/mikeduglas/libcurl/tree/master/doc/faq.md)  
+[Forum](https://clarionhub.com/t/libcurl-faq-https-github-com-mikeduglas-libcurl/1965)  
 [Full version history](https://github.com/mikeduglas/libcurl/blob/master/history/changes.md)  
 [Clarion 6.3 examples](https://github.com/mikeduglas/libcurl/tree/master/examples/C6.3%20apps). Last update 2018-12-16.  
 

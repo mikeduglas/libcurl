@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.51
-!** 24.11.2021
+!** libcurl for Clarion v1.52
+!** 21.12.2021
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -398,8 +398,21 @@ CURLSSLOPT_ALLOW_BEAST        EQUATE(00000001b)
 ! - NO_REVOKE tells libcurl to disable certificate revocation checks for those
 !   SSL backends where such behavior is present.
 CURLSSLOPT_NO_REVOKE          EQUATE(00000010b)
-
-
+! - NO_PARTIALCHAIN tells libcurl to *NOT* accept a partial certificate chain
+!   if possible. The OpenSSL backend has this ability.
+CURLSSLOPT_NO_PARTIALCHAIN    EQUATE(00000100b)
+! - REVOKE_BEST_EFFORT tells libcurl to ignore certificate revocation offline
+!   checks and ignore missing revocation list for those SSL backends where such
+!   behavior is present.
+CURLSSLOPT_REVOKE_BEST_EFFORT EQUATE(00001000b)
+! - CURLSSLOPT_NATIVE_CA tells libcurl to use standard certificate store of
+!   operating  system. Currently implemented under MS-Windows.
+CURLSSLOPT_NATIVE_CA          EQUATE(00010000b)
+! - CURLSSLOPT_AUTO_CLIENT_CERT tells libcurl to automatically locate and use
+!   a client certificate for authentication. (Schannel)
+CURLSSLOPT_AUTO_CLIENT_CERT   EQUATE(00100000b)
+    
+    
 CURLOPT_CONNECT_ONLY          EQUATE(141 + CURLOPTTYPE_LONG)            !no transfer, set up connection and let application use the socket by extracting it with CURLINFO_LASTSOCKET
 
 !"name" and "pwd" to use when fetching.

@@ -32,6 +32,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.52
+- NEW: for option CURLOPT_SSL_OPTIONS new equates defined: CURLSSLOPT_NO_PARTIALCHAIN, CURLSSLOPT_NATIVE_CA, CURLSSLOPT_AUTO_CLIENT_CERT.
+
 v1.51 **experimental**
 - CHG: removed printf dependency.
 - FIX: recent libcurl.dll builds throw "Bad/illegal format or missing URL" error if an uri contains the characters which must be encoded (space, ampersand and so on).  

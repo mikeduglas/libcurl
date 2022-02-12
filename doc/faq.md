@@ -172,8 +172,10 @@ A. Assume sUrl is string variable containing url, sJson is string variable conta
 
 ### Q. On some machines, sending an email fails with the error "Send failed: Access denied to remote resource".
 
-A. During the session libcurl sends to the server HELO command with computer name by default: "HELO MyComputer". If
-computer name doesn't match the rules of HELO command, you see the "Send failed: Access denied to remote resource". An example of invalid HELO is "HELO Мой-Комп".
+A. During the session libcurl sends to the server EHLO command with computer name by default: "EHLO MyComputer". If
+computer name doesn't match the rules of EHLO/HELO commands, you see the "Send failed: Access denied to remote resource". An example of invalid EHLO is "EHLO Комп-ПК".
+DebugView reports an error:
+  [libcurl] HEADER_OUT: EHLO Комп-ПК 
 
 TCurlMailClass.Server method has 3rd optional parameter pHelo, so to fix this issue just pass a string like 'MyComputer' or 'MIKE'::
 ```

@@ -178,7 +178,7 @@ DebugView reports an error:
 > [libcurl] HEADER_OUT: EHLO Комп-ПК  
 > [libcurl] HEADER_IN: 555 5.5.2 Syntax error  
 
-TCurlMailClass.Server method has 3rd optional parameter pHelo, so to fix this issue just pass a string like 'MyComputer' or 'MIKE'::
+TCurlMailClass.Server method has 3rd optional parameter pHelo, so to fix this issue just pass a string like 'MyComputer' or 'client.net':
 ```
 curl.Server('smtps://smtp.mail.ru', 465, 'MyComputer')
 ```

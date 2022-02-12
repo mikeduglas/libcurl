@@ -176,6 +176,7 @@ A. During the session libcurl sends to the server EHLO command with computer nam
 computer name doesn't match the rules of EHLO/HELO commands, you see the "Send failed: Access denied to remote resource". An example of invalid EHLO is "EHLO Комп-ПК".
 DebugView reports an error:
 > [libcurl] HEADER_OUT: EHLO Комп-ПК 
+> [libcurl] HEADER_IN: 555 5.5.2 Syntax error 
 
 TCurlMailClass.Server method has 3rd optional parameter pHelo, so to fix this issue just pass a string like 'MyComputer' or 'MIKE'::
 ```

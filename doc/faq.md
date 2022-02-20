@@ -70,8 +70,12 @@ curl -u jsmith:jsmith -X POST -F “environment=TEM” -F “filename=Test” -F
 ```
 curl http://server.com 1 -H “Content-Type: application/json” --data-binary @test.json
 ```
-Call curl.SendFile() with appropriate mime type (“application/json” in this case):
+Call curl.SendFile() with appropriate mime type (generic "application/octet-stream" or specific like “application/json”):
 ```
+  DATA
+curl TCurlHttpClass  !- SendFile is a method of TCurlHttpClass.
+
+  CODE
   curl.Init()
 
   url = 'http://server.com'

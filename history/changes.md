@@ -10,7 +10,8 @@ v1.53
 > * libssh2 1.10.0
 > * nghttp2 1.47.0
 > * zlib 1.2.12
-- NEW: All CURLOPT_xxx options from curl.h are declared.
+- CHG: All CURLOPT_* options from curl.h are declared.
+- CHG: Missing CURLINFO_* constants added.
 
 v1.52
 - NEW: for option CURLOPT_SSL_OPTIONS new equates defined: CURLSSLOPT_NO_PARTIALCHAIN, CURLSSLOPT_NATIVE_CA, CURLSSLOPT_AUTO_CLIENT_CERT.

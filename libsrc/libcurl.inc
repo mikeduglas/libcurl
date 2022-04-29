@@ -153,6 +153,7 @@ CURLINFO_LONG                 EQUATE(0200000h)
 CURLINFO_DOUBLE               EQUATE(0300000h)
 CURLINFO_SLIST                EQUATE(0400000h)
 CURLINFO_SOCKET               EQUATE(0500000h)
+CURLINFO_OFF_T                EQUATE(0600000h)
 CURLINFO_MASK                 EQUATE(00fffffh)
 CURLINFO_TYPEMASK             EQUATE(0f00000h)
 
@@ -208,6 +209,20 @@ CURLINFO_HTTP_VERSION         EQUATE(CURLINFO_LONG   + 46)
 CURLINFO_PROXY_SSL_VERIFYRESULT   EQUATE(CURLINFO_LONG + 47)
 CURLINFO_PROTOCOL             EQUATE(CURLINFO_LONG   + 48)
 CURLINFO_SCHEME               EQUATE(CURLINFO_STRING + 49)
+
+CURLINFO_TOTAL_TIME_T         EQUATE(CURLINFO_OFF_T + 50)
+CURLINFO_NAMELOOKUP_TIME_T    EQUATE(CURLINFO_OFF_T + 51)
+CURLINFO_CONNECT_TIME_T       EQUATE(CURLINFO_OFF_T + 52)
+CURLINFO_PRETRANSFER_TIME_T   EQUATE(CURLINFO_OFF_T + 53)
+CURLINFO_STARTTRANSFER_TIME_T EQUATE(CURLINFO_OFF_T + 54)
+CURLINFO_REDIRECT_TIME_T      EQUATE(CURLINFO_OFF_T + 55)
+CURLINFO_APPCONNECT_TIME_T    EQUATE(CURLINFO_OFF_T + 56)
+CURLINFO_RETRY_AFTER          EQUATE(CURLINFO_OFF_T + 57)
+CURLINFO_EFFECTIVE_METHOD     EQUATE(CURLINFO_STRING + 58)
+CURLINFO_PROXY_ERROR          EQUATE(CURLINFO_LONG + 59)
+CURLINFO_REFERER              EQUATE(CURLINFO_STRING + 60)
+
+
 
 !#define CURL_GLOBAL_SSL (1<<0)
 !#define CURL_GLOBAL_WIN32 (1<<1)
@@ -360,13 +375,13 @@ CURLOPT_HTTPGET               EQUATE(80 + CURLOPTTYPE_LONG)             !Set thi
 
 CURLOPT_HTTP_VERSION          EQUATE(84 + CURLOPTTYPE_VALUES)           !Specify which HTTP version to use! This must be set to one of the CURL_HTTP_VERSION* enums set below.
 !  /* These enums are for use with the CURLOPT_HTTP_VERSION option. */ 
-CURL_HTTP_VERSION_NONE              EQUATE(0)                           !setting this means we don't care, and that we'd like the library to choose the best possible for us!
-CURL_HTTP_VERSION_1_0               EQUATE(1)                           !please use HTTP 1.0 in the request
-CURL_HTTP_VERSION_1_1               EQUATE(2)                           !please use HTTP 1.1 in the request
-CURL_HTTP_VERSION_2_0               EQUATE(3)                           !please use HTTP 2 in the request
-CURL_HTTP_VERSION_2TLS              EQUATE(4)                           !use version 2 for HTTPS, version 1.1 for HTTP
-CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE EQUATE(5)                           !please use HTTP 2 without HTTP/1.1 Upgrade
-CURL_HTTP_VERSION_LAST              EQUATE(6)                           !*ILLEGAL* http version
+CURL_HTTP_VERSION_NONE        EQUATE(0)                           !setting this means we don't care, and that we'd like the library to choose the best possible for us!
+CURL_HTTP_VERSION_1_0         EQUATE(1)                           !please use HTTP 1.0 in the request
+CURL_HTTP_VERSION_1_1         EQUATE(2)                           !please use HTTP 1.1 in the request
+CURL_HTTP_VERSION_2_0         EQUATE(3)                           !please use HTTP 2 in the request
+CURL_HTTP_VERSION_2TLS        EQUATE(4)                           !use version 2 for HTTPS, version 1.1 for HTTP
+CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE   EQUATE(5)                   !please use HTTP 2 without HTTP/1.1 Upgrade
+CURL_HTTP_VERSION_3           EQUATE(30)                          !Makes use of explicit HTTP/3 without fallback. Use CURLOPT_ALTSVC to enable HTTP/3 upgrade
 
 !  /* set to zero to disable the libcurl's decoding and thus pass the raw body
 !     data to the application even when it is encoded/compressed */
@@ -723,6 +738,7 @@ CURLFORM_END                    EQUATE
 CURLFORM_OBSOLETE2              EQUATE
 
 CURLFORM_STREAM                 EQUATE
+CURLFORM_CONTENTLEN             EQUATE              !added in 7.46.0, provide a curl_off_t length
 
 CURLFORM_LASTENTRY              EQUATE              !the last unused
                               END

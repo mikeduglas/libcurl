@@ -111,7 +111,7 @@ CURLE_SSL_CERTPROBLEM         EQUATE(58)  !problem with the local certificate
 CURLE_SSL_CIPHER              EQUATE(59)  !couldn't use specified cipher
 CURLE_SSL_CACERT              EQUATE(60)  !problem with the CA cert (path?)
 CURLE_BAD_CONTENT_ENCODING    EQUATE(61)  !Unrecognized/bad encoding
-CURLE_LDAP_INVALID_URL        EQUATE(62)  !Invalid LDAP URL
+CURLE_OBSOLETE62              EQUATE(62)
 CURLE_FILESIZE_EXCEEDED       EQUATE(63)  !Maximum file size exceeded
 CURLE_USE_SSL_FAILED          EQUATE(64)  !Requested FTP SSL level failed
 CURLE_SEND_FAIL_REWIND        EQUATE(65)  !Sending the data requires a rewind that failed
@@ -125,7 +125,7 @@ CURLE_TFTP_UNKNOWNID          EQUATE(72)  !Unknown transfer ID
 CURLE_REMOTE_FILE_EXISTS      EQUATE(73)  !File already exists
 CURLE_TFTP_NOSUCHUSER         EQUATE(74)  !No such user
 CURLE_CONV_FAILED             EQUATE(75)  !conversion failed
-CURLE_CONV_REQD               EQUATE(76)  !caller must register conversion callbacks using curl_easy_setopt options CURLOPT_CONV_FROM_NETWORK_FUNCTION, CURLOPT_CONV_TO_NETWORK_FUNCTION, and CURLOPT_CONV_FROM_UTF8_FUNCTION
+CURLE_OBSOLETE76              EQUATE(76)
 CURLE_SSL_CACERT_BADFILE      EQUATE(77)  !could not load CACERT file, missing or wrong format
 CURLE_REMOTE_FILE_NOT_FOUND   EQUATE(78)  !remote file not found
 CURLE_SSH                     EQUATE(79)  !error from the SSH layer, somewhat generic so the error message will be of interest when this has happened

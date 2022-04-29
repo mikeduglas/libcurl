@@ -32,6 +32,19 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.53
+- CHG: Now uses libcurl v7.83.0, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 7.83.0 was built and statically linked with
+> 
+> * OpenSSL 3.0.2
+> * brotli 1.0.9
+> * libgsasl 1.10.0
+> * libidn2 2.3.2
+> * libssh2 1.10.0
+> * nghttp2 1.47.0
+> * zlib 1.2.12
+- NEW: All CURLOPT_xxx options from curl.h are declared.
+
 v1.52
 - NEW: for option CURLOPT_SSL_OPTIONS new equates defined: CURLSSLOPT_NO_PARTIALCHAIN, CURLSSLOPT_NATIVE_CA, CURLSSLOPT_AUTO_CLIENT_CERT.
 
@@ -58,41 +71,6 @@ v1.50
 
 v1.49
 - FIX: The length of TCurlDropboxClass._accessToken increased to 1024 characters.
-
-v1.48
-- NEW: CURLOPT_TIMECONDITION, CURLOPT_TIMEVALUE, CURLOPT_TIMEVALUE_LARGE options.
-- NEW: static curl::UnixTime function, returning Unix time specified in number of seconds since 1 Jan 1970.
-
-v1.47
-- FIX: in TCurlHttpClass.FollowLocation() "pContentLength" parameter was removed. Add http header "Content-Length: 0" explicitly if it is required.
-
-v1.46
-- FIX: TCurlClass.GetContentType() returned invalid data.
-- NEW: CURLOPT_HEADERFUNCTION option
-- NEW: TCurlClass.SetHeaderCallback method enables a callback that receives header data.
-- NEW: TCurlClass.HeaderCallback(STRING headerLine) virtual method to store headers.
-- CHG: default UserAgent changed to 'curl/7.65.3'
-
-v1.45
-- FIX: changed some method names to avoid "Redefine system intrinsic" compiler warnings and related "No matching prototype available" compiler errors in C6.3:
-  - TCurlSList.Append renamed to TCurlSList.AppendData
-  - TCurlUrlApiClass.Dup renamed to TCurlUrlApiClass.Clone
-  - TCurlMultiClass.Add renamed to TCurlMultiClass.AddCurl
-
-v1.44
-- NEW: TCurlMultiClass: Enables multiple simultaneous transfers in the same thread without making it complicated for the application.
-- NEW: 10-at-a-time example: Download many files in parallel, in the same thread. 
-  
-v1.43
-- FIX: TCurlFtpClass.LoadDir and TCurlFtpClass.LoadDirListOnly did not dispose IDynStr instance if SendRequest failed.
-- CHG: Now uses libcurl v7.65.3, see [changelog](https://curl.haxx.se/changes.html) for details.
-> curl 7.65.3 was built and statically linked with
-> 
-> * OpenSSL 1.1.1c
-> * brotli 1.0.7
-> * libssh2 1.9.0
-> * nghttp2 1.39.1
-> * zlib 1.2.11
   
 
 [Full version history](https://github.com/mikeduglas/libcurl/blob/master/history/changes.md)

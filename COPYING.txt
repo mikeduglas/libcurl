@@ -1,6 +1,6 @@
 COPYRIGHT AND PERMISSION NOTICE
 
-Copyright (c) 2015 - 2019, Mike Duglas, <mikeduglas66@gmail.com>.
+Copyright (c) 2015 - 2022, Mike Duglas, <mikeduglas66@gmail.com>.
 
 All rights reserved.
 

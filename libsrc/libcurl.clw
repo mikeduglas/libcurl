@@ -202,7 +202,7 @@
     END
   END
 
-curl::UserAgent               CSTRING('curl/7.80.0')
+curl::UserAgent               CSTRING('curl/7.83.0')
 
 !!!region static functions
 curl::DebugInfo               PROCEDURE(STRING s)

@@ -4,7 +4,7 @@
 #SHEET
   #TAB('About')
     #DISPLAY('Libcurl support')
-    #DISPLAY('(c) 2015-2021 by Mike Duglas')
+    #DISPLAY('(c) 2015-2022 by Mike Duglas')
     #DISPLAY('home page: https://github.com/mikeduglas/libcurl')
     #DISPLAY('email: mikeduglas66@gmail.com')
     #DISPLAY('')

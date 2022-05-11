@@ -1,4 +1,7 @@
 ## Version history
+v1.54
+- CHG: Added "ONCE" to all INCLUDE statements.
+
 v1.53
 - CHG: Now uses libcurl v7.83.0, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 7.83.0 was built and statically linked with

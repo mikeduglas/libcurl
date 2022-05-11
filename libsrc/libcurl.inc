@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.53
-!** 29.04.2022
+!** libcurl for Clarion v1.54
+!** 11.05.2022
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -952,7 +952,7 @@ CURLOPT_MIME_OPTIONS          EQUATE(315 + CURLOPTTYPE_LONG)
 !!!endregion
 
 
-  INCLUDE('svapi.inc')
+  INCLUDE('svapi.inc'), ONCE
 
 !structure to pass a file to callbacks
 TCurlFileStruct              CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
@@ -1052,7 +1052,6 @@ filled                          LONG  !bytes written
 
 
     ! CreateFile, WriteFile, CloseHandle etc
-!    INCLUDE('svapifnc.inc')
     MODULE('WIN API')
       winapi::CreateDirectory(*CString szPathName, <*SECURITY_ATTRIBUTES SecurityAttributes>),bool,pascal,proc,raw,name('CreateDirectoryA')
       winapi::GetLastError(),long,pascal,name('GetLastError')

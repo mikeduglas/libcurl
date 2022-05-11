@@ -1,11 +1,11 @@
-!** libcurl for Clarion v1.50
-!** 23.11.2021
+!** libcurl for Clarion v1.54
+!** 11.05.2022
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
 
-  INCLUDE('libcurl.inc')
+  INCLUDE('libcurl.inc'), ONCE
 
   MAP
     MODULE('WinAPI')

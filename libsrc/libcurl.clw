@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.53
-!** 29.04.2022
+!** libcurl for Clarion v1.54
+!** 11.05.2022
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -7,8 +7,8 @@
 
   PRAGMA('link(libcurl.lib)')
 
-  INCLUDE('libcurl.inc')
-  INCLUDE('libcurl.trn')
+  INCLUDE('libcurl.inc'), ONCE
+  INCLUDE('libcurl.trn'), ONCE
 
   MAP
     MODULE('libcurl API')

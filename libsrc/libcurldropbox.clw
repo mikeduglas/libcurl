@@ -1,17 +1,16 @@
-!** libcurl for Clarion v1.51
-!** 24.11.2021
+!** libcurl for Clarion v1.54
+!** 11.05.2022
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
 
-  INCLUDE('libcurl.inc')
+  INCLUDE('libcurl.inc'), ONCE
 
   MAP
     MODULE('WinAPI')
       winapi::Sleep(LONG dwMilliseconds), PASCAL, PROC, NAME('Sleep')
     END
-!    INCLUDE('printf.inc')
   END
 
 !!RPC endpoints

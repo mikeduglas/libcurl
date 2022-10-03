@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.54
-!** 11.05.2022
+!** libcurl for Clarion v1.55
+!** 03.10.2022
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -124,8 +124,8 @@ CURLE_TFTP_ILLEGAL            EQUATE(71)  !Illegal TFTP operation
 CURLE_TFTP_UNKNOWNID          EQUATE(72)  !Unknown transfer ID
 CURLE_REMOTE_FILE_EXISTS      EQUATE(73)  !File already exists
 CURLE_TFTP_NOSUCHUSER         EQUATE(74)  !No such user
-CURLE_CONV_FAILED             EQUATE(75)  !conversion failed
-CURLE_OBSOLETE76              EQUATE(76)
+CURLE_OBSOLETE75              EQUATE(75)  !NOT IN USE since 7.82.0
+CURLE_OBSOLETE76              EQUATE(76)  !NOT IN USE since 7.82.0
 CURLE_SSL_CACERT_BADFILE      EQUATE(77)  !could not load CACERT file, missing or wrong format
 CURLE_REMOTE_FILE_NOT_FOUND   EQUATE(78)  !remote file not found
 CURLE_SSH                     EQUATE(79)  !error from the SSH layer, somewhat generic so the error message will be of interest when this has happened
@@ -140,10 +140,17 @@ CURLE_FTP_BAD_FILE_LIST       EQUATE(87)  !unable to parse FTP file list
 CURLE_CHUNK_FAILED            EQUATE(88)  !chunk callback reported error
 CURLE_NO_CONNECTION_AVAILABLE EQUATE(89)  !No connection available, the session will be queued
 CURLE_SSL_PINNEDPUBKEYNOTMATCH    EQUATE(90) !specified pinned public key did not match
-
-!-- v7.52
 CURLE_SSL_INVALIDCERTSTATUS   EQUATE(91)  !invalid certificate status
 CURLE_HTTP2_STREAM            EQUATE(92)  !stream error in HTTP/2 framing layer
+
+!-- added in v1.55
+CURLE_RECURSIVE_API_CALL      EQUATE(93)  !an api function was called from inside a callback
+CURLE_AUTH_ERROR              EQUATE(94)  !an authentication function returned an error
+CURLE_HTTP3                   EQUATE(95)  !An HTTP/3 layer problem
+CURLE_QUIC_CONNECT_ERROR      EQUATE(96)  !QUIC connection error
+CURLE_PROXY                   EQUATE(97)  !proxy handshake error
+CURLE_SSL_CLIENTCERT          EQUATE(98)  !client-side certificate required
+CURLE_UNRECOVERABLE_POLL      EQUATE(99)  !poll/select returned fatal error
 
 !CURL_LAST /* never use! */ 
 
@@ -202,14 +209,12 @@ CURLINFO_PRIMARY_PORT         EQUATE(CURLINFO_LONG   + 40)
 CURLINFO_LOCAL_IP             EQUATE(CURLINFO_STRING + 41)
 CURLINFO_LOCAL_PORT           EQUATE(CURLINFO_LONG   + 42)
 CURLINFO_TLS_SESSION          EQUATE(CURLINFO_SLIST  + 43)
-!v7.52
 CURLINFO_ACTIVESOCKET         EQUATE(CURLINFO_SOCKET + 44)
 CURLINFO_TLS_SSL_PTR          EQUATE(CURLINFO_SLIST  + 45)
 CURLINFO_HTTP_VERSION         EQUATE(CURLINFO_LONG   + 46)
 CURLINFO_PROXY_SSL_VERIFYRESULT   EQUATE(CURLINFO_LONG + 47)
 CURLINFO_PROTOCOL             EQUATE(CURLINFO_LONG   + 48)
 CURLINFO_SCHEME               EQUATE(CURLINFO_STRING + 49)
-
 CURLINFO_TOTAL_TIME_T         EQUATE(CURLINFO_OFF_T + 50)
 CURLINFO_NAMELOOKUP_TIME_T    EQUATE(CURLINFO_OFF_T + 51)
 CURLINFO_CONNECT_TIME_T       EQUATE(CURLINFO_OFF_T + 52)
@@ -221,6 +226,8 @@ CURLINFO_RETRY_AFTER          EQUATE(CURLINFO_OFF_T + 57)
 CURLINFO_EFFECTIVE_METHOD     EQUATE(CURLINFO_STRING + 58)
 CURLINFO_PROXY_ERROR          EQUATE(CURLINFO_LONG + 59)
 CURLINFO_REFERER              EQUATE(CURLINFO_STRING + 60)
+CURLINFO_CAINFO               EQUATE(CURLINFO_STRING + 61)
+CURLINFO_CAPATH               EQUATE(CURLINFO_STRING + 62)
 
 
 
@@ -284,12 +291,12 @@ CURLOPT_CONNECTTIMEOUT_MS     EQUATE(156 + CURLOPTTYPE_LONG)            !Same as
 
 CURLOPT_USERAGENT             EQUATE(18 + CURLOPTTYPE_STRINGPOINT)      !Set the User-Agent string (examined by some CGIs)
 
-!  /* FTP option that changes the timeout, in seconds, associated with
-!     getting a response.  This is different from transfer timeout time and
-!     essentially places a demand on the FTP server to acknowledge commands
-!     in a timely manner. */ 
-CURLOPT_FTP_RESPONSE_TIMEOUT  EQUATE(112 + CURLOPTTYPE_LONG)
-CURLOPT_SERVER_RESPONSE_TIMEOUT   EQUATE(CURLOPT_FTP_RESPONSE_TIMEOUT)
+!  /* Option that changes the timeout, in seconds, associated with
+!     getting a response. This is different from transfer timeout time and
+!     essentially places a demand on the server to acknowledge commands
+!     in a timely manner. For FTP, SMTP, IMAP and POP3. */ 
+CURLOPT_SERVER_RESPONSE_TIMEOUT   EQUATE(112 + CURLOPTTYPE_LONG)
+CURLOPT_FTP_RESPONSE_TIMEOUT      EQUATE(CURLOPT_SERVER_RESPONSE_TIMEOUT)
 
 CURLOPT_ACCEPTTIMEOUT_MS      EQUATE(212 + CURLOPTTYPE_LONG)            !Time-out accept operations (currently for FTP only) after this amount of miliseconds
 
@@ -952,7 +959,7 @@ CURLOPT_MIME_OPTIONS          EQUATE(315 + CURLOPTTYPE_LONG)
 !!!endregion
 
 
-  INCLUDE('svapi.inc'), ONCE
+  INCLUDE('svapi.inc')
 
 !structure to pass a file to callbacks
 TCurlFileStruct              CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
@@ -1052,6 +1059,7 @@ filled                          LONG  !bytes written
 
 
     ! CreateFile, WriteFile, CloseHandle etc
+!    INCLUDE('svapifnc.inc')
     MODULE('WIN API')
       winapi::CreateDirectory(*CString szPathName, <*SECURITY_ATTRIBUTES SecurityAttributes>),bool,pascal,proc,raw,name('CreateDirectoryA')
       winapi::GetLastError(),long,pascal,name('GetLastError')
@@ -1200,7 +1208,9 @@ GetInfo::STRING                 PROCEDURE(CURLINFO info), STRING
 GetInfo::DOUBLE                 PROCEDURE(CURLINFO info), REAL
 
 GetContentType                  PROCEDURE(), STRING
-GetResponseCode                 PROCEDURE(), LONG ! returns the last received HTTP or FTP code
+GetResponseCode                 PROCEDURE(), LONG     ! returns the last received HTTP or FTP code
+GetDefaultCAInfo                PROCEDURE(), STRING   ! returns a string holding the default built-in path used for the CURLOPT_CAINFO option unless set by the user. This is a path identifying a single file containing CA certificates.
+GetDefaultCAPath                PROCEDURE(), STRING   ! returns a string holding the default built-in path used for the CURLOPT_CAPATH option unless set by the user. This is a path identifying a directory.
 
 SetQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()
 PreQuote                        PROCEDURE(TCurlSList plist), CURLcode, PROC !call in after AddHttpHeader()

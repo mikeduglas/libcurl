@@ -1,4 +1,30 @@
 ## Version history
+v1.55
+- CHG: Now uses libcurl v7.85.0, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 7.85.0_5 was built and statically linked with
+> 
+> brotli 1.0.9
+> gsasl 2.2.0
+> libssh2 1.10.0
+> nghttp2 1.50.0
+> nghttp3 0.7.1
+> ngtcp2 0.9.0
+> openssl-quic 3.0.5
+> zlib 1.2.12
+> zstd 1.5.2
+> 
+> The following tools/compilers were used in the build process:
+> 
+> clang 14.0.6
+> clang 15.0.0 (ARM64)
+> curl-for-win bce14879
+> llvm-mingw 20220906 (ARM64)
+> mingw-w64 10.0.0-2
+
+- NEW: CURLE_XX codes (93..99).
+- NEW: CURLINFO enum values: CURLINFO_CAINFO and CURLINFO_CAPATH.
+- NEW: GetDefaultCAInfo() and GetDefaultCAPath() methods.
+
 v1.54
 - CHG: Added "ONCE" to all INCLUDE statements.
 

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.54
-!** 11.05.2022
+!** libcurl for Clarion v1.55
+!** 03.10.2022
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -7,8 +7,8 @@
 
   PRAGMA('link(libcurl.lib)')
 
-  INCLUDE('libcurl.inc'), ONCE
-  INCLUDE('libcurl.trn'), ONCE
+  INCLUDE('libcurl.inc')
+  INCLUDE('libcurl.trn')
 
   MAP
     MODULE('libcurl API')
@@ -1276,6 +1276,15 @@ TCurlClass.GetContentType     PROCEDURE()
 TCurlClass.GetResponseCode    PROCEDURE()
   CODE
   RETURN SELF.GetInfo::LONG(CURLINFO_RESPONSE_CODE)
+  
+TCurlClass.GetDefaultCAInfo   PROCEDURE()
+  CODE
+  RETURN SELF.GetInfo::STRING(CURLINFO_CAINFO)
+  
+TCurlClass.GetDefaultCAPath   PROCEDURE()
+  CODE
+  RETURN SELF.GetInfo::STRING(CURLINFO_CAPATH)
+
 
 TCurlClass.SetQuote           PROCEDURE(TCurlSList plist)
   CODE

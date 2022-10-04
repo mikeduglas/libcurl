@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.55
-!** 03.10.2022
+!** libcurl for Clarion v1.55.1
+!** 04.10.2022
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -959,7 +959,7 @@ CURLOPT_MIME_OPTIONS          EQUATE(315 + CURLOPTTYPE_LONG)
 !!!endregion
 
 
-  INCLUDE('svapi.inc')
+  INCLUDE('svapi.inc'), ONCE
 
 !structure to pass a file to callbacks
 TCurlFileStruct              CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')

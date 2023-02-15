@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.55
-!** 04.10.2022
+!** libcurl for Clarion v1.56
+!** 15.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1751,6 +1751,19 @@ CURLUE_NO_HOST                  EQUATE(14)
 CURLUE_NO_PORT                  EQUATE(15)
 CURLUE_NO_QUERY                 EQUATE(16)
 CURLUE_NO_FRAGMENT              EQUATE(17)
+CURLUE_NO_ZONEID                EQUATE(18)
+CURLUE_BAD_FILE_URL             EQUATE(19)
+CURLUE_BAD_FRAGMENT             EQUATE(20)
+CURLUE_BAD_HOSTNAME             EQUATE(21)
+CURLUE_BAD_IPV6                 EQUATE(22)
+CURLUE_BAD_LOGIN                EQUATE(23)
+CURLUE_BAD_PASSWORD             EQUATE(24)
+CURLUE_BAD_PATH                 EQUATE(25)
+CURLUE_BAD_QUERY                EQUATE(26)
+CURLUE_BAD_SCHEME               EQUATE(27)
+CURLUE_BAD_SLASHES              EQUATE(28)
+CURLUE_BAD_USER                 EQUATE(29)
+CURLUE_LACKS_IDN                EQUATE(30)
                               END
 
 
@@ -1766,20 +1779,23 @@ CURLUPART_PORT                  EQUATE
 CURLUPART_PATH                  EQUATE
 CURLUPART_QUERY                 EQUATE
 CURLUPART_FRAGMENT              EQUATE
+CURLUPART_ZONEID                EQUATE
                               END
 
-CURLU_DEFAULT_PORT            EQUATE(0b)            !return default port number
-CURLU_NO_DEFAULT_PORT         EQUATE(10b)           !act as if no port number was set, if the port number matches the default for the scheme
-CURLU_DEFAULT_SCHEME          EQUATE(100b)          !return default scheme if missing
-CURLU_NON_SUPPORT_SCHEME      EQUATE(1000b)         !allow non-supported scheme
-CURLU_PATH_AS_IS              EQUATE(10000b)        !leave dot sequences
-CURLU_DISALLOW_USER           EQUATE(100000b)       !no user+password allowed
-CURLU_URLDECODE               EQUATE(1000000b)      !URL decode on get
-CURLU_URLENCODE               EQUATE(10000000b)     !URL encode on set
-CURLU_APPENDQUERY             EQUATE(100000000b)    !append a form style part
-CURLU_GUESS_SCHEME            EQUATE(1000000000b)   !legacy curl-style guessing
-CURLU_NO_AUTHORITY            EQUATE(10000000000b)  !Allow empty authority when the scheme is unknown.
-CURLU_ALLOW_SPACE             EQUATE(100000000000b) !Allow spaces in the URL
+!GetPart/SetPart flags
+CURLU_DEFAULT_PORT            EQUATE(00b)            !return default port number
+CURLU_NO_DEFAULT_PORT         EQUATE(010b)           !act as if no port number was set, if the port number matches the default for the scheme
+CURLU_DEFAULT_SCHEME          EQUATE(0100b)          !return default scheme if missing
+CURLU_NON_SUPPORT_SCHEME      EQUATE(01000b)         !allow non-supported scheme
+CURLU_PATH_AS_IS              EQUATE(010000b)        !leave dot sequences
+CURLU_DISALLOW_USER           EQUATE(0100000b)       !no user+password allowed
+CURLU_URLDECODE               EQUATE(01000000b)      !URL decode on get
+CURLU_URLENCODE               EQUATE(010000000b)     !URL encode on set
+CURLU_APPENDQUERY             EQUATE(0100000000b)    !append a form style part
+CURLU_GUESS_SCHEME            EQUATE(01000000000b)   !legacy curl-style guessing
+CURLU_NO_AUTHORITY            EQUATE(010000000000b)  !Allow empty authority when the scheme is unknown.
+CURLU_ALLOW_SPACE             EQUATE(0100000000000b) !Allow spaces in the URL
+CURLU_PUNYCODE                EQUATE(01000000000000b)!get the host name in pynycode
 
 CURLU                         EQUATE(LONG)
 
@@ -1940,4 +1956,60 @@ ReadInfo                        PROCEDURE(*TCURLMsg pMsg, <*LONG msgs_in_queue>)
 Find                            PROCEDURE(CURL eh), *TCurlClass
 
 StrError                        PROCEDURE(CURLMcode errcode), STRING, VIRTUAL
+                              END
+
+
+
+!---------------------------- Websocket API ----------------------------!
+
+!/* websockets options */
+CURLOPT_WS_OPTIONS            EQUATE(320 + CURLOPTTYPE_LONG)
+
+!/* bits for the CURLOPT_WS_OPTIONS bitmask: */
+CURLWS_RAW_MODE               EQUATE(00000001b)
+
+curl_ws_frame                 GROUP, TYPE
+age                             LONG              !/* zero */
+flags                           LONG              !/* See the CURLWS_* defines */
+offsetLo                        LONG              !/* the offset of this data into the frame */
+offsetHi                        LONG
+bytesleftLo                     LONG              !/* number of pending bytes left of the payload */
+bytesleftHi                     LONG
+len                             size_t            !/* size of the current data chunk *
+                              END
+
+!/* flag bits */
+CURLWS_TEXT                   EQUATE(00000001b)
+CURLWS_BINARY                 EQUATE(00000010b)
+CURLWS_CONT                   EQUATE(00000100b)
+CURLWS_CLOSE                  EQUATE(00001000b)
+CURLWS_PING                   EQUATE(00010000b)
+CURLWS_OFFSET                 EQUATE(00100000b)
+CURLWS_PONG                   EQUATE(01000000b) !/* sendflags for curl_ws_send() */
+
+TCurlWebsocketClass           CLASS(TCurlClass), TYPE, MODULE('libcurlws.clw'), LINK('libcurlws.clw')
+connRes                         CURLE, PROTECTED
+!ds                              &IDynStr, PROTECTED
+Construct                       PROCEDURE()
+Destruct                        PROCEDURE(), DERIVED
+Connect                         PROCEDURE(STRING pUrl), CURLcode, PROC
+Disconnect                      PROCEDURE(<STRING pReason>), CURLcode, PROC
+SendFrame                       PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC, PRIVATE
+SendMultiFrame                  PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC, PRIVATE
+Send                            PROCEDURE(STRING pData, UNSIGNED pFlags), CURLcode, PROC
+Send                            PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC
+SendText                        PROCEDURE(STRING pText), CURLcode, PROC
+SendText                        PROCEDURE(*STRING pText), CURLcode, PROC
+SendBinary                      PROCEDURE(STRING pData), CURLcode, PROC
+SendBinary                      PROCEDURE(*STRING pData), CURLcode, PROC
+SendFile                        PROCEDURE(STRING pFileName, BOOL pAsText=FALSE), CURLcode, PROC
+
+!!!<summary>Receive a response from websockets server.</summary>
+!!!<param name="pResponse">Response data.</param>
+!!!<param name="pBufSize">The size of a buffer which gets data chunks.</param>
+Receive                         PROCEDURE(*IDynStr pResponse, LONG pBufSize=256), CURLcode, PROC
+!!!<summary>Receive a response from websockets server.</summary>
+!!!<param name="pFileName">A file the response data will be saved in.</param>
+!!!<param name="pBufSize">The size of a buffer which gets data chunks.</param>
+Receive                         PROCEDURE(STRING pFileName, LONG pBufSize=256), CURLcode, PROC
                               END

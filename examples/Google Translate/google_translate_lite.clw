@@ -128,7 +128,8 @@ aresp                           ANY
     END
   END
 
-  !- cleaup
+  !- cleanup
+  hresp.Kill()
   DisposeDynStr(hresp)
 
   !- return translated text

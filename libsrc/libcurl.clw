@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.55
-!** 03.10.2022
+!** libcurl for Clarion v1.56
+!** 15.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -202,7 +202,7 @@
     END
   END
 
-curl::UserAgent               CSTRING('curl/7.83.0')
+curl::UserAgent               CSTRING('curl/7.87.0')
 
 !!!region static functions
 curl::DebugInfo               PROCEDURE(STRING s)

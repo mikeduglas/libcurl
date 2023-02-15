@@ -1,4 +1,23 @@
 ## Version history
+v1.56
+- CHG: Now uses libcurl v7.88.0, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 7.88.0 was built and statically linked with
+> 
+> brotli 1.0.9
+> cacert 2023-01-10
+> gsasl 2.2.0
+> libssh2 1.10.0
+> nghttp2 1.52.0
+> nghttp3 0.8.0
+> ngtcp2 0.13.1
+> openssl-quic 3.0.8
+> zlib 1.2.13
+> zstd 1.5.4
+  
+- NEW: CURLU_PUNYCODE flag: allows TCurlUrlApiClass.GetPart() get the punycode version of host names for the host name and URL parts.
+- NEW: TCurlWebsocketClass implements new WebSocket communication api.
+- NEW: WebsocketsClient.clw example.
+
 v1.55
 - CHG: Now uses libcurl v7.85.0, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 7.85.0_5 was built and statically linked with

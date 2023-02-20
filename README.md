@@ -32,6 +32,18 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.57
+- CHG: Now uses libcurl v7.88.1, see [changelog](https://curl.haxx.se/changes.html) for details.
+- FIX: TCurlClass.AddErrors(curl::ErrorBlock ErrsIn) failed if curl::DefaultErrors had more than 1 entries in libcurl.trn.
+- NEW: TCurlClass.GetInfo now supports parameters of curl_off_t (uint64) type.
+- NEW: TCurlClass.SetDebugInfoFilter method allows to filter debug messages or completely turn them off. See CURL_DEBUGINFO_xxx equates.
+- NEW: TCurlHttpClass.DownloadFile method allows to resume interrupted downloads if the server supports partial requests.
+- NEW: TCurlClass: ResetReadCallback, ResetWriteCallback, ResetXFerCallback, ResetDebugCallback, ResetHeaderCallback methods.
+- NEW: TCurlFileStruct: SetFilePointer, GetFilePointer, GetFileSize methods.
+- NEW: curl::FileAppend write callback.
+- CHG: TCurlWebsocketClass: internal changes.
+- CHG: Some Windows APIs moved from libcurl.inc into the modules where they are used.
+
 v1.56
 - CHG: Now uses libcurl v7.88.0, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 7.88.0 was built and statically linked with

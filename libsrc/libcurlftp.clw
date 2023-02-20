@@ -1,12 +1,12 @@
-!** libcurl for Clarion v1.54
-!** 11.05.2022
+!** libcurl for Clarion v1.57
+!** 20.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
 
   MEMBER
 
-  INCLUDE('libcurl.inc'), ONCE
+  INCLUDE('libcurl.inc')
 
 TFtpDirListItem               GROUP, TYPE
 Mask                            STRING(20)
@@ -498,8 +498,8 @@ res                             CURLcode, AUTO
   
   RETURN SELF.Perform()
 
-TCurlFtpClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
-res                                 CURLcode, AUTO
+TCurlFtpClass.ReadFile        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
+res                             CURLcode, AUTO
   CODE
   !turn on wildcard matching
   !this also turns on curl::ChunkBgnCallback() and curl::ChunkEndCallback()

@@ -1,0 +1,21 @@
+ This project has been alive for many years. Countless people have provided
+ feedback that have improved libcurlcurl for Clarion. Here follows a list of people that have
+ contributed (a-z order).
+
+ If you have contributed but are missing here, please let me know!
+
+Admin on clarionlife
+atashe3 on clarionlife
+finsoftrz on clarionlife
+gopstop2007 on clarionlife
+Will (Guillermo)
+Igor Vesnin on clarionlife
+Jeffrey Kuijt
+Johan de Klerk
+kreator on clarionlife
+pansoft on clarionlife
+RaFaeL on clarionlife
+Will (Guillermo)
+Валерий Будько
+Игорь Столяров on clarionlife
+Олег on clarionlife

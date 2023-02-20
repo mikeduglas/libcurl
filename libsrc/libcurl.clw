@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.56
-!** 15.02.2023
+!** libcurl for Clarion v1.57
+!** 20.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -7,8 +7,8 @@
 
   PRAGMA('link(libcurl.lib)')
 
-  INCLUDE('libcurl.inc')
-  INCLUDE('libcurl.trn')
+  INCLUDE('libcurl.inc'), ONCE
+  INCLUDE('libcurl.trn'), ONCE
 
   MAP
     MODULE('libcurl API')
@@ -41,6 +41,7 @@
       curl_easy_getinfo(CURL curl, CURLINFO info, LONG arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
       curl_easy_getinfo(CURL curl, CURLINFO info, *CSTRING arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
       curl_easy_getinfo(CURL curl, CURLINFO info, *REAL arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
+      curl_easy_getinfo(CURL curl, CURLINFO info, *curl_off_t arg), CURLcode, C, RAW, NAME('curl_easy_getinfo')
 
       curl_easy_init(), CURL, C, RAW, NAME('curl_easy_init')
 
@@ -196,13 +197,25 @@
 !      curl_version_info @59
     END
 
-    MODULE('WinAPI')
+    MODULE('Windows API')
+      winapi::CreateFile(*cstring szFileName, long dwDesiredAccess, long dwShareMode, long lpSecurityAttributes, |
+        long dwCreationDisposition, long dwFlagsAndAttributes, HANDLE hTemplateFile),HANDLE, |
+        name('CreateFileA'),pascal,raw
+      winapi::GetFileSize(HANDLE hFile, *long FileSizeHigh),long,raw,pascal,name('GetFileSize')
+      winapi::ReadFile(HANDLE hFile, long lpBuffer, long dwBytes, *long dwBytesRead, long lpOverlapped),bool,raw,pascal,name('ReadFile')
+      winapi::WriteFile(HANDLE hFile, long lpBuffer, long dwBytes, *long dwBytesWritten, long lpOverlapped),bool,raw,pascal,proc,name('WriteFile')
+      winapi::SetFilePointer(HANDLE hFile, LONG lDistanceToMove, LONG lpDistanceToMoveHigh, ULONG dwMoveMethod),ULONG,RAW,PASCAL,NAME('SetFilePointer')
+      winapi::GetFileSize(HANDLE hFile, LONG pFileSizeHigh),LONG,RAW,PASCAL,NAME('GetFileSize')
+      winapi::CloseHandle(HANDLE),bool,raw,pascal,proc,name('CloseHandle')
+
       curl::OutputDebugString(*CSTRING lpOutputString), PASCAL, RAW, NAME('OutputDebugStringA')
-!      curl::realloc(LONG lpmemblock,LONG size), LONG, PROC, NAME('_realloc')
     END
   END
 
-curl::UserAgent               CSTRING('curl/7.87.0')
+curl::UserAgent               CSTRING('curl/7.88.1')
+
+winapi::INVALID_FILE_SIZE         EQUATE(-1)
+winapi::INVALID_SET_FILE_POINTER  EQUATE(-1)
 
 !!!region static functions
 curl::DebugInfo               PROCEDURE(STRING s)
@@ -288,7 +301,9 @@ bytesWritten                    size_t
     RETURN -1
   END
   
+  ! write data
   IF fs.WriteFile(buffer, bufsize * nmemb, bytesWritten)
+    fs.fPosition += bytesWritten
     RETURN bytesWritten
   END
   
@@ -296,6 +311,38 @@ bytesWritten                    size_t
   
   RETURN -1 !error
   
+curl::FileAppend              PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
+fs                              &TCurlFileStruct
+bytesWritten                    size_t
+  CODE
+  IF pFileStruct = 0
+    ! tell curl how many bytes we handled
+    RETURN bufsize * nmemb
+  END
+  
+  fs &= (pFileStruct)
+  
+  ! create file if not exists, otherwise open it
+  IF NOT fs.CreateFile(,,OPEN_ALWAYS)
+    curl::DebugInfo('CreateFile('& fs.GetFileName() &') error')
+    RETURN -1
+  end
+
+  ! seek to the end of file
+  IF fs.SetFilePointer(0, FILE_END) <> winapi::INVALID_SET_FILE_POINTER
+    ! append data
+    IF fs.WriteFile(buffer, bufsize * nmemb, bytesWritten)
+      fs.fPosition += bytesWritten
+      RETURN bytesWritten
+    END
+
+    curl::DebugInfo('WriteFile('& fs.GetFileName() &') error '& winapi::GetLastError())
+  ELSE
+    curl::DebugInfo('SetFilePointer('& fs.GetFileName() &') error: Unable to seek to EOF.')
+  END
+  
+  RETURN -1 !error
+
 curl::FileRead                PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
 fs                              &TCurlFileStruct
 bytesRead                       size_t
@@ -543,7 +590,49 @@ TCurlFileStruct.WriteFile     PROCEDURE(long lpBuffer, long dwBytes, *long dwByt
 TCurlFileStruct.GetFileName   PROCEDURE()
   CODE
   RETURN CLIP(SELF.filename)
+  
+TCurlFileStruct.SetFilePointer    PROCEDURE(LONG plDistanceToMove, ULONG pdwMoveMethod)
+  CODE
+  IF SELF.fhandle
+    RETURN winapi::SetFilePointer(SELF.fhandle, plDistanceToMove, 0, pdwMoveMethod)
+  ELSE
+    RETURN winapi::INVALID_SET_FILE_POINTER
+  END
+  
+TCurlFileStruct.GetFilePointer    PROCEDURE()
+  CODE
+  RETURN SELF.SetFilePointer(0, FILE_CURRENT)
+  
+TCurlFileStruct.GetFileSize   PROCEDURE(<*LONG pFileSizeHigh>)
+bDoClose                        BOOL(FALSE)
+lpFileSizeLo                    LONG, AUTO
+lpFileSizeHi                    LONG, AUTO
+  CODE
+  IF NOT SELF.fhandle
+    !- file not opened, open it first and close on exit
+    bDoClose = TRUE
+  END
+  
+  IF SELF.OpenFile()
+    lpFileSizeLo = winapi::GetFileSize(SELF.fhandle, ADDRESS(lpFileSizeHi))
+    IF lpFileSizeLo = winapi::INVALID_FILE_SIZE
+      lpFileSizeLo = 0
+    END
+    IF NOT OMITTED(pFileSizeHigh)
+      pFileSizeHigh = lpFileSizeHi
+    END
+  ELSE
+    IF NOT OMITTED(pFileSizeHigh)
+      pFileSizeHigh = 0
+    END
+    lpFileSizeLo = 0
+  END
+  
+  IF bDoClose
+    SELF.Close()
+  END
 
+  RETURN lpFileSizeLo
 !!!endregion
   
 !!!region TCurlMailStruct
@@ -652,6 +741,7 @@ TCurlClass.Construct          PROCEDURE()
   SELF.headers &= NEW TCurlSList
   SELF.Errors &= NEW curl::ErrorEntry
   SELF.urlp &= NEW TCurlUrlApiClass
+  SELF.debugInfoMask = CURL_DEBUGINFO_ALL
   
 TCurlClass.Destruct           PROCEDURE()
   CODE
@@ -715,6 +805,7 @@ Errs                            &STRING
     SELF.Errors.Message &= Errs[Follow :Follow+Slen-1]
     ADD(SELF.Errors)
 ?   ASSERT(~ERRORCODE(),'Unable to add new error message to queue.')
+    Follow += Slen
   END
 
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, LONG param)
@@ -824,6 +915,12 @@ res                             CURLcode, AUTO
   
   RETURN CURLE_OK
 
+TCurlClass.ResetReadCallback  PROCEDURE()
+  CODE
+  SELF.SetOpt(CURLOPT_READFUNCTION, 0)
+  SELF.SetOpt(CURLOPT_READDATA, 0)
+  RETURN CURLE_OK
+
 TCurlClass.SetWriteCallback   PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData)
 res                             CURLcode, AUTO
   CODE
@@ -839,6 +936,12 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
+  RETURN CURLE_OK
+
+TCurlClass.ResetWriteCallback PROCEDURE()
+  CODE
+  SELF.SetOpt(CURLOPT_WRITEFUNCTION, 0)
+  SELF.SetOpt(CURLOPT_WRITEDATA, 0)
   RETURN CURLE_OK
 
 TCurlClass.SetXFerCallback    PROCEDURE(<curl::ProgressDataProcType xferproc>)
@@ -867,6 +970,13 @@ res                             CURLcode, AUTO
   
   RETURN CURLE_OK
 
+TCurlClass.ResetXFerCallback  PROCEDURE()
+  CODE
+  SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, 0)
+  SELF.SetOpt(CURLOPT_PROGRESSDATA, 0)
+  SELF.SetOpt(CURLOPT_NOPROGRESS, TRUE)
+  RETURN CURLE_OK
+
 TCurlClass.SetDebugCallback   PROCEDURE(curl::DebugProcType debugproc)
 res                             CURLcode, AUTO
   CODE
@@ -887,6 +997,13 @@ res                             CURLcode, AUTO
     
   RETURN CURLE_OK
 
+TCurlClass.ResetDebugCallback PROCEDURE()
+  CODE
+  SELF.SetOpt(CURLOPT_DEBUGFUNCTION, 0)
+  SELF.SetOpt(CURLOPT_DEBUGDATA, 0)
+  SELF.SetOpt(CURLOPT_VERBOSE, 0)
+  RETURN CURLE_OK
+
 TCurlClass.SetHeaderCallback  PROCEDURE(<curl::HeaderProcType headerproc>)
 res                             CURLcode, AUTO
   CODE
@@ -905,10 +1022,22 @@ res                             CURLcode, AUTO
   END
   
   RETURN CURLE_OK
+  
+TCurlClass.ResetHeaderCallback    PROCEDURE()
+  CODE
+  SELF.SetOpt(CURLOPT_HEADERFUNCTION, 0)
+  SELF.SetOpt(CURLOPT_HEADERDATA, 0)
+  RETURN CURLE_OK
 
+TCurlClass.SetDebugInfoFilter PROCEDURE(UNSIGNED pDebugInfoFilter)
+  CODE
+  SELF.debugInfoMask = pDebugInfoFilter
+  
 TCurlClass.ReadFile           PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
-res                             CURLcode, AUTO
 fs                              LIKE(TCurlFileStruct)
+uapi                            TCurlUrlApiClass
+sSchema                         STRING(20), AUTO
+res                             CURLcode, AUTO
   CODE
   ! set WriteFile callback
   fs.Init(pLocalFile)
@@ -928,25 +1057,33 @@ fs                              LIKE(TCurlFileStruct)
   IF res <> CURLE_OK
     RETURN res
   END
-  
-  !callback is called before download of concrete file started
-  res = SELF.SetOpt(CURLOPT_CHUNK_BGN_FUNCTION, curl::ChunkBgnCallback)  
-  IF res <> CURLE_OK
-    RETURN res
-  END
-  
-  !callback is called after data from the file have been transferred 
-  res = SELF.SetOpt(CURLOPT_CHUNK_END_FUNCTION, curl::ChunkEndCallback)  
-  IF res <> CURLE_OK
-    RETURN res
-  END
 
-  !put transfer data into callbacks
-  res = SELF.SetOpt(CURLOPT_CHUNK_DATA, ADDRESS(fs))  
-  IF res <> CURLE_OK
-    RETURN res
-  END
+  !- set options regarding a protocol
+  uapi.Init()
+  uapi.SetPart(CURLUPART_URL, pRemoteFile, CURLU_DEFAULT_SCHEME)
+  uapi.GetPart(CURLUPART_SCHEME, sSchema)
+  IF sSchema = 'ftp'
+    !callback is called before download of concrete file started
+    res = SELF.SetOpt(CURLOPT_CHUNK_BGN_FUNCTION, curl::ChunkBgnCallback)  
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  
+    !callback is called after data from the file have been transferred 
+    res = SELF.SetOpt(CURLOPT_CHUNK_END_FUNCTION, curl::ChunkEndCallback)  
+    IF res <> CURLE_OK
+      RETURN res
+    END
 
+    !put transfer data into callbacks
+    fs.Init(pLocalFile)
+    res = SELF.SetOpt(CURLOPT_CHUNK_DATA, ADDRESS(fs))  
+    IF res <> CURLE_OK
+      RETURN res
+    END
+  END
+  uapi.Cleanup()
+  
   ! perform request
   res = SELF.Perform()
   IF res <> CURLE_OK
@@ -1149,7 +1286,9 @@ TCurlClass.XFerInfo           PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, 
   
 TCurlClass.DebugCallback      PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext)
   CODE
-  curl::DebugInfo(CLIP(ptypetxt) &': '& CLIP(ptext))
+  IF BAND(SELF.debugInfoMask, BSHIFT(1, ptype))
+    curl::DebugInfo(CLIP(ptypetxt) &': '& CLIP(ptext))
+  END
   
 TCurlClass.TalkCallback       PROCEDURE(CURL_INFOTYPE ptype, STRING ptext)
   CODE
@@ -1231,6 +1370,17 @@ res                             CURLcode, AUTO
   
   RETURN res
   
+TCurlClass.GetInfo            PROCEDURE(CURLINFO pInfo, *curl_off_t pValue)
+off_t_val                       LIKE(curl_off_t), AUTO
+res                             CURLcode, AUTO
+  CODE
+  res = curl_easy_getinfo(SELF.curl, pInfo, off_t_val)
+  IF res = CURLE_OK
+    pValue = off_t_val
+  END
+  
+  RETURN res
+
 TCurlClass.GetInfo::LONG      PROCEDURE(CURLINFO info)
 lVal                            LONG, AUTO
   CODE
@@ -1268,6 +1418,22 @@ rVal                            REAL
   END
   
   RETURN 0.0
+  
+TCurlClass.GetInfo::OFF_T     PROCEDURE(CURLINFO info, <*UNSIGNED pHighPart>)
+off_t_val                       LIKE(curl_off_t)
+  CODE
+  ASSERT(BAND(info, CURLINFO_TYPEMASK) = CURLINFO_OFF_T)
+  IF SELF.GetInfo(info, off_t_val) = CURLE_OK
+    IF NOT OMITTED(pHighPart)
+      pHighPart = off_t_val.hi
+    END
+    RETURN off_t_val.lo
+  END
+
+  IF NOT OMITTED(pHighPart)
+    pHighPart = 0
+  END
+  RETURN 0
 
 TCurlClass.GetContentType     PROCEDURE()
   CODE

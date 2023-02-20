@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.54
-!** 11.05.2022
+!** libcurl for Clarion v1.57
+!** 20.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -8,9 +8,14 @@
   INCLUDE('libcurl.inc'), ONCE
 
   MAP
-    MODULE('WinAPI')
+    MODULE('Windows API')
       winapi::GetLocalTime(LONG lpSystemTime), PASCAL, NAME('GetLocalTime')
       winapi::GetTimeZoneInformation(LONG lpTimeZoneInformation), ULONG, PROC, PASCAL, NAME('GetTimeZoneInformation')
+      winapi::MultiByteToWideChar(long CodePage, long dwFlags, long lpMultiByteStr, long cbMultiByte, |
+        long lpWideCharStr, long cchWideCharStr),long,pascal,name('MultiByteToWideChar')
+      winapi::WideCharToMultiByte(long CodePage, long dwFlags, long lpWideCharStr, long cchWideChar, |
+        long lpMultiByteStr, long cbMultiByte, long lpDefaultChar, |
+        long lpUsedDefaultChar),long,pascal,name('WideCharToMultiByte')
     END
 
     ConvertToCodePage(STRING pStr, SIGNED pCodePage = CP_UTF8), STRING, PRIVATE  ! convert ASCII to UTF8

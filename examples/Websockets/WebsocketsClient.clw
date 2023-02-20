@@ -7,7 +7,10 @@
     INCLUDE('printf.inc'), ONCE
   END
 
-ws                            TCurlWebsocketClass
+ws                            CLASS(TCurlWebsocketClass)
+Connect                         PROCEDURE(STRING pUrl), CURLcode, PROC, DERIVED
+                              END
+
 host                          STRING(256)
 txtRequest                    STRING(256)
 ds                            &IDynStr
@@ -44,13 +47,9 @@ Window                        WINDOW('Websockets libcurl client'),AT(,,397,173),
   ACCEPT
     CASE ACCEPTED()
     OF ?btnConnect
-      !- connect to websockets server without SSL verification
-      ws.SetSSLVerifyHost(FALSE)
-      ws.SetSSLVerifyPeer(FALSE)
       rc = ws.Connect(host)
       IF rc = CURLE_OK
         ?btnSend{PROP:Disable} = FALSE
-        ?btnConnect{PROP:Disable} = TRUE
         DisplayResponse('Connected')
       ELSE
         !- Connect error
@@ -63,8 +62,6 @@ Window                        WINDOW('Websockets libcurl client'),AT(,,397,173),
       ws.Disconnect()
 
       ?btnSend{PROP:Disable} = TRUE
-      ?btnConnect{PROP:Disable} = FALSE
-
       DisplayResponse('Disconnected')
 
     OF ?btnSend
@@ -92,6 +89,19 @@ Window                        WINDOW('Websockets libcurl client'),AT(,,397,173),
   ds.Kill()
   DisposeDynStr(ds)
   
+ 
+ws.Connect                    PROCEDURE(STRING pUrl)
+  CODE
+  !- reset all previous connection settings
+  SELF.Reset()
+  !- no SSL verification
+  SELF.SetSSLVerifyHost(FALSE)
+  SELF.SetSSLVerifyPeer(FALSE)
+  !- timeout
+  SELF.SetOpt(CURLOPT_TIMEOUT, 10)
+  
+  !- connect
+  RETURN PARENT.Connect(pUrl)
   
 DisplayResponse               PROCEDURE(STRING pText)
   CODE

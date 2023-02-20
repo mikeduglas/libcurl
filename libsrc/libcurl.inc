@@ -1,13 +1,11 @@
-!** libcurl for Clarion v1.56
-!** 15.02.2023
+!** libcurl for Clarion v1.57
+!** 20.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
-!** TODO: implement CURLOPT_TRAILERFUNCTION, CURLOPT_TRAILERDATA
-
-
   INCLUDE('DynStr.inc'), ONCE
 
+__LIBCURL__                   EQUATE(1)
 CURL                          EQUATE(LONG)
 
 size_t                        EQUATE(UNSIGNED)
@@ -159,29 +157,37 @@ CURLINFO_STRING               EQUATE(0100000h)
 CURLINFO_LONG                 EQUATE(0200000h)
 CURLINFO_DOUBLE               EQUATE(0300000h)
 CURLINFO_SLIST                EQUATE(0400000h)
+CURLINFO_PTR                  EQUATE(0400000h)    !same as SLIST
 CURLINFO_SOCKET               EQUATE(0500000h)
 CURLINFO_OFF_T                EQUATE(0600000h)
 CURLINFO_MASK                 EQUATE(00fffffh)
 CURLINFO_TYPEMASK             EQUATE(0f00000h)
 
 CURLINFO                      EQUATE(LONG)
-CURLINFO_NONE                 EQUATE(0)             !/* first, never use this */
+CURLINFO_NONE                 EQUATE(0)                             !/* first, never use this */
 CURLINFO_EFFECTIVE_URL        EQUATE(CURLINFO_STRING + 1)
 CURLINFO_RESPONSE_CODE        EQUATE(CURLINFO_LONG   + 2)
 CURLINFO_TOTAL_TIME           EQUATE(CURLINFO_DOUBLE + 3)
 CURLINFO_NAMELOOKUP_TIME      EQUATE(CURLINFO_DOUBLE + 4)
 CURLINFO_CONNECT_TIME         EQUATE(CURLINFO_DOUBLE + 5)
 CURLINFO_PRETRANSFER_TIME     EQUATE(CURLINFO_DOUBLE + 6)
-CURLINFO_SIZE_UPLOAD          EQUATE(CURLINFO_DOUBLE + 7)
-CURLINFO_SIZE_DOWNLOAD        EQUATE(CURLINFO_DOUBLE + 8)
-CURLINFO_SPEED_DOWNLOAD       EQUATE(CURLINFO_DOUBLE + 9)
-CURLINFO_SPEED_UPLOAD         EQUATE(CURLINFO_DOUBLE + 10)
+CURLINFO_SIZE_UPLOAD          EQUATE(CURLINFO_DOUBLE + 7)           !Deprecated since 7.55.0, use CURLINFO_SIZE_UPLOAD_T
+CURLINFO_SIZE_UPLOAD_T        EQUATE(CURLINFO_OFF_T  + 7)
+CURLINFO_SIZE_DOWNLOAD        EQUATE(CURLINFO_DOUBLE + 8)           !Deprecated since 7.55.0, use CURLINFO_SIZE_DOWNLOAD_T
+CURLINFO_SIZE_DOWNLOAD_T      EQUATE(CURLINFO_OFF_T  + 8)
+CURLINFO_SPEED_DOWNLOAD       EQUATE(CURLINFO_DOUBLE + 9)           !Deprecated since 7.55.0, use CURLINFO_SPEED_DOWNLOAD_T
+CURLINFO_SPEED_DOWNLOAD_T     EQUATE(CURLINFO_OFF_T  + 9)
+CURLINFO_SPEED_UPLOAD         EQUATE(CURLINFO_DOUBLE + 10)          !Deprecated since 7.55.0, use CURLINFO_SPEED_UPLOAD_T
+CURLINFO_SPEED_UPLOAD_T       EQUATE(CURLINFO_OFF_T  + 10)
 CURLINFO_HEADER_SIZE          EQUATE(CURLINFO_LONG   + 11)
 CURLINFO_REQUEST_SIZE         EQUATE(CURLINFO_LONG   + 12)
 CURLINFO_SSL_VERIFYRESULT     EQUATE(CURLINFO_LONG   + 13)
 CURLINFO_FILETIME             EQUATE(CURLINFO_LONG   + 14)
-CURLINFO_CONTENT_LENGTH_DOWNLOAD  EQUATE(CURLINFO_DOUBLE + 15)
-CURLINFO_CONTENT_LENGTH_UPLOAD    EQUATE(CURLINFO_DOUBLE + 16)
+CURLINFO_FILETIME_T           EQUATE(CURLINFO_OFF_T  + 14)
+CURLINFO_CONTENT_LENGTH_DOWNLOAD      EQUATE(CURLINFO_DOUBLE + 15)  !Deprecated since 7.55.0, use CURLINFO_CONTENT_LENGTH_DOWNLOAD_T
+CURLINFO_CONTENT_LENGTH_DOWNLOAD_T    EQUATE(CURLINFO_OFF_T  + 15)
+CURLINFO_CONTENT_LENGTH_UPLOAD        EQUATE(CURLINFO_DOUBLE + 16)  !Deprecated since 7.55.0, use CURLINFO_CONTENT_LENGTH_UPLOAD_T
+CURLINFO_CONTENT_LENGTH_UPLOAD_T      EQUATE(CURLINFO_OFF_T  + 16)
 CURLINFO_STARTTRANSFER_TIME   EQUATE(CURLINFO_DOUBLE + 17)
 CURLINFO_CONTENT_TYPE         EQUATE(CURLINFO_STRING + 18)
 CURLINFO_REDIRECT_TIME        EQUATE(CURLINFO_DOUBLE + 19)
@@ -194,12 +200,12 @@ CURLINFO_OS_ERRNO             EQUATE(CURLINFO_LONG   + 25)
 CURLINFO_NUM_CONNECTS         EQUATE(CURLINFO_LONG   + 26)
 CURLINFO_SSL_ENGINES          EQUATE(CURLINFO_SLIST  + 27)
 CURLINFO_COOKIELIST           EQUATE(CURLINFO_SLIST  + 28)
-CURLINFO_LASTSOCKET           EQUATE(CURLINFO_LONG   + 29)
+CURLINFO_LASTSOCKET           EQUATE(CURLINFO_LONG   + 29)          !Deprecated since 7.45.0, use CURLINFO_ACTIVESOCKET
 CURLINFO_FTP_ENTRY_PATH       EQUATE(CURLINFO_STRING + 30)
 CURLINFO_REDIRECT_URL         EQUATE(CURLINFO_STRING + 31)
 CURLINFO_PRIMARY_IP           EQUATE(CURLINFO_STRING + 32)
 CURLINFO_APPCONNECT_TIME      EQUATE(CURLINFO_DOUBLE + 33)
-CURLINFO_CERTINFO             EQUATE(CURLINFO_SLIST  + 34)
+CURLINFO_CERTINFO             EQUATE(CURLINFO_PTR    + 34)
 CURLINFO_CONDITION_UNMET      EQUATE(CURLINFO_LONG   + 35)
 CURLINFO_RTSP_SESSION_ID      EQUATE(CURLINFO_STRING + 36)
 CURLINFO_RTSP_CLIENT_CSEQ     EQUATE(CURLINFO_LONG   + 37)
@@ -208,12 +214,12 @@ CURLINFO_RTSP_CSEQ_RECV       EQUATE(CURLINFO_LONG   + 39)
 CURLINFO_PRIMARY_PORT         EQUATE(CURLINFO_LONG   + 40)
 CURLINFO_LOCAL_IP             EQUATE(CURLINFO_STRING + 41)
 CURLINFO_LOCAL_PORT           EQUATE(CURLINFO_LONG   + 42)
-CURLINFO_TLS_SESSION          EQUATE(CURLINFO_SLIST  + 43)
+CURLINFO_TLS_SESSION          EQUATE(CURLINFO_PTR    + 43)          !Deprecated since 7.48.0, use CURLINFO_TLS_SSL_PTR
 CURLINFO_ACTIVESOCKET         EQUATE(CURLINFO_SOCKET + 44)
-CURLINFO_TLS_SSL_PTR          EQUATE(CURLINFO_SLIST  + 45)
+CURLINFO_TLS_SSL_PTR          EQUATE(CURLINFO_PTR    + 45)
 CURLINFO_HTTP_VERSION         EQUATE(CURLINFO_LONG   + 46)
 CURLINFO_PROXY_SSL_VERIFYRESULT   EQUATE(CURLINFO_LONG + 47)
-CURLINFO_PROTOCOL             EQUATE(CURLINFO_LONG   + 48)
+CURLINFO_PROTOCOL             EQUATE(CURLINFO_LONG   + 48)          !Deprecated since 7.85.0, use CURLINFO_SCHEME
 CURLINFO_SCHEME               EQUATE(CURLINFO_STRING + 49)
 CURLINFO_TOTAL_TIME_T         EQUATE(CURLINFO_OFF_T + 50)
 CURLINFO_NAMELOOKUP_TIME_T    EQUATE(CURLINFO_OFF_T + 51)
@@ -239,7 +245,7 @@ CURLINFO_CAPATH               EQUATE(CURLINFO_STRING + 62)
 !#define CURL_GLOBAL_ACK_EINTR (1<<2)
 
 CURL_GLOBAL_ENUM              EQUATE(LONG)
-CURL_GLOBAL_SSL               EQUATE(0001b)
+CURL_GLOBAL_SSL               EQUATE(0001b)   !no purpose since 7.57.0
 CURL_GLOBAL_WIN32             EQUATE(0010b)
 CURL_GLOBAL_ALL               EQUATE(BOR(CURL_GLOBAL_SSL, CURL_GLOBAL_WIN32))
 CURL_GLOBAL_NOTHING           EQUATE(0)
@@ -963,17 +969,21 @@ CURLOPT_MIME_OPTIONS          EQUATE(315 + CURLOPTTYPE_LONG)
 
 !structure to pass a file to callbacks
 TCurlFileStruct              CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
-filename                        CSTRING(256), PROTECTED
+filename                        CSTRING(MAX_PATH), PROTECTED
 fhandle                         HANDLE, PROTECTED
+fPosition                       size_t, PROTECTED
 
 Destruct                        PROCEDURE(), VIRTUAL  !closes file handle
 Init                            PROCEDURE(STRING pFilename)
 Close                           PROCEDURE(), BOOL, VIRTUAL, PROC
 CreateFile                      PROCEDURE(LONG dwDesiredAccess = GENERIC_WRITE, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = CREATE_ALWAYS, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL), BOOL
-OpenFile                        PROCEDURE(LONG dwDesiredAccess = GENERIC_READ, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = OPEN_EXISTING, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL), BOOL
+OpenFile                        PROCEDURE(LONG dwDesiredAccess = GENERIC_READ, LONG dwShareMode = FILE_SHARE_READ, LONG dwCreationDisposition = OPEN_EXISTING, LONG dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL), BOOL, PROC
 ReadFile                        PROCEDURE(LONG lpBuffer, LONG dwBytes, *LONG dwBytesRead), BOOL
 WriteFile                       PROCEDURE(long lpBuffer, long dwBytes, *long dwBytesWritten), BOOL
 GetFileName                     PROCEDURE(), STRING
+SetFilePointer                  PROCEDURE(LONG plDistanceToMove, ULONG pdwMoveMethod), UNSIGNED, PROC
+GetFilePointer                  PROCEDURE(), UNSIGNED
+GetFileSize                     PROCEDURE(<*LONG pFileSizeHigh>), LONG
                               END
 
 TCurlStringStruct             GROUP, TYPE
@@ -1024,6 +1034,8 @@ filled                          LONG  !bytes written
 
       !writes to a file
       curl::FileWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
+      !appends a file
+      curl::FileAppend(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
       !reads from a file
       curl::FileRead(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct), size_t, C
       !writes to a string
@@ -1056,27 +1068,12 @@ filled                          LONG  !bytes written
       curl::UnixTime(LONG pClaDate, LONG pClaTime), ULONG
     END
 
-
-
-    ! CreateFile, WriteFile, CloseHandle etc
-!    INCLUDE('svapifnc.inc')
-    MODULE('WIN API')
+    MODULE('Windows API')
       winapi::CreateDirectory(*CString szPathName, <*SECURITY_ATTRIBUTES SecurityAttributes>),bool,pascal,proc,raw,name('CreateDirectoryA')
       winapi::GetLastError(),long,pascal,name('GetLastError')
-      winapi::CreateFile(*cstring szFileName, long dwDesiredAccess, long dwShareMode, long lpSecurityAttributes, |
-        long dwCreationDisposition, long dwFlagsAndAttributes, HANDLE hTemplateFile),HANDLE, |
-        name('CreateFileA'),pascal,raw
-      winapi::GetFileSize(HANDLE hFile, *long FileSizeHigh),long,raw,pascal,name('GetFileSize')
-      winapi::ReadFile(HANDLE hFile, long lpBuffer, long dwBytes, *long dwBytesRead, long lpOverlapped),bool,raw,pascal,name('ReadFile')
-      winapi::WriteFile(HANDLE hFile, long lpBuffer, long dwBytes, *long dwBytesWritten, long lpOverlapped),bool,raw,pascal,proc,name('WriteFile')
-      winapi::CloseHandle(HANDLE),bool,raw,pascal,proc,name('CloseHandle')
-      winapi::MultiByteToWideChar(long CodePage, long dwFlags, long lpMultiByteStr, long cbMultiByte, |
-        long lpWideCharStr, long cchWideCharStr),long,pascal,name('MultiByteToWideChar')
-      winapi::WideCharToMultiByte(long CodePage, long dwFlags, long lpWideCharStr, long cchWideChar, |
-        long lpMultiByteStr, long cbMultiByte, long lpDefaultChar, |
-        long lpUsedDefaultChar),long,pascal,name('WideCharToMultiByte')
-      winapi::ShellExecute(LONG phWnd, <*CSTRING pAction>, *CSTRING pFilename, <*CSTRING pParameters>, <*CSTRING pDirectory>, LONG pFlags=1), LONG, PASCAL, RAW, PROC, NAME('ShellExecuteA')
+    END
 
+    MODULE('Clarion Runtime')
       curl::memcpy(LONG lpDest,LONG lpSource,LONG nCount), LONG, PROC, NAME('_memcpy')
     END
   END
@@ -1113,9 +1110,27 @@ curl::ErrorEntry              QUEUE(curl::ErrorEntryGroup), TYPE  ! List of all 
 
 
 !---------------------------- TCurlClass---- -----------------------------!
+!- Debug info bits
+CURL_DEBUGINFO_TEXT           EQUATE(00000001b) !- informational text
+CURL_DEBUGINFO_HEADER_IN      EQUATE(00000010b) !- header (or header-like) data received from the peer
+CURL_DEBUGINFO_HEADER_OUT     EQUATE(00000100b) !- header (or header-like) data sent to the peer
+CURL_DEBUGINFO_DATA_IN        EQUATE(00001000b) !- unprocessed protocol data received from the peer
+CURL_DEBUGINFO_DATA_OUT       EQUATE(00010000b) !- protocol data sent to the peer
+CURL_DEBUGINFO_SSL_DATA_IN    EQUATE(00100000b) !- SSL/TLS (binary) data received from the peer
+CURL_DEBUGINFO_SSL_DATA_OUT   EQUATE(01000000b) !- SSL/TLS (binary) data sent to the peer
+CURL_DEBUGINFO_IN             EQUATE(00101011b) !- incoming on;ly
+CURL_DEBUGINFO_OUT            EQUATE(01010101b) !- outgoing only
+!bitmasks
+CURL_DEBUGINFO_NONE           EQUATE(00000000b) !- off
+CURL_DEBUGINFO_NO_DATA_IN     EQUATE(11010111b) !- don't log CURL_DEBUGINFO_DATA_IN and CURL_DEBUGINFO_SSL_DATA_IN
+CURL_DEBUGINFO_NO_DATA_OUT    EQUATE(10101111b) !- don't log CURL_DEBUGINFO_DATA_OUT and CURL_DEBUGINFO_SSL_DATA_OUT
+CURL_DEBUGINFO_NO_DATA        EQUATE(00000111b) !- don't log any DATA
+CURL_DEBUGINFO_ALL            EQUATE(11111111b) !- no filters
+
 TCurlClass                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
 curl                            CURL, PROTECTED
 urlp                            &TCurlUrlApiClass, PROTECTED
+debugInfoMask                   UNSIGNED, PROTECTED
 
 !linked list of http headers
 headers                         &TCurlSList, PROTECTED
@@ -1125,10 +1140,17 @@ AddError                        PROCEDURE(CURLE Id, *STRING Message), VIRTUAL
 AddErrors                       PROCEDURE(curl::ErrorBlock ErrsIn), VIRTUAL
 
 SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG pData), CURLcode, PROC
+ResetReadCallback               PROCEDURE(), CURLcode, PROC
 SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC
+ResetWriteCallback              PROCEDURE(), CURLcode, PROC
 SetXFerCallback                 PROCEDURE(<curl::ProgressDataProcType xferproc>), CURLcode, PROC
+ResetXFerCallback               PROCEDURE(), CURLcode, PROC
 SetDebugCallback                PROCEDURE(curl::DebugProcType debugproc), CURLcode, PROC
+ResetDebugCallback              PROCEDURE(), CURLcode, PROC
 SetHeaderCallback               PROCEDURE(<curl::HeaderProcType headerproc>), CURLcode, PROC
+ResetHeaderCallback             PROCEDURE(), CURLcode, PROC
+
+SetDebugInfoFilter              PROCEDURE(UNSIGNED pDebugInfoFilter)  !- DebugInfo filter (see CURL_DEBUGINFO_xxx equates)
 
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), VIRTUAL
@@ -1200,12 +1222,14 @@ SetSSLVerifyPeer                PROCEDURE(BOOL pValue), CURLcode, PROC
 SetCAInfo                       PROCEDURE(STRING pCert), CURLcode, PROC
 SetSSLVersion                   PROCEDURE(CURL_SSLVERSION_ENUM pSSLVersion), CURLcode, PROC
 
-GetInfo                         PROCEDURE(CURLINFO info, *LONG value), CURLcode, PROC
-GetInfo                         PROCEDURE(CURLINFO info, *REAL value), CURLcode, PROC
-GetInfo::LONG                   PROCEDURE(CURLINFO info), LONG
-GetInfo::SLIST                  PROCEDURE(CURLINFO info), LONG
-GetInfo::STRING                 PROCEDURE(CURLINFO info), STRING
-GetInfo::DOUBLE                 PROCEDURE(CURLINFO info), REAL
+GetInfo                         PROCEDURE(CURLINFO pInfo, *LONG pValue), CURLcode, PROC
+GetInfo                         PROCEDURE(CURLINFO pInfo, *REAL pValue), CURLcode, PROC
+GetInfo                         PROCEDURE(CURLINFO pInfo, *curl_off_t pValue), CURLcode, PROC
+GetInfo::LONG                   PROCEDURE(CURLINFO pInfo), LONG
+GetInfo::SLIST                  PROCEDURE(CURLINFO pInfo), LONG
+GetInfo::STRING                 PROCEDURE(CURLINFO pInfo), STRING
+GetInfo::DOUBLE                 PROCEDURE(CURLINFO pInfo), REAL
+GetInfo::OFF_T                  PROCEDURE(CURLINFO pInfo, <*UNSIGNED pHighPart>), UNSIGNED
 
 GetContentType                  PROCEDURE(), STRING
 GetResponseCode                 PROCEDURE(), LONG     ! returns the last received HTTP or FTP code
@@ -1503,7 +1527,12 @@ TCurlHttpClass                CLASS(TCurlClass), TYPE, MODULE('libcurlhttp.clw')
 httppost                        LONG, PROTECTED
 postend                         LONG, PROTECTED
 
+!- some header values not accessed thru GetInfo
+bAcceptRangesEnabled            BOOL, PROTECTED             !- "Accept-Ranges: byte" header
+sAttachment                     STRING(MAX_PATH), PROTECTED !- filename from "Content-Disposition: attachment; filename="filename.jpg" header
+
 Destruct                        PROCEDURE(), DERIVED
+HeaderCallback                  PROCEDURE(STRING pHeaderLine), DERIVED
 
 !FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
 FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
@@ -1569,6 +1598,35 @@ SendFileStr                     PROCEDURE(STRING pUrl, STRING pFileName, STRING 
 !pDataLen=0 means LEN(pBinData)
 SendBinData                     PROCEDURE(STRING pUrl, CONST *STRING pBinData, LONG pDataLen = 0, STRING pContentType, <STRING pResponseFile>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 SendBinDataStr                  PROCEDURE(STRING pUrl, CONST *STRING pBinData, LONG pDataLen = 0, STRING pContentType, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
+
+!!!<summary>Download a file.</summary>
+!!!<param name="pRemoteFile">The url of a resource to download.</param>
+!!!<param name="pLocalFile">The name of a local target.</param>
+!!!<param name="pBlockSize">The size of the data (in bytes) read on each GET request.</param>
+!!!<param name="pAppend">If true, then the download will be resumed from where it was interrupted.</param>
+!!!<param name="pRetries">The number of failed attempts to download data on each GET request before aborting.</param>
+!!!<param name="xferproc">Progress callback.</param>
+!!!<remarks>
+!!!If pLocalFile is empty, then the resulting name of a local file is evaluated from Content-Disposition HTTP header or from the url of remote file and saved in current folder.
+!!!If pLocalFile ends with \ or /, then it is considered as a target folder, and the file name is evaluated according to the same rules.
+!!!Otherwise pLocalFile is considered as target file path.
+!!!If pLocalFile is a variable parameter, then it receives the actual file name.
+!!!</remarks>
+DownloadFile                    PROCEDURE(STRING pRemoteFile, <STRING pLocalFile>, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
+!!!<summary>Download a file.</summary>
+!!!<param name="pRemoteFile">The url of a resource to download.</param>
+!!!<param name="pLocalFile">The name of a local target.</param>
+!!!<param name="pBlockSize">The size of the data (in bytes) read on each GET request.</param>
+!!!<param name="pAppend">If true, then the download will be resumed from where it was interrupted.</param>
+!!!<param name="pRetries">The number of failed attempts to download data on each GET request before aborting.</param>
+!!!<param name="xferproc">Progress callback.</param>
+!!!<remarks>
+!!!If pLocalFile is empty, then the resulting name of a local file is evaluated from Content-Disposition HTTP header or from the url of remote file and saved in current folder.
+!!!If pLocalFile ends with \ or /, then it is considered as a target folder, and the file name is evaluated according to the same rules.
+!!!Otherwise pLocalFile is considered as target file path.
+!!!If pLocalFile is a variable parameter, then it receives the actual file name.
+!!!</remarks>
+DownloadFile                    PROCEDURE(STRING pRemoteFile, *STRING pLocalFile, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
                               END
 
 !---------------------------- TCurlDropboxClass ----------------------------!
@@ -1992,8 +2050,8 @@ connRes                         CURLE, PROTECTED
 !ds                              &IDynStr, PROTECTED
 Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), DERIVED
-Connect                         PROCEDURE(STRING pUrl), CURLcode, PROC
-Disconnect                      PROCEDURE(<STRING pReason>), CURLcode, PROC
+Connect                         PROCEDURE(STRING pUrl), CURLcode, PROC, VIRTUAL
+Disconnect                      PROCEDURE(<STRING pReason>), CURLcode, PROC, VIRTUAL
 SendFrame                       PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC, PRIVATE
 SendMultiFrame                  PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC, PRIVATE
 Send                            PROCEDURE(STRING pData, UNSIGNED pFlags), CURLcode, PROC

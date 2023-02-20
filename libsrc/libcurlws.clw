@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.56
-!** 15.02.2023
+!** libcurl for Clarion v1.57
+!** 20.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -84,9 +84,6 @@ TCurlWebsocketClass.Destruct  PROCEDURE()
 
 TCurlWebsocketClass.Connect   PROCEDURE(STRING pUrl)
   CODE
-  !- disconnect first
-  SELF.Disconnect()
-
   SELF.SetUrl(pUrl)
   SELF.SetDebugCallback(curl::DebugCallback)
 !  SELF.SetWriteCallback(curl::ws:WriteCB, ADDRESS(SELF))
@@ -107,7 +104,6 @@ res                                 CURLcode, AUTO
   IF SELF.connRes = CURLE_OK
     res = SELF.Send(pReason, CURLWS_CLOSE)
     SELF.connRes = CURLE_COULDNT_CONNECT
-    SELF.Reset()
   ELSE
     res = CURLE_OK
   END

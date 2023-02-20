@@ -1,11 +1,11 @@
-!** libcurl for Clarion v1.54
-!** 11.05.2022
+!** libcurl for Clarion v1.57
+!** 20.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
 
-  INCLUDE('libcurl.inc'), ONCE
+  INCLUDE('libcurl.inc')
 
   MAP
     MODULE('libcurl API')
@@ -13,21 +13,74 @@
       curl_formadd_3(LONG pphttppost, LONG pplast_post, CURLformoption option1, *CSTRING option1name, CURLformoption option2, *CSTRING option2name, CURLformoption option3, *CSTRING option3name, CURLformoption endoption), CURLFORMcode, PROC, C, RAW, NAME('curl_formadd')
       curl_formfree(LONG pform), C, RAW, NAME('curl_formfree')
     END
+
+    GetLocalFileName(STRING pLocalFile, STRING pAttachment, STRING pUrl), STRING, PRIVATE
   END
+
+!!!region helpers
+GetLocalFileName              PROCEDURE(STRING pLocalFile, STRING pAttachment, STRING pUrl)
+nLen                            LONG, AUTO
+uapi                            TCurlUrlApiClass
+sRemotePath                     STRING(1024), AUTO
+slashPos                        LONG, AUTO
+  CODE
+  nLen = LEN(CLIP(pLocalFile))
+  
+  IF nLen AND pLocalFile[nLen] <> '\' AND pLocalFile[nLen] <> '/'
+    !- pLocalFile is a filename
+    RETURN pLocalFile
+  END
+  
+  IF pAttachment
+    !- pLocalFile is a folder or an empty string, use pAttachment as an actual name
+    RETURN CLIP(pLocalFile) & pAttachment
+  END
+  
+  !- extract filename from pUrl
+  uapi.Init()
+  uapi.SetPart(CURLUPART_URL, pUrl, 0)
+  uapi.GetPart(CURLUPART_PATH, sRemotePath)
+
+  !- find trailing /
+  nLen = LEN(CLIP(sRemotePath))
+  slashPos = INSTRING('/', sRemotePath, -1, nLen)
+  IF slashPos
+    RETURN CLIP(pLocalFile) & sRemotePath[slashPos+1 : nLen]
+  END
+  
+  !- unable to get local name
+  RETURN ''
+!!!endregion
 
 !!!region TCurlHttpClass
 TCurlHttpClass.Destruct       PROCEDURE()
   CODE
   SELF.FormFree()
   
-!TCurlHttpClass.FollowLocation PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0)
-!  CODE
-!  IF pFollowLocation
-!    SELF.AddHttpHeader('Content-Length: '& pContentLength) !curl bug: "http error 411 (Length required)"; explicit 0 fixes this
-!    SELF.SetHttpHeaders()
-!  END
-!  
-!  RETURN SELF.SetOpt(CURLOPT_FOLLOWLOCATION, pFollowLocation)
+TCurlHttpClass.HeaderCallback PROCEDURE(STRING pHeaderLine)
+pos1                            LONG, AUTO
+len                             LONG, AUTO
+  CODE
+  IF NOT SELF.bAcceptRangesEnabled
+    IF UPPER(SUB(pHeaderLine, 1, SIZE('ACCEPT-RANGES:'))) = 'ACCEPT-RANGES:'
+      SELF.bAcceptRangesEnabled = TRUE
+    END
+  END
+  IF NOT SELF.sAttachment
+    IF UPPER(SUB(pHeaderLine, 1, SIZE('CONTENT-DISPOSITION:'))) = 'CONTENT-DISPOSITION:'
+      pos1 = INSTRING('FILENAME=', UPPER(pHeaderLine), 1, SIZE('CONTENT-DISPOSITION:'))
+      IF pos1
+        SELF.sAttachment = SUB(pHeaderLine, pos1+SIZE('FILENAME='), SIZE(pHeaderLine))
+        !- remove double qoutes
+        len = LEN(CLIP(SELF.sAttachment))
+        pos1 = INSTRING('"', SELF.sAttachment, -1, len)
+        IF pos1 >= 2
+          SELF.sAttachment = SELF.sAttachment[2 : pos1-1]
+        END
+      END
+    END
+  END
+  
 TCurlHttpClass.FollowLocation PROCEDURE(BOOL pFollowLocation = TRUE)
   CODE
   RETURN SELF.SetOpt(CURLOPT_FOLLOWLOCATION, pFollowLocation)
@@ -232,4 +285,193 @@ res                             CURLcode, AUTO
 
   RETURN SELF.SendRequestStr(pUrl, '', pResponseBuf, xferproc)
 
+TCurlHttpClass.DownloadFile   PROCEDURE(STRING pRemoteFile, <STRING pLocalFile>, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>)
+sLocalFile                      STRING(MAX_PATH), AUTO
+  CODE
+  sLocalFile = pLocalFile
+  RETURN SELF.DownloadFile(pRemoteFile, sLocalFile, pBlockSize, pRetries, pAppend, xferproc)
+  
+TCurlHttpClass.DownloadFile   PROCEDURE(STRING pRemoteFile, *STRING pLocalFile, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>)
+sLocalFile                      STRING(MAX_PATH), AUTO
+fs                              LIKE(TCurlFileStruct)
+nContentLength                  ULONG, AUTO
+nRange1                         ULONG, AUTO
+nRange2                         ULONG, AUTO
+sByteRange                      CSTRING(22), AUTO   ! 2x10 digits and '-' sign = 21 characters
+dwBytesRead                     ULONG, AUTO
+httpCode                        LONG, AUTO
+nRetryCount                     USHORT, AUTO
+res                             CURLcode, AUTO
+  CODE
+  !- reset bAcceptRangesEnabled
+  SELF.bAcceptRangesEnabled = FALSE
+  
+  ! progress
+  SELF.SetXFerCallback(xferproc)
+  
+  ! header callback
+  SELF.SetHeaderCallback(curl::HeaderCallback)
+
+  ! remote file
+  SELF.SetUrl(pRemoteFile)
+  
+  !- follow HTTP 3xx redirects
+  SELF.FollowLocation(TRUE)
+
+  ! do the download request without getting the body ("HEAD" method)
+  SELF.SetOpt(CURLOPT_NOBODY, 1)  
+  
+  ! fail the request if the HTTP code returned is equal to or larger than 400. The default action would be to return the page normally, ignoring that code.
+  SELF.SetOpt(CURLOPT_FAILONERROR, 1)  
+
+  res = SELF.Perform()
+  IF res <> CURLE_OK
+    !- can't connect
+    httpCode = SELF.GetInfo::LONG(CURLINFO_RESPONSE_CODE)
+    CASE httpCode
+    OF 405  !- Method Not Allowed
+      !- "HEAD" method is not allowed, so continue without the header info
+    ELSE
+      !- abort
+      RETURN res
+    END
+  END
+    
+  ! set WriteFile callback
+  sLocalFile = GetLocalFileName(pLocalFile, SELF.sAttachment, pRemoteFile)
+  IF NOT sLocalFile
+    curl::DebugInfo('TCurlHttpClass.DownloadFile: Target filename is blank.')
+    RETURN CURLE_URL_MALFORMAT
+  END
+  
+  !- return actual filename to the caller
+  pLocalFile = sLocalFile
+
+  !- force the HTTP request to get back to using GET
+  SELF.SetOpt(CURLOPT_NOBODY, 0)  
+  SELF.SetOpt(CURLOPT_HTTPGET, 1)  
+
+  ! reset header callback as we already parsed the header earlier.
+  SELF.ResetHeaderCallback()
+
+  IF NOT SELF.bAcceptRangesEnabled
+    !- Accept-Ranges header is missing: call ReadFile instead,
+    curl::DebugInfo('TCurlHttpClass.DownloadFile: Accept-Ranges header is missing, continue with ReadFile.')
+    RETURN PARENT.ReadFile(pRemoteFile, sLocalFile, xferproc)
+  END
+  
+  !- write callback
+  fs.Init(sLocalFile)
+  IF NOT pAppend
+    !- create new file
+    SELF.SetWriteCallback(curl::FileWrite, ADDRESS(fs))
+  ELSE
+    !- open existing file and append data to the end
+    SELF.SetWriteCallback(curl::FileAppend, ADDRESS(fs))
+  END
+
+  !- get the Content-Length header
+  nContentLength = SELF.GetInfo::OFF_T(CURLINFO_CONTENT_LENGTH_DOWNLOAD_T)
+  IF nContentLength = 0FFFFFFFFh  ! -1
+    !- no Content-Length header found
+    nContentLength = 0
+  END
+
+  !- set byte range to request (0..pBlockSize-1)
+  IF NOT pAppend
+    !- download from beginning
+    nRange1 = 0
+  ELSE
+    !- download from EOF
+    nRange1 = fs.GetFileSize()
+  END
+  sByteRange = nRange1 &'-'
+  IF pBlockSize AND nRange1+pBlockSize < nContentLength
+    nRange2 = nRange1 + pBlockSize-1
+    sByteRange = sByteRange & nRange2
+  END
+  SELF.SetOpt(CURLOPT_RANGE, sByteRange)  
+
+  ! perform request
+  nRetryCount = 0
+  
+  LOOP
+    res = SELF.Perform()
+    httpCode = SELF.GetInfo::LONG(CURLINFO_RESPONSE_CODE)
+
+    IF res = CURLE_OK
+      !- reset retry counter
+      nRetryCount = 0
+      
+      CASE httpCode
+      OF 200  !- Success
+        BREAK
+        
+      OF 206  !- Partial Content
+        dwBytesRead = SELF.GetInfo::OFF_T(CURLINFO_SIZE_DOWNLOAD_T)
+        
+        !- set next byte range
+        nRange1 += dwBytesRead
+        IF nRange1 >= nContentLength
+          !- downloading completed
+          BREAK
+        END
+
+        sByteRange = nRange1 &'-'
+        IF pBlockSize AND nRange1+pBlockSize < nContentLength
+          nRange2 = nRange1+pBlockSize-1
+          sByteRange = sByteRange & nRange2
+        END
+        SELF.SetOpt(CURLOPT_RANGE, sByteRange)
+      END
+    ELSE
+      !- Perform failed
+      
+      CASE res 
+      OF CURLE_OPERATION_TIMEDOUT
+      OROF CURLE_COULDNT_CONNECT
+        nRetryCount += 1
+        IF nRetryCount >= pRetries
+          !- too many errors: abort
+          BREAK
+        END
+      
+        curl::DebugInfo('TCurlHttpClass.DownloadFile: '& SELF.StrError(res) &', try again...')
+        YIELD()
+        CYCLE
+      END
+      
+      CASE httpCode
+      OF   400  !- Bad request
+      OROF 404  !- Not found
+        nRetryCount += 1
+        IF nRetryCount >= pRetries
+          !- too many errors: abort
+          BREAK
+        END
+        
+        !- try again
+        curl::DebugInfo('TCurlHttpClass.DownloadFile: HTTP error '& httpCode &', try again...')
+        YIELD()
+      OF 416    !- Range Not Satisfiable
+        ! range is out of bounds
+        ! this could happen if Content-Length is unknown (nContentLength==-1) and we exceed the actual downloading file size.
+        ! so ignore this error and return OK
+        res = CURLE_OK
+        BREAK
+      ELSE
+        IF httpCode > 400
+          !- abort on any other fatal error
+          curl::DebugInfo('TCurlHttpClass.DownloadFile: HTTP fatal error '& httpCode &', abort downloading')
+          BREAK
+        ELSE
+          !- abort on unexpected error (3xx)
+          curl::DebugInfo('TCurlHttpClass.DownloadFile: HTTP unexpected error '& httpCode &', abort downloading')
+          BREAK
+        END
+      END
+    END
+  END
+  
+  RETURN res
 !!!endregion

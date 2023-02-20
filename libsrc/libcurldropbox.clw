@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.54
-!** 11.05.2022
+!** libcurl for Clarion v1.57
+!** 20.02.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -8,8 +8,9 @@
   INCLUDE('libcurl.inc'), ONCE
 
   MAP
-    MODULE('WinAPI')
+    MODULE('Windows API')
       winapi::Sleep(LONG dwMilliseconds), PASCAL, PROC, NAME('Sleep')
+      winapi::ShellExecute(LONG phWnd, <*CSTRING pAction>, *CSTRING pFilename, <*CSTRING pParameters>, <*CSTRING pDirectory>, LONG pFlags=1), LONG, PASCAL, RAW, PROC, NAME('ShellExecuteA')
     END
   END
 

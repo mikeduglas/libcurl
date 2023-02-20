@@ -285,24 +285,38 @@ res                             CURLcode, AUTO
 
   RETURN SELF.SendRequestStr(pUrl, '', pResponseBuf, xferproc)
 
-TCurlHttpClass.DownloadFile   PROCEDURE(STRING pRemoteFile, <STRING pLocalFile>, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>)
+TCurlHttpClass.DownloadFile   PROCEDURE(STRING pRemoteFile, <STRING pLocalFile>, | 
+                                ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, | 
+                                <*ULONG pContentLength>, <*ULONG pBytesWritten>, | 
+                                <curl::ProgressDataProcType xferproc>)
 sLocalFile                      STRING(MAX_PATH), AUTO
   CODE
   sLocalFile = pLocalFile
-  RETURN SELF.DownloadFile(pRemoteFile, sLocalFile, pBlockSize, pRetries, pAppend, xferproc)
+  RETURN SELF.DownloadFile(pRemoteFile, sLocalFile, pBlockSize, pAppend, pRetries, pContentLength, pBytesWritten, xferproc)
   
-TCurlHttpClass.DownloadFile   PROCEDURE(STRING pRemoteFile, *STRING pLocalFile, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>)
+TCurlHttpClass.DownloadFile   PROCEDURE(STRING pRemoteFile, *STRING pLocalFile, | 
+                                ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, | 
+                                <*ULONG pContentLength>, <*ULONG pBytesWritten>, | 
+                                <curl::ProgressDataProcType xferproc>)
 sLocalFile                      STRING(MAX_PATH), AUTO
 fs                              LIKE(TCurlFileStruct)
 nContentLength                  ULONG, AUTO
 nRange1                         ULONG, AUTO
 nRange2                         ULONG, AUTO
 sByteRange                      CSTRING(22), AUTO   ! 2x10 digits and '-' sign = 21 characters
-dwBytesRead                     ULONG, AUTO
+dwBytesWritten                  ULONG, AUTO
+dwTotalBytesWritten             ULONG, AUTO
 httpCode                        LONG, AUTO
 nRetryCount                     USHORT, AUTO
 res                             CURLcode, AUTO
   CODE
+  IF NOT OMITTED(pContentLength)
+    pContentLength = 0
+  END
+  IF NOT OMITTED(pBytesWritten)
+    pBytesWritten = 0
+  END
+
   !- reset bAcceptRangesEnabled
   SELF.bAcceptRangesEnabled = FALSE
   
@@ -376,6 +390,10 @@ res                             CURLcode, AUTO
     !- no Content-Length header found
     nContentLength = 0
   END
+  
+  IF NOT OMITTED(pContentLength)
+    pContentLength = nContentLength
+  END
 
   !- set byte range to request (0..pBlockSize-1)
   IF NOT pAppend
@@ -394,6 +412,7 @@ res                             CURLcode, AUTO
 
   ! perform request
   nRetryCount = 0
+  dwTotalBytesWritten = 0
   
   LOOP
     res = SELF.Perform()
@@ -408,10 +427,11 @@ res                             CURLcode, AUTO
         BREAK
         
       OF 206  !- Partial Content
-        dwBytesRead = SELF.GetInfo::OFF_T(CURLINFO_SIZE_DOWNLOAD_T)
+        dwBytesWritten = SELF.GetInfo::OFF_T(CURLINFO_SIZE_DOWNLOAD_T)
+        dwTotalBytesWritten += dwBytesWritten
         
         !- set next byte range
-        nRange1 += dwBytesRead
+        nRange1 += dwBytesWritten
         IF nRange1 >= nContentLength
           !- downloading completed
           BREAK
@@ -473,5 +493,9 @@ res                             CURLcode, AUTO
     END
   END
   
+  IF NOT OMITTED(pBytesWritten)
+    pBytesWritten = dwTotalBytesWritten
+  END
+
   RETURN res
 !!!endregion

@@ -1605,6 +1605,8 @@ SendBinDataStr                  PROCEDURE(STRING pUrl, CONST *STRING pBinData, L
 !!!<param name="pBlockSize">The size of the data (in bytes) read on each GET request.</param>
 !!!<param name="pAppend">If true, then the download will be resumed from where it was interrupted.</param>
 !!!<param name="pRetries">The number of failed attempts to download data on each GET request before aborting.</param>
+!!!<param name="pContentLength">The Content-Length header value.</param>
+!!!<param name="pBytesWritten">The actual number of bytes written, or 0 if the server does not support partial requests.</param>
 !!!<param name="xferproc">Progress callback.</param>
 !!!<remarks>
 !!!If pLocalFile is empty, then the resulting name of a local file is evaluated from Content-Disposition HTTP header or from the url of remote file and saved in current folder.
@@ -1612,13 +1614,18 @@ SendBinDataStr                  PROCEDURE(STRING pUrl, CONST *STRING pBinData, L
 !!!Otherwise pLocalFile is considered as target file path.
 !!!If pLocalFile is a variable parameter, then it receives the actual file name.
 !!!</remarks>
-DownloadFile                    PROCEDURE(STRING pRemoteFile, <STRING pLocalFile>, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
+DownloadFile                    PROCEDURE(STRING pRemoteFile, <STRING pLocalFile>, | 
+                                  ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, | 
+                                  <*ULONG pContentLength>, <*ULONG pBytesWritten>, | 
+                                  <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
 !!!<summary>Download a file.</summary>
 !!!<param name="pRemoteFile">The url of a resource to download.</param>
 !!!<param name="pLocalFile">The name of a local target.</param>
 !!!<param name="pBlockSize">The size of the data (in bytes) read on each GET request.</param>
 !!!<param name="pAppend">If true, then the download will be resumed from where it was interrupted.</param>
 !!!<param name="pRetries">The number of failed attempts to download data on each GET request before aborting.</param>
+!!!<param name="pContentLength">The Content-Length header value.</param>
+!!!<param name="pBytesWritten">The actual number of bytes written, or 0 if the server does not support partial requests.</param>
 !!!<param name="xferproc">Progress callback.</param>
 !!!<remarks>
 !!!If pLocalFile is empty, then the resulting name of a local file is evaluated from Content-Disposition HTTP header or from the url of remote file and saved in current folder.
@@ -1626,7 +1633,10 @@ DownloadFile                    PROCEDURE(STRING pRemoteFile, <STRING pLocalFile
 !!!Otherwise pLocalFile is considered as target file path.
 !!!If pLocalFile is a variable parameter, then it receives the actual file name.
 !!!</remarks>
-DownloadFile                    PROCEDURE(STRING pRemoteFile, *STRING pLocalFile, ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
+DownloadFile                    PROCEDURE(STRING pRemoteFile, *STRING pLocalFile, | 
+                                  ULONG pBlockSize=0, BOOL pAppend=FALSE, USHORT pRetries=5, | 
+                                  <*ULONG pContentLength>, <*ULONG pBytesWritten>, | 
+                                  <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
                               END
 
 !---------------------------- TCurlDropboxClass ----------------------------!

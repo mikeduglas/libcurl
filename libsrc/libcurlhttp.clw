@@ -5,7 +5,7 @@
 
   MEMBER
 
-  INCLUDE('libcurl.inc')
+  INCLUDE('libcurl.inc'), ONCE
 
   MAP
     MODULE('libcurl API')

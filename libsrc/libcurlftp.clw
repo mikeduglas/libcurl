@@ -6,7 +6,7 @@
 
   MEMBER
 
-  INCLUDE('libcurl.inc')
+  INCLUDE('libcurl.inc'), ONCE
 
 TFtpDirListItem               GROUP, TYPE
 Mask                            STRING(20)

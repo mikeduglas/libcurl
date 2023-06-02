@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.57
-!** 20.02.2023
+!** libcurl for Clarion v1.58
+!** 02.06.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -212,7 +212,7 @@
     END
   END
 
-curl::UserAgent               CSTRING('curl/7.88.1')
+curl::UserAgent               CSTRING('curl/8.1.2')
 
 winapi::INVALID_FILE_SIZE         EQUATE(-1)
 winapi::INVALID_SET_FILE_POINTER  EQUATE(-1)
@@ -888,9 +888,9 @@ TCurlClass.StrError           PROCEDURE(CURLcode errcode)
   RETURN curl_easy_strerror(errcode)
   
 TCurlClass.SetUserPwd         PROCEDURE(STRING pUser, STRING pPwd)
-userpwd                         CSTRING(LEN(pUser) + LEN(pPwd) + 1 + 1)
+userpwd                         CSTRING(LEN(pUser) + LEN(pPwd) + 1 + 1), AUTO
   CODE
-  IF pUser AND pPwd
+  IF pUser !- blank password is allowed.
     userpwd = CLIP(pUser) &':'& CLIP(pPwd)
   ELSE
     userpwd = ''

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.57
-!** 20.02.2023
+!** libcurl for Clarion v1.58
+!** 02.06.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -234,6 +234,7 @@ CURLINFO_PROXY_ERROR          EQUATE(CURLINFO_LONG + 59)
 CURLINFO_REFERER              EQUATE(CURLINFO_STRING + 60)
 CURLINFO_CAINFO               EQUATE(CURLINFO_STRING + 61)
 CURLINFO_CAPATH               EQUATE(CURLINFO_STRING + 62)
+!CURLINFO_LASTONE              EQUATE(62)
 
 
 

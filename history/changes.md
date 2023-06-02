@@ -1,4 +1,21 @@
 ## Version history
+v1.58
+- CHG: Now uses libcurl v8.1.2, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 8.1.2 was built and statically linked with
+> 
+> * brotli 1.0.9
+> * cacert 2023-05-30
+> * gsasl 2.2.0
+> * libssh2 1.11.0
+> * nghttp2 1.53.0
+> * nghttp3 0.11.0
+> * ngtcp2 0.15.0
+> * quictls 3.1.0
+> * zlib 1.2.13
+> * zstd 1.5.5
+
+- FIX: TCurlClass.SetUserPwd method now allows blank password, in this case "username:" is passed as CURLOPT_USERPWD option value.
+
 v1.57
 - CHG: Now uses libcurl v7.88.1, see [changelog](https://curl.haxx.se/changes.html) for details.
 - FIX: TCurlClass.AddErrors(curl::ErrorBlock ErrsIn) failed if curl::DefaultErrors had more than 1 entries in libcurl.trn.

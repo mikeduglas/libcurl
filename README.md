@@ -32,6 +32,10 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.59
+- FIX: TCurlFtpClass.ReadFile now accepts (optional) pWildcardMatching argument. If you use [FTP wildcard matching](https://everything.curl.dev/libcurl/callbacks/ftpmatch) then call curl.ReadFile(remoteFile, localFile, true).
+This change should fix endless downloading bug in recent curl builds.
+
 v1.58
 - CHG: Now uses libcurl v8.1.2, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 8.1.2 was built and statically linked with

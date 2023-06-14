@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.58
-!** 02.06.2023
+!** libcurl for Clarion v1.59
+!** 14.06.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1301,7 +1301,8 @@ DeleteFile                      PROCEDURE(STRING pUrl, STRING pFilename), CURLco
 RenameFile                      PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
 RenameDir                       PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
 
-ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, DERIVED, PROC
+!ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, DERIVED, PROC
+ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, BOOL pWildcardMatching, <curl::ProgressDataProcType xferproc>), CURLcode, VIRTUAL, PROC
 
 ! create missing dirs for FTP and SFTP
 ! https://curl.haxx.se/libcurl/c/CURLOPT_FTP_CREATE_MISSING_DIRS.html

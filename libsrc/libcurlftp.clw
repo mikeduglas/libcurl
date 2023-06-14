@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.57
-!** 20.02.2023
+!** libcurl for Clarion v1.59
+!** 14.06.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -498,19 +498,31 @@ res                             CURLcode, AUTO
   
   RETURN SELF.Perform()
 
-TCurlFtpClass.ReadFile        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
-res                             CURLcode, AUTO
+!TCurlFtpClass.ReadFile        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
+!res                             CURLcode, AUTO
+!  CODE
+!  !turn on wildcard matching
+!  !this also turns on curl::ChunkBgnCallback() and curl::ChunkEndCallback()
+!  !for FTP only (not SFTP)
+!  IF UPPER(SUB(pRemoteFile, 1, 7)) <> 'SFTP://'
+!    res = SELF.SetOpt(CURLOPT_WILDCARDMATCH, 1)  
+!    IF res <> CURLE_OK
+!      RETURN res
+!    END
+!  END
+!  
+!  RETURN PARENT.ReadFile(pRemoteFile, pLocalFile, xferproc)
+
+TCurlFtpClass.ReadFile        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, BOOL pWildcardMatching, <curl::ProgressDataProcType xferproc>)
   CODE
-  !turn on wildcard matching
-  !this also turns on curl::ChunkBgnCallback() and curl::ChunkEndCallback()
-  !for FTP only (not SFTP)
-  IF UPPER(SUB(pRemoteFile, 1, 7)) <> 'SFTP://'
-    res = SELF.SetOpt(CURLOPT_WILDCARDMATCH, 1)  
-    IF res <> CURLE_OK
-      RETURN res
-    END
+  IF pWildcardMatching AND UPPER(SUB(pRemoteFile, 1, 7)) <> 'SFTP://'
+    !turn on wildcard matching
+    !this also turns on curl::ChunkBgnCallback() and curl::ChunkEndCallback()
+    !for FTP only (not SFTP)
+    SELF.SetOpt(CURLOPT_WILDCARDMATCH, 1)
+  ELSE
+    SELF.SetOpt(CURLOPT_WILDCARDMATCH, 0)
   END
-  
   RETURN PARENT.ReadFile(pRemoteFile, pLocalFile, xferproc)
 
 TCurlFtpClass.CreateMissingDirs   PROCEDURE(CURLFTP_CREATE_DIR_ENUM pValue)

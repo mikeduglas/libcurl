@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.58
-!** 02.06.2023
+!** libcurl for Clarion v1.59
+!** 14.06.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -217,6 +217,16 @@ curl::UserAgent               CSTRING('curl/8.1.2')
 winapi::INVALID_FILE_SIZE         EQUATE(-1)
 winapi::INVALID_SET_FILE_POINTER  EQUATE(-1)
 
+
+
+!/* This is a magic return code for the write callback that, when returned,
+!   will signal libcurl to pause receiving on the current transfer. */
+CURL_WRITEFUNC_PAUSE          EQUATE(010000001h)
+!/* This is a magic return code for the write callback that, when returned,
+!   will signal an error from the callback. */
+CURL_WRITEFUNC_ERROR          EQUATE(0FFFFFFFFh)
+
+
 !!!region static functions
 curl::DebugInfo               PROCEDURE(STRING s)
 prefix                          STRING('[libcurl] ')
@@ -280,7 +290,6 @@ curl::free                    PROCEDURE(LONG p)
 curl::free                    PROCEDURE(*CSTRING p)
   CODE
   curl_free(p)
-
 !!!endregion
 
 !!!region callbacks
@@ -298,7 +307,7 @@ bytesWritten                    size_t
   ! create file
   IF NOT fs.CreateFile()
     curl::DebugInfo('CreateFile('& fs.GetFileName() &') error')
-    RETURN -1
+    RETURN CURL_WRITEFUNC_ERROR
   END
   
   ! write data
@@ -309,7 +318,7 @@ bytesWritten                    size_t
   
   curl::DebugInfo('WriteFile('& fs.GetFileName() &') error '& winapi::GetLastError())
   
-  RETURN -1 !error
+  RETURN CURL_WRITEFUNC_ERROR
   
 curl::FileAppend              PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pFileStruct)
 fs                              &TCurlFileStruct
@@ -557,7 +566,7 @@ ret                             BOOL, AUTO
     ELSE
       curl::DebugInfo('CloseHandle failed, win error '& winapi::GetLastError())
     END
-    
+    SELF.fPosition = 0
     RETURN ret
   END
   
@@ -583,7 +592,7 @@ TCurlFileStruct.ReadFile      PROCEDURE(LONG lpBuffer, LONG dwBytes, *LONG dwByt
   CODE
   RETURN winapi::ReadFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesRead, 0)
   
-TCurlFileStruct.WriteFile     PROCEDURE(long lpBuffer, long dwBytes, *long dwBytesWritten)
+TCurlFileStruct.WriteFile     PROCEDURE(LONG lpBuffer, LONG dwBytes, *LONG dwBytesWritten)
   CODE
   RETURN winapi::WriteFile(SELF.fhandle, lpBuffer, dwBytes, dwBytesWritten, 0)
   
@@ -1062,7 +1071,7 @@ res                             CURLcode, AUTO
   uapi.Init()
   uapi.SetPart(CURLUPART_URL, pRemoteFile, CURLU_DEFAULT_SCHEME)
   uapi.GetPart(CURLUPART_SCHEME, sSchema)
-  IF sSchema = 'ftp'
+  IF sSchema = 'ftp'  ! relevant if CURLOPT_WILDCARDMATCH set to 1
     !callback is called before download of concrete file started
     res = SELF.SetOpt(CURLOPT_CHUNK_BGN_FUNCTION, curl::ChunkBgnCallback)  
     IF res <> CURLE_OK
@@ -1086,6 +1095,7 @@ res                             CURLcode, AUTO
   
   ! perform request
   res = SELF.Perform()
+  curl::DebugInfo('Perform returned '& res)
   IF res <> CURLE_OK
     RETURN res
   END

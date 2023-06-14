@@ -1095,7 +1095,6 @@ res                             CURLcode, AUTO
   
   ! perform request
   res = SELF.Perform()
-  curl::DebugInfo('Perform returned '& res)
   IF res <> CURLE_OK
     RETURN res
   END

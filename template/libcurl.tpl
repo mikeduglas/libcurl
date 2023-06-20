@@ -4,7 +4,7 @@
 #SHEET
   #TAB('About')
     #DISPLAY('Libcurl support')
-    #DISPLAY('(c) 2015-2022 by Mike Duglas')
+    #DISPLAY('(c) 2015-2023 by Mike Duglas')
     #DISPLAY('home page: https://github.com/mikeduglas/libcurl')
     #DISPLAY('email: mikeduglas66@gmail.com')
     #DISPLAY('')
@@ -77,7 +77,11 @@ Reset                  PROCEDURE(), DERIVED
 AddError               PROCEDURE(CURLE Id, *STRING Message), DERIVED
 AddErrors              PROCEDURE(curl::ErrorBlock ErrsIn), DERIVED
 StrError               PROCEDURE(CURLcode errcode), STRING, DERIVED
+  #IF(%curlBaseClass <> 'TCurlFtpClass')
 ReadFile               PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, DERIVED, PROC
+  #ELSE
+ReadFile               PROCEDURE(STRING pRemoteFile, STRING pLocalFile, BOOL pWildcardMatching, <curl::ProgressDataProcType xferproc>), CURLcode, DERIVED, PROC
+  #ENDIF
 XFerInfo               PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, PROC, DERIVED
 DebugCallback          PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext), DERIVED
   #IF(%curlBaseClass = 'TCurlMailClass')
@@ -141,12 +145,20 @@ SetOptions             PROCEDURE(), CURLcode, PROC, DERIVED, PROTECTED
 #EMBED(%curlStrErrorAfterParent, 'StrError After Parent'), %curlVar, TREE('libcurl|'& %curlVar &'|StrError(CURLcode errcode)|After Parent' & '{{COLOR(' & %ColorCodeSection & '),PRIORITY(9000)}')
   RETURN sErrTxt
 #! ReadFile  
+  #IF(%curlBaseClass <> 'TCurlFtpClass')
 #?%curlVar.ReadFile     PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)
+  #ELSE
+#?%curlVar.ReadFile     PROCEDURE(STRING pRemoteFile, STRING pLocalFile, BOOL pWildcardMatching, <curl::ProgressDataProcType xferproc>)
+  #ENDIF
 #?nRes                  CURLcode, AUTO
 #EMBED(%curlReadFileData, 'ReadFile DATA'), DATA, %curlVar, TREE('libcurl|'& %curlVar &'|ReadFile(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)|DATA' & '{{COLOR(' & %ColorDataSection & '),PRIORITY(5)}')
   #?CODE
 #EMBED(%curlReadFileBeforeParent, 'ReadFile Before Parent'), %curlVar, TREE('libcurl|'& %curlVar &'|ReadFile(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)|Before Parent' & '{{COLOR(' & %ColorCodeSection & '),PRIORITY(10)}')
+  #IF(%curlBaseClass <> 'TCurlFtpClass')
   nRes = PARENT.ReadFile(pRemoteFile, pLocalFile, xferproc)
+  #ELSE
+  nRes = PARENT.ReadFile(pRemoteFile, pLocalFile, pWildcardMatching, xferproc)
+  #ENDIF
 #EMBED(%curlReadFileAfterParent, 'ReadFile After Parent'), %curlVar, TREE('libcurl|'& %curlVar &'|ReadFile(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>)|After Parent' & '{{COLOR(' & %ColorCodeSection & '),PRIORITY(9000)}')
   RETURN nRes
 #! XFerInfo  

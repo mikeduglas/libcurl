@@ -32,6 +32,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.59 (libcurl.tpl fix)
+- FIX: "Unknown identifier: XFERPROC" in template generated code if base class is TCurlFtpClass.
+
 v1.59
 - FIX: TCurlFtpClass.ReadFile now accepts (optional) pWildcardMatching argument. If you use [FTP wildcard matching](https://everything.curl.dev/libcurl/callbacks/ftpmatch) then call curl.ReadFile(remoteFile, localFile, true).
 This change should fix endless downloading bug in recent curl builds.

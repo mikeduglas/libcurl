@@ -32,6 +32,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.60
+- FIX: TCurlMailClass: incorrect encoding from Chinese to utf8 (email subject/body).
+
 v1.59 (libcurl.tpl fix)
 - FIX: "Unknown identifier: XFERPROC" in template generated code if base class is TCurlFtpClass.
 

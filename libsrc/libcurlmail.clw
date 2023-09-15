@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.57
-!** 20.02.2023
+!** libcurl for Clarion v1.60
+!** 14.09.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -12,13 +12,14 @@
       winapi::GetLocalTime(LONG lpSystemTime), PASCAL, NAME('GetLocalTime')
       winapi::GetTimeZoneInformation(LONG lpTimeZoneInformation), ULONG, PROC, PASCAL, NAME('GetTimeZoneInformation')
       winapi::MultiByteToWideChar(long CodePage, long dwFlags, long lpMultiByteStr, long cbMultiByte, |
-        long lpWideCharStr, long cchWideCharStr),long,pascal,name('MultiByteToWideChar')
+        long lpWideCharStr, long cchWideCharStr),long,pascal,name('MultiByteToWideChar'),proc
       winapi::WideCharToMultiByte(long CodePage, long dwFlags, long lpWideCharStr, long cchWideChar, |
         long lpMultiByteStr, long cbMultiByte, long lpDefaultChar, |
-        long lpUsedDefaultChar),long,pascal,name('WideCharToMultiByte')
+        long lpUsedDefaultChar),long,pascal,name('WideCharToMultiByte'),proc
     END
 
-    ConvertToCodePage(STRING pStr, SIGNED pCodePage = CP_UTF8), STRING, PRIVATE  ! convert ASCII to UTF8
+    ConvertToCodePage(STRING pStr, SIGNED pInputCodePage, SIGNED pOutputCodePage), STRING, PRIVATE  ! convert ASCII to UTF8
+    ConvertToCodePage(STRING pStr, SIGNED pOutputCodePage = CP_UTF8), STRING, PRIVATE  ! convert ASCII to UTF8
     GetMIMETypeFromFileExt(STRING pFilename), STRING, PRIVATE
     GetShortFileName(STRING pFilename), STRING, PRIVATE
     ExtractMailAddress(STRING pMailAddress), STRING, PRIVATE  !extracts 'user@gmail.com' from 'Joe Doe <user@gmail.com>'
@@ -33,6 +34,11 @@
     
     Body::Add(*TCurlMimeClass mime, curl_mimepart part, STRING pType, STRING pcharset, CONST *STRING pBody), PRIVATE
   END
+
+!- MultiByteToWideChar/WideCharToMultiByte
+  OMIT('**_CP_UTF16_**', CP_UTF16 = 0FFFFFFFFh)
+CP_UTF16  EQUATE(0FFFFFFFFh)
+!'**_CP_UTF16_**'
 
 TCurlMailData                 CLASS, TYPE
 mime                            &TCurlMimeClass, PRIVATE  !multipart/mixed
@@ -67,24 +73,47 @@ DECODED_BUF_SIZE              EQUATE(54)    !54 characters per line
 ENCODED_BUF_SIZE              EQUATE(72)    !54 * 4 / 3
 
 !!!region static functions
-ConvertToCodePage             PROCEDURE(STRING pStr, SIGNED pCodePage = CP_UTF8)
-UnicodeText                     STRING(LEN(pStr)*2+2)
-UtfText                         STRING(LEN(pStr)*2+2)
+ConvertToCodePage             PROCEDURE(STRING pInput, LONG pInputCodePage, LONG pOutputCodePage)
+szInput                         CSTRING(LEN(pInput) + 1)
+UnicodeText                     CSTRING(LEN(pInput)*2+2)
+DecodedText                     CSTRING(LEN(pInput)*2+2)
 Len                             LONG, AUTO
-bytesWritten                    LONG, AUTO
   CODE
-  Len = LEN(pStr)*2 + 2
-  bytesWritten = winapi::MultiByteToWideChar(CP_ACP, 0, ADDRESS(pStr), LEN(pStr), ADDRESS(UnicodeText), Len)
-  UnicodeText[Len-1 : Len] = '<0><0>'
-  Len = winapi::WideCharToMultiByte(pCodePage, 0, ADDRESS(UnicodeText), -1, ADDRESS(UTFText), Len, 0, 0)
-  LOOP
-    IF UtfText[Len] = '<0>'
-      Len -= 1
-    ELSE
-      BREAK
-    END
+  IF NOT pInput
+    RETURN ''
   END
-  RETURN UtfText[1 : Len]
+  
+  IF pInputCodepage <> CP_UTF16
+    szInput = pInput
+    !- get length of UnicodeText in characters
+    Len = winapi::MultiByteToWideChar(pInputCodePage, 0, ADDRESS(szInput), -1, 0, 0)
+    IF Len = 0
+      curl::DebugInfo('MultiByteToWideChar failed, error '& winapi::GetLastError())
+      RETURN ''
+    END
+    !- get UnicodeText terminated by <0,0>
+    winapi::MultiByteToWideChar(pInputCodePage, 0, ADDRESS(szInput), -1, ADDRESS(UnicodeText), Len)
+  ELSE
+    Len = LEN(pInput) / 2
+    UnicodeText = pInput & '<0,0>'
+  END
+  
+  IF pOutputCodepage = CP_UTF16
+    RETURN UnicodeText[1 : Len*2]
+  END
+  
+  !- get length of DecodedText in bytes
+  Len = winapi::WideCharToMultiByte(pOutputCodePage, 0, ADDRESS(UnicodeText), -1, 0, 0, 0, 0)
+  IF Len = 0
+    curl::DebugInfo('WideCharToMultiByte failed, error '& winapi::GetLastError())
+    RETURN ''
+  END
+  winapi::WideCharToMultiByte(pOutputCodePage, 0, ADDRESS(UnicodeText), -1, ADDRESS(DecodedText), Len, 0, 0)
+  RETURN DecodedText
+
+ConvertToCodePage             PROCEDURE(STRING pStr, SIGNED pOutputCodePage = CP_UTF8)
+  CODE
+  RETURN ConvertToCodePage(pStr, CP_ACP, pOutputCodePage)
 
 !http://webdesign.about.com/od/multimedia/a/mime-types-by-file-extension.htm
 GetMIMETypeFromFileExt        PROCEDURE(STRING pFilename)

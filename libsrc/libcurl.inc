@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.60
-!** 14.09.2023
+!** libcurl for Clarion v1.61
+!** 02.10.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1536,6 +1536,8 @@ sAttachment                     STRING(MAX_PATH), PROTECTED !- filename from "Co
 Destruct                        PROCEDURE(), DERIVED
 HeaderCallback                  PROCEDURE(STRING pHeaderLine), DERIVED
 
+Init                            PROCEDURE(), DERIVED
+
 !FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE, LONG pContentLength = 0), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
 FollowLocation                  PROCEDURE(BOOL pFollowLocation = TRUE), CURLcode, PROC !libcurl bug: "http error 411 (Length required)"; explicit 0 fixes this
 MaxRedirs                       PROCEDURE(LONG pValue), CURLcode, PROC
@@ -1887,6 +1889,7 @@ GetPtr                          PROCEDURE(), CURLU
 Clone                           PROCEDURE(TCurlUrlApiClass src)
 GetPart                         PROCEDURE(CURLUPart what, *STRING part, UNSIGNED flags = 0), CURLUcode, PROC
 SetPart                         PROCEDURE(CURLUPart what, STRING part, UNSIGNED flags = 0), CURLUcode, PROC
+RemovePart                      PROCEDURE(CURLUPart what), CURLUcode, PROC
                               END
 
 

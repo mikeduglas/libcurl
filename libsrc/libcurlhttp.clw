@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.57
-!** 20.02.2023
+!** libcurl for Clarion v1.61
+!** 02.10.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -80,6 +80,11 @@ len                             LONG, AUTO
       END
     END
   END
+  
+TCurlHttpClass.Init           PROCEDURE()
+  CODE
+  PARENT.Init()
+  SELF.SetDefaultProtocol('http')
   
 TCurlHttpClass.FollowLocation PROCEDURE(BOOL pFollowLocation = TRUE)
   CODE

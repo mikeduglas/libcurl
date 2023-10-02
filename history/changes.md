@@ -1,4 +1,9 @@
 ## Version history
+v1.61
+- FIX: Subsequent TCurlClass.SetUrl calls could set incorrect url.
+- NEW: TCurlUrlApiClass.RemovePart method.
+- CHG: TCurlHttpClass uses 'http' default protocol.
+
 v1.60
 - FIX: TCurlMailClass: incorrect encoding from Chinese to utf8 (email subject/body).
 

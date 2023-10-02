@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.59
-!** 14.06.2023
+!** libcurl for Clarion v1.61
+!** 02.10.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -779,6 +779,7 @@ TCurlClass.Cleanup            PROCEDURE()
 TCurlClass.Reset              PROCEDURE()
   CODE
   SELF.FreeHttpHeaders()
+  SELF.urlp.RemovePart(CURLUPART_URL)
   IF SELF.curl
     curl_easy_reset(SELF.curl)
   END
@@ -870,12 +871,13 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
 TCurlClass.SetUrl             PROCEDURE(STRING pUrl)
 rcu                             CURLUcode, AUTO
   CODE
-  rcu = SELF.urlp.SetPart(CURLUPART_URL, pUrl, CURLU_ALLOW_SPACE)
+  !- remove old content first
+  SELF.urlp.RemovePart(CURLUPART_URL)
+  rcu = SELF.urlp.SetPart(CURLUPART_URL, pUrl, CURLU_ALLOW_SPACE+CURLU_DEFAULT_SCHEME)
   IF rcu <> CURLUE_OK
     curl::DebugInfo('TCurlClass.SetUrl('& CLIP(pUrl) &') error: '& curl::url:StrError(rcu))
     RETURN CURLE_URL_MALFORMAT
   END
-  
   RETURN SELF.SetOpt(CURLOPT_CURLU, SELF.urlp.GetPtr())
 
 TCurlClass.Perform            PROCEDURE()

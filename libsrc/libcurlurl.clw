@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.54
-!** 11.05.2022
+!** libcurl for Clarion v1.61
+!** 02.10.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -114,4 +114,9 @@ szpart                          CSTRING(LEN(CLIP(part)) + 1)
   CODE
   szpart = CLIP(part)
   RETURN curl_url_set(SELF.urlp, what, szpart, flags)
+  
+TCurlUrlApiClass.RemovePart   PROCEDURE(CURLUPart what)
+szNull                          &CSTRING
+  CODE
+  RETURN curl_url_set(SELF.urlp, what, szNull, 0)
 !!!endregion

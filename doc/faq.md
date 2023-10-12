@@ -170,6 +170,7 @@ curl.XFerInfo         PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL uln
 A. Assume sUrl is string variable containing url, sJson is string variable containing json:
 ```
   curl.AddHttpHeader('Content-Type: application/json')  !- or 'Content-Type: text/json'
+  curl.SetHttpHeaders()                                 !- commit headers list
   curl.SetCustomRequest('POST')
   curl.SendRequest(sUrl, sJson)
 ```

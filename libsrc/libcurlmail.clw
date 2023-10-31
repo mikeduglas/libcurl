@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.60
-!** 14.09.2023
+!** libcurl for Clarion v1.62
+!** 31.10.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -797,7 +797,7 @@ TCurlMailClass.SetOptions     PROCEDURE()
 mailfrom                        CSTRING(256)
 res                             CURLcode, AUTO
   CODE
-  res = SELF.SetOpt(CURLOPT_URL, SELF.url);
+  res = SELF.SetUrl(SELF.url);
   IF res <> CURLE_OK
     RETURN res
   END

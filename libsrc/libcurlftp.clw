@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.59
-!** 14.06.2023
+!** libcurl for Clarion v1.62
+!** 31.10.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -382,7 +382,7 @@ res                             CURLcode, AUTO
     RETURN res
   END
 
-  res = SELF.SetOpt(CURLOPT_URL, pUrl)
+  res = SELF.SetUrl(pUrl)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -419,7 +419,7 @@ res                             CURLcode, AUTO
     RETURN res
   END
 
-  res = SELF.SetOpt(CURLOPT_URL, pUrl)
+  res = SELF.SetUrl(pUrl)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -467,7 +467,7 @@ res                             CURLcode, AUTO
     RETURN res
   END
 
-  res = SELF.SetOpt(CURLOPT_URL, pUrl)
+  res = SELF.SetUrl(pUrl)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -491,7 +491,7 @@ res                             CURLcode, AUTO
     RETURN res
   END
 
-  res = SELF.SetOpt(CURLOPT_URL, pUrl)
+  res = SELF.SetUrl(pUrl)
   IF res <> CURLE_OK
     RETURN res
   END

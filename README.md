@@ -32,6 +32,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.62
+- FIX: Changed SELF.SetOpt(CURLOPT_URL, url) calls to SELF.SetUrl(url) which uses CURLUPART_URL instead of CURLOPT_URL.
+
 v1.61
 - FIX: Subsequent TCurlClass.SetUrl calls could set incorrect url.
 - NEW: TCurlUrlApiClass.RemovePart method.

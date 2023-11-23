@@ -1,4 +1,20 @@
 ## Version history
+v1.63
+- CHG: Now uses libcurl v8.4.0, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 8.4.0_6 was built and statically linked with
+> 
+> * brotli 1.1.0
+> * cacert 2023-08-22
+> * libssh2 1.11.0
+> * nghttp2 1.58.0
+> * nghttp3 1.0.0
+> * ngtcp2 1.0.1
+> * quictls 3.1.4
+> * zlib 1.3
+> * zstd 1.5.5
+- NEW: New equates added.
+- FIX: CURLU_DEFAULT_PORT equate had a wrong value.
+
 v1.62
 - FIX: Changed SELF.SetOpt(CURLOPT_URL, url) calls to SELF.SetUrl(url) which uses CURLUPART_URL instead of CURLOPT_URL.
 

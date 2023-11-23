@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.62
-!** 31.10.2023
+!** libcurl for Clarion v1.63
+!** 23.11.2023
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -530,6 +530,7 @@ CURLAUTH_NTLM                 EQUATE(8)
 CURLAUTH_DIGEST_IE            EQUATE(16)
 CURLAUTH_NTLM_WB              EQUATE(32)
 CURLAUTH_BEARER               EQUATE(64)
+CURLAUTH_AWS_SIGV4            EQUATE(128)
 CURLAUTH_ONLY                 EQUATE(080000000h)
 CURLAUTH_ANY                  EQUATE(0FFFFFFEFh)
 CURLAUTH_ANYSAFE              EQUATE(0FFFFFFEEh)
@@ -588,11 +589,12 @@ CURLSSH_AUTH_ENUM             EQUATE(LONG)
                               ITEMIZE
 CURLSSH_AUTH_ANY                EQUATE(-1)          !~0     !/* all types supported by the server */
 CURLSSH_AUTH_NONE               EQUATE(0)                   !/* none allowed, silly but complete */
-CURLSSH_AUTH_PUBLICKEY          EQUATE(00001b)      !(1<<0) !/* public/private key files */
-CURLSSH_AUTH_PASSWORD           EQUATE(00010b)      !(1<<1) !/* password */
-CURLSSH_AUTH_HOST               EQUATE(00100b)      !(1<<2) !/* host key files */
-CURLSSH_AUTH_KEYBOARD           EQUATE(01000b)      !(1<<3) !/* keyboard interactive */
-CURLSSH_AUTH_AGENT              EQUATE(10000b)      !(1<<4) !/* agent (ssh-agent, pageant...) */
+CURLSSH_AUTH_PUBLICKEY          EQUATE(000001b)      !(1<<0) !/* public/private key files */
+CURLSSH_AUTH_PASSWORD           EQUATE(000010b)      !(1<<1) !/* password */
+CURLSSH_AUTH_HOST               EQUATE(000100b)      !(1<<2) !/* host key files */
+CURLSSH_AUTH_KEYBOARD           EQUATE(001000b)      !(1<<3) !/* keyboard interactive */
+CURLSSH_AUTH_AGENT              EQUATE(010000b)      !(1<<4) !/* agent (ssh-agent, pageant...) */
+CURLSSH_AUTH_GSSAPI             EQUATE(100000b)      !(1<<5) !/* gssapi (kerberos, ...) */
 CURLSSH_AUTH_DEFAULT            EQUATE(CURLSSH_AUTH_ANY)
                               END
 
@@ -963,6 +965,14 @@ CURLOPT_PREREQFUNCTION        EQUATE(312 + CURLOPTTYPE_FUNCTIONPOINT)
 CURLOPT_PREREQDATA            EQUATE(313 + CURLOPTTYPE_CBPOINT)
 CURLOPT_MAXLIFETIME_CONN      EQUATE(314 + CURLOPTTYPE_LONG)
 CURLOPT_MIME_OPTIONS          EQUATE(315 + CURLOPTTYPE_LONG)
+CURLOPT_SSH_HOSTKEYFUNCTION   EQUATE(316 + CURLOPTTYPE_FUNCTIONPOINT)
+CURLOPT_SSH_HOSTKEYDATA       EQUATE(317 + CURLOPTTYPE_CBPOINT)
+CURLOPT_PROTOCOLS_STR         EQUATE(318 + CURLOPTTYPE_STRINGPOINT)
+CURLOPT_REDIR_PROTOCOLS_STR   EQUATE(319 + CURLOPTTYPE_STRINGPOINT)
+CURLOPT_WS_OPTIONS            EQUATE(320 + CURLOPTTYPE_LONG)
+CURLOPT_CA_CACHE_TIMEOUT      EQUATE(321 + CURLOPTTYPE_LONG)
+CURLOPT_QUICK_EXIT            EQUATE(322 + CURLOPTTYPE_LONG)
+CURLOPT_HAPROXY_CLIENT_IP     EQUATE(323 + CURLOPTTYPE_STRINGPOINT)
 !!!endregion
 
 
@@ -1855,19 +1865,20 @@ CURLUPART_ZONEID                EQUATE
                               END
 
 !GetPart/SetPart flags
-CURLU_DEFAULT_PORT            EQUATE(00b)            !return default port number
-CURLU_NO_DEFAULT_PORT         EQUATE(010b)           !act as if no port number was set, if the port number matches the default for the scheme
-CURLU_DEFAULT_SCHEME          EQUATE(0100b)          !return default scheme if missing
-CURLU_NON_SUPPORT_SCHEME      EQUATE(01000b)         !allow non-supported scheme
-CURLU_PATH_AS_IS              EQUATE(010000b)        !leave dot sequences
-CURLU_DISALLOW_USER           EQUATE(0100000b)       !no user+password allowed
-CURLU_URLDECODE               EQUATE(01000000b)      !URL decode on get
-CURLU_URLENCODE               EQUATE(010000000b)     !URL encode on set
-CURLU_APPENDQUERY             EQUATE(0100000000b)    !append a form style part
-CURLU_GUESS_SCHEME            EQUATE(01000000000b)   !legacy curl-style guessing
-CURLU_NO_AUTHORITY            EQUATE(010000000000b)  !Allow empty authority when the scheme is unknown.
-CURLU_ALLOW_SPACE             EQUATE(0100000000000b) !Allow spaces in the URL
-CURLU_PUNYCODE                EQUATE(01000000000000b)!get the host name in pynycode
+CURLU_DEFAULT_PORT            EQUATE(01b)             !return default port number
+CURLU_NO_DEFAULT_PORT         EQUATE(010b)            !act as if no port number was set, if the port number matches the default for the scheme
+CURLU_DEFAULT_SCHEME          EQUATE(0100b)           !return default scheme if missing
+CURLU_NON_SUPPORT_SCHEME      EQUATE(01000b)          !allow non-supported scheme
+CURLU_PATH_AS_IS              EQUATE(010000b)         !leave dot sequences
+CURLU_DISALLOW_USER           EQUATE(0100000b)        !no user+password allowed
+CURLU_URLDECODE               EQUATE(01000000b)       !URL decode on get
+CURLU_URLENCODE               EQUATE(010000000b)      !URL encode on set
+CURLU_APPENDQUERY             EQUATE(0100000000b)     !append a form style part
+CURLU_GUESS_SCHEME            EQUATE(01000000000b)    !legacy curl-style guessing
+CURLU_NO_AUTHORITY            EQUATE(010000000000b)   !Allow empty authority when the scheme is unknown.
+CURLU_ALLOW_SPACE             EQUATE(0100000000000b)  !Allow spaces in the URL
+CURLU_PUNYCODE                EQUATE(01000000000000b) !get the host name in pynycode
+CURLU_PUNY2IDN                EQUATE(010000000000000b)!punycode => IDN conversion
 
 CURLU                         EQUATE(LONG)
 
@@ -2036,7 +2047,7 @@ StrError                        PROCEDURE(CURLMcode errcode), STRING, VIRTUAL
 !---------------------------- Websocket API ----------------------------!
 
 !/* websockets options */
-CURLOPT_WS_OPTIONS            EQUATE(320 + CURLOPTTYPE_LONG)
+!CURLOPT_WS_OPTIONS            EQUATE(320 + CURLOPTTYPE_LONG)
 
 !/* bits for the CURLOPT_WS_OPTIONS bitmask: */
 CURLWS_RAW_MODE               EQUATE(00000001b)

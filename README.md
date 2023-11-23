@@ -32,6 +32,22 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.63
+- CHG: Now uses libcurl v8.4.0, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 8.4.0_6 was built and statically linked with
+> 
+> * brotli 1.1.0
+> * cacert 2023-08-22
+> * libssh2 1.11.0
+> * nghttp2 1.58.0
+> * nghttp3 1.0.0
+> * ngtcp2 1.0.1
+> * quictls 3.1.4
+> * zlib 1.3
+> * zstd 1.5.5
+- NEW: New equates added.
+- FIX: CURLU_DEFAULT_PORT equate had a wrong value.
+
 v1.62
 - FIX: Changed SELF.SetOpt(CURLOPT_URL, url) calls to SELF.SetUrl(url) which uses CURLUPART_URL instead of CURLOPT_URL.
 
@@ -42,30 +58,6 @@ v1.61
 
 v1.60
 - FIX: TCurlMailClass: incorrect encoding from Chinese to utf8 (email subject/body).
-
-v1.59 (libcurl.tpl fix)
-- FIX: "Unknown identifier: XFERPROC" in template generated code if base class is TCurlFtpClass.
-
-v1.59
-- FIX: TCurlFtpClass.ReadFile now accepts (optional) pWildcardMatching argument. If you use [FTP wildcard matching](https://everything.curl.dev/libcurl/callbacks/ftpmatch) then call curl.ReadFile(remoteFile, localFile, true).
-This change should fix endless downloading bug in recent curl builds.
-
-v1.58
-- CHG: Now uses libcurl v8.1.2, see [changelog](https://curl.haxx.se/changes.html) for details.
-> curl 8.1.2 was built and statically linked with
-> 
-> * brotli 1.0.9
-> * cacert 2023-05-30
-> * gsasl 2.2.0
-> * libssh2 1.11.0
-> * nghttp2 1.53.0
-> * nghttp3 0.11.0
-> * ngtcp2 0.15.0
-> * quictls 3.1.0
-> * zlib 1.2.13
-> * zstd 1.5.5
-
-- FIX: TCurlClass.SetUserPwd method now allows blank password, in this case "username:" is passed as CURLOPT_USERPWD option value.
   
 
 [Full version history](https://github.com/mikeduglas/libcurl/blob/master/history/changes.md)

@@ -32,6 +32,9 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.64
+- FIX: If an url was set without a scheme (for example "smtp.gmail.com") then the default "HTTPS" scheme was used.
+
 v1.63
 - CHG: Now uses libcurl v8.4.0, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 8.4.0_6 was built and statically linked with

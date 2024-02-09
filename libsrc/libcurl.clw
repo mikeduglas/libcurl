@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.61
-!** 02.10.2023
+!** libcurl for Clarion v1.64
+!** 09.02.2024
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -870,14 +870,19 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
 !  RETURN SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
 TCurlClass.SetUrl             PROCEDURE(STRING pUrl)
 rcu                             CURLUcode, AUTO
+!urlScheme                       STRING(40), AUTO
   CODE
   !- remove old content first
   SELF.urlp.RemovePart(CURLUPART_URL)
-  rcu = SELF.urlp.SetPart(CURLUPART_URL, pUrl, CURLU_ALLOW_SPACE+CURLU_DEFAULT_SCHEME)
+  
+  !- CURLU_GUESS_SCHEME: If the outermost subdomain name matches DICT, FTP, IMAP, LDAP, POP3 or SMTP then that scheme is used, otherwise it picks HTTP. 
+  rcu = SELF.urlp.SetPart(CURLUPART_URL, pUrl, CURLU_ALLOW_SPACE+CURLU_GUESS_SCHEME)  
   IF rcu <> CURLUE_OK
     curl::DebugInfo('TCurlClass.SetUrl('& CLIP(pUrl) &') error: '& curl::url:StrError(rcu))
     RETURN CURLE_URL_MALFORMAT
   END
+!  SELF.urlp.GetPart(CURLUPART_SCHEME, urlScheme)
+!  curl::DebugInfo('TCurlClass.SetUrl('& CLIP(pUrl) &') scheme= '& CLIP(urlScheme))
   RETURN SELF.SetOpt(CURLOPT_CURLU, SELF.urlp.GetPtr())
 
 TCurlClass.Perform            PROCEDURE()

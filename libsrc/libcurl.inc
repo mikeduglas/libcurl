@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.63
-!** 23.11.2023
+!** libcurl for Clarion v1.64
+!** 09.02.2024
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1140,6 +1140,7 @@ CURL_DEBUGINFO_ALL            EQUATE(11111111b) !- no filters
 
 TCurlClass                    CLASS, TYPE, MODULE('libcurl.clw'), LINK('libcurl.clw')
 curl                            CURL, PROTECTED
+defaultProtocol                 STRING(40), PROTECTED
 urlp                            &TCurlUrlApiClass, PROTECTED
 debugInfoMask                   UNSIGNED, PROTECTED
 

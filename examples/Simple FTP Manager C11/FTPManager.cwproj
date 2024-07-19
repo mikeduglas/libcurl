@@ -87,9 +87,15 @@
     <Compile Include="FTPManager_BC0.CLW">
       <Generated>true</Generated>
     </Compile>
+    <None Include="libcurl.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Generated>True</Generated>
+      <ProjectGenerated>True</ProjectGenerated>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Library Include="ftp.ico" />
+    <Library Include="libcurl.lib" />
   </ItemGroup>
   <Import Project="$(ClarionBinPath)\SoftVelocity.Build.Clarion.targets" />
 </Project>

@@ -4,7 +4,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Clarion 2.1.0.2447
 Project("{12B76EC0-1D7B-4FA7-A7D0-C524288B48A1}") = "FTPManager", "FTPManager.cwproj", "{7FFFF109-7696-4575-98F2-467C3E36898B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{{2150E333-8FDC-42A3-9474-1A3956D46DE8}}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2150E333-8FDC-42A3-9474-1A3956D46DE8}"
 	ProjectSection(SolutionItems) = postProject
 		FTPManager.app = FTPManager.app
 	EndProjectSection

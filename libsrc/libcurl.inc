@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.64.1
-!** 09.02.2024
+!** libcurl for Clarion v1.65.0
+!** 11.08.2024
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1866,20 +1866,22 @@ CURLUPART_ZONEID                EQUATE
                               END
 
 !GetPart/SetPart flags
-CURLU_DEFAULT_PORT            EQUATE(01b)             !return default port number
-CURLU_NO_DEFAULT_PORT         EQUATE(010b)            !act as if no port number was set, if the port number matches the default for the scheme
-CURLU_DEFAULT_SCHEME          EQUATE(0100b)           !return default scheme if missing
-CURLU_NON_SUPPORT_SCHEME      EQUATE(01000b)          !allow non-supported scheme
-CURLU_PATH_AS_IS              EQUATE(010000b)         !leave dot sequences
-CURLU_DISALLOW_USER           EQUATE(0100000b)        !no user+password allowed
-CURLU_URLDECODE               EQUATE(01000000b)       !URL decode on get
-CURLU_URLENCODE               EQUATE(010000000b)      !URL encode on set
-CURLU_APPENDQUERY             EQUATE(0100000000b)     !append a form style part
-CURLU_GUESS_SCHEME            EQUATE(01000000000b)    !legacy curl-style guessing
-CURLU_NO_AUTHORITY            EQUATE(010000000000b)   !Allow empty authority when the scheme is unknown.
-CURLU_ALLOW_SPACE             EQUATE(0100000000000b)  !Allow spaces in the URL
-CURLU_PUNYCODE                EQUATE(01000000000000b) !get the host name in pynycode
-CURLU_PUNY2IDN                EQUATE(010000000000000b)!punycode => IDN conversion
+CURLU_DEFAULT_PORT            EQUATE(01b)               !return default port number
+CURLU_NO_DEFAULT_PORT         EQUATE(010b)              !act as if no port number was set, if the port number matches the default for the scheme
+CURLU_DEFAULT_SCHEME          EQUATE(0100b)             !return default scheme if missing
+CURLU_NON_SUPPORT_SCHEME      EQUATE(01000b)            !allow non-supported scheme
+CURLU_PATH_AS_IS              EQUATE(010000b)           !leave dot sequences
+CURLU_DISALLOW_USER           EQUATE(0100000b)          !no user+password allowed
+CURLU_URLDECODE               EQUATE(01000000b)         !URL decode on get
+CURLU_URLENCODE               EQUATE(010000000b)        !URL encode on set
+CURLU_APPENDQUERY             EQUATE(0100000000b)       !append a form style part
+CURLU_GUESS_SCHEME            EQUATE(01000000000b)      !legacy curl-style guessing
+CURLU_NO_AUTHORITY            EQUATE(010000000000b)     !Allow empty authority when the scheme is unknown.
+CURLU_ALLOW_SPACE             EQUATE(0100000000000b)    !Allow spaces in the URL
+CURLU_PUNYCODE                EQUATE(01000000000000b)   !get the host name in pynycode
+CURLU_PUNY2IDN                EQUATE(010000000000000b)  !punycode => IDN conversion
+CURLU_GET_EMPTY               EQUATE(0100000000000000b) !allow empty queries and fragments when extracting the URL or the components
+CURLU_NO_GUESS_SCHEME         EQUATE(01000000000000000b)!for get, do not accept a guess
 
 CURLU                         EQUATE(LONG)
 

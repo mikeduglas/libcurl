@@ -1,4 +1,21 @@
 ## Version history
+v1.65
+- CHG: Now uses libcurl v8.9.1_1, see [changelog](https://curl.haxx.se/changes.html) for details.
+> curl 8.9.1_1 was built and statically linked with
+> 
+> * brotli 1.1.0
+> * cacert 2024-07-02
+> * curl 8.9.1
+> * libpsl 0.21.5
+> * libressl 3.9.2
+> * libssh2 1.11.0
+> * nghttp2 1.62.1
+> * nghttp3 1.4.0
+> * ngtcp2 1.6.0
+> * zlib 1.3.1
+> * zstd 1.5.6
+- FIX: Explicit scheme was overwritten with the default protocol.
+
 v1.64
 - FIX: If an url was set without a scheme (for example "smtp.gmail.com") then the default "HTTPS" scheme was used.
 

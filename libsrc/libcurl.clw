@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.64.1
-!** 09.02.2024
+!** libcurl for Clarion v1.65.0
+!** 11.08.2024
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -870,22 +870,23 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
 !  RETURN SELF.SetOpt(CURLOPT_URL, ADDRESS(url))
 TCurlClass.SetUrl             PROCEDURE(STRING pUrl)
 rcu                             CURLUcode, AUTO
+sScheme                         STRING(40)
   CODE
   !- remove old content first
   SELF.urlp.RemovePart(CURLUPART_URL)
   
   !- CURLU_GUESS_SCHEME: If the outermost subdomain name matches DICT, FTP, IMAP, LDAP, POP3 or SMTP then that scheme is used, otherwise it picks HTTP. 
   rcu = SELF.urlp.SetPart(CURLUPART_URL, pUrl, CURLU_ALLOW_SPACE+CURLU_GUESS_SCHEME)
-
-  IF SELF.defaultProtocol
-    !- Overwrite the default scheme (HTTP) for DICT, FTP, IMAP, LDAP, POP3 or SMTP protocols.
-    rcu = SELF.urlp.SetPart(CURLUPART_SCHEME, SELF.defaultProtocol)
-  END
-  
   IF rcu <> CURLUE_OK
     curl::DebugInfo('TCurlClass.SetUrl('& CLIP(pUrl) &') error: '& curl::url:StrError(rcu))
     RETURN CURLE_URL_MALFORMAT
   END
+  !- if a scheme is missing in the original url, replace it with the defaultProtocol.
+  rcu = SELF.urlp.GetPart(CURLUPART_SCHEME, sScheme, CURLU_NO_GUESS_SCHEME)
+  IF rcu = CURLUE_NO_SCHEME AND SELF.defaultProtocol <> ''
+    SELF.urlp.SetPart(CURLUPART_SCHEME, SELF.defaultProtocol)
+  END
+
   RETURN SELF.SetOpt(CURLOPT_CURLU, SELF.urlp.GetPtr())
 
 TCurlClass.Perform            PROCEDURE()

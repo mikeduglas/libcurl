@@ -14,7 +14,7 @@ v1.65
 > * ngtcp2 1.6.0
 > * zlib 1.3.1
 > * zstd 1.5.6
-- FIX: Explicit scheme was overwritten with the default protocol.
+- FIX: (Regression) Explicit scheme was overwritten with the default protocol.
 
 v1.64
 - FIX: If an url was set without a scheme (for example "smtp.gmail.com") then the default "HTTPS" scheme was used.

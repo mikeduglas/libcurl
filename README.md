@@ -33,6 +33,7 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Recent changes
 v1.66
+- CHG: Now uses libcurl v8.11.0_1, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 8.11.0_1 was built and statically linked with
 > 
 > * brotli 1.1.0

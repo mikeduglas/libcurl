@@ -1,4 +1,4 @@
-!** libcurl for Clarion v1.65.0
+!** libcurl for Clarion v1.66.0
 !** 11.08.2024
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
@@ -234,8 +234,12 @@ CURLINFO_PROXY_ERROR          EQUATE(CURLINFO_LONG + 59)
 CURLINFO_REFERER              EQUATE(CURLINFO_STRING + 60)
 CURLINFO_CAINFO               EQUATE(CURLINFO_STRING + 61)
 CURLINFO_CAPATH               EQUATE(CURLINFO_STRING + 62)
-!CURLINFO_LASTONE              EQUATE(62)
-
+CURLINFO_XFER_ID              EQUATE(CURLINFO_OFF_T + 63)
+CURLINFO_CONN_ID              EQUATE(CURLINFO_OFF_T + 64)
+CURLINFO_QUEUE_TIME_T         EQUATE(CURLINFO_OFF_T + 65)
+CURLINFO_USED_PROXY           EQUATE(CURLINFO_LONG + 66)
+CURLINFO_POSTTRANSFER_TIME_T  EQUATE(CURLINFO_OFF_T + 67)
+CURLINFO_EARLYDATA_SENT_T     EQUATE(CURLINFO_OFF_T + 68)
 
 
 !#define CURL_GLOBAL_SSL (1<<0)
@@ -2081,22 +2085,26 @@ Construct                       PROCEDURE()
 Destruct                        PROCEDURE(), DERIVED
 Connect                         PROCEDURE(STRING pUrl), CURLcode, PROC, VIRTUAL
 Disconnect                      PROCEDURE(<STRING pReason>), CURLcode, PROC, VIRTUAL
+Connected                       PROCEDURE(), BOOL
 SendFrame                       PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC, PRIVATE
 SendMultiFrame                  PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC, PRIVATE
-Send                            PROCEDURE(STRING pData, UNSIGNED pFlags), CURLcode, PROC
-Send                            PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC
-SendText                        PROCEDURE(STRING pText), CURLcode, PROC
-SendText                        PROCEDURE(*STRING pText), CURLcode, PROC
-SendBinary                      PROCEDURE(STRING pData), CURLcode, PROC
-SendBinary                      PROCEDURE(*STRING pData), CURLcode, PROC
-SendFile                        PROCEDURE(STRING pFileName, BOOL pAsText=FALSE), CURLcode, PROC
+Send                            PROCEDURE(STRING pData, UNSIGNED pFlags), CURLcode, PROC, VIRTUAL
+Send                            PROCEDURE(*STRING pData, UNSIGNED pFlags), CURLcode, PROC, VIRTUAL
+SendText                        PROCEDURE(STRING pText), CURLcode, PROC, VIRTUAL
+SendText                        PROCEDURE(*STRING pText), CURLcode, PROC, VIRTUAL
+SendBinary                      PROCEDURE(STRING pData), CURLcode, PROC, VIRTUAL
+SendBinary                      PROCEDURE(*STRING pData), CURLcode, PROC, VIRTUAL
+SendFile                        PROCEDURE(STRING pFileName, BOOL pAsText=FALSE), CURLcode, PROC, VIRTUAL
 
 !!!<summary>Receive a response from websockets server.</summary>
 !!!<param name="pResponse">Response data.</param>
+Receive                         PROCEDURE(*STRING pResponse), CURLcode, PROC, VIRTUAL
+!!!<summary>Receive a response from websockets server.</summary>
+!!!<param name="pResponse">Response data.</param>
 !!!<param name="pBufSize">The size of a buffer which gets data chunks.</param>
-Receive                         PROCEDURE(*IDynStr pResponse, LONG pBufSize=256), CURLcode, PROC
+Receive                         PROCEDURE(*IDynStr pResponse, LONG pBufSize=256), CURLcode, PROC, VIRTUAL
 !!!<summary>Receive a response from websockets server.</summary>
 !!!<param name="pFileName">A file the response data will be saved in.</param>
 !!!<param name="pBufSize">The size of a buffer which gets data chunks.</param>
-Receive                         PROCEDURE(STRING pFileName, LONG pBufSize=256), CURLcode, PROC
+ReceiveFile                     PROCEDURE(STRING pFileName, LONG pBufSize=256), CURLcode, PROC, VIRTUAL
                               END

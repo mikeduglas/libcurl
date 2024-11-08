@@ -32,6 +32,23 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.66
+> curl 8.11.0_1 was built and statically linked with
+> 
+> * brotli 1.1.0
+> * cacert 2024-09-24
+> * curl 8.11.0
+> * libpsl 0.21.5
+> * libressl 4.0.0
+> * libssh2 1.11.1
+> * nghttp2 1.64.0
+> * nghttp3 1.6.0
+> * ngtcp2 1.8.1
+> * zlib 1.3.1
+> * zstd 1.5.6
+- NEW: 8 new CURLINFO_xxx equates defined.
+- CHG: TCurlWebsocketClass cosmetic changes.
+
 v1.65
 - CHG: Now uses libcurl v8.9.1_1, see [changelog](https://curl.haxx.se/changes.html) for details.
 > curl 8.9.1_1 was built and statically linked with

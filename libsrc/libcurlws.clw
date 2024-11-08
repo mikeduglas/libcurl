@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.57
-!** 20.02.2023
+!** libcurl for Clarion v1.66.0
+!** 11.08.2024
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -43,7 +43,7 @@
       curl_ws_meta(CURL curl), LONG, CURLcode, C, NAME('curl_ws_meta')
     END
 
-    curl::ws:WriteCB(LONG buffer, size_t bufsize, size_t nmemb, LONG pUserData), size_t, C
+!    curl::ws:WriteCB(LONG buffer, size_t bufsize, size_t nmemb, LONG pUserData), size_t, C
   END
 
 !The current implementation only supports frame sizes up to a max (64K right now). 
@@ -51,24 +51,24 @@
 MAX_FRAME_SIZE                EQUATE(64000)
 MAX_CHUNK_SIZE                EQUATE(126)
 
-curl::ws:WriteCB              PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pUserData)
-bytesReceived                   size_t, AUTO
-ws                              &TCurlWebsocketClass
-sbuffer                         STRING(bufsize * nmemb)
-rc                              BOOL
-  CODE
-  IF pUserData = 0
-    RETURN -1
-  END
-
-  ws &= (pUserData)
-  
-  bytesReceived = bufsize * nmemb
-  curl::memcpy(ADDRESS(sbuffer), buffer, bytesReceived)
-!  ws.ds.Cat(sbuffer)
-  curl::DebugInfo('curl::ws:WriteCB('& sbuffer &')')
-  
-  RETURN bytesReceived
+!curl::ws:WriteCB              PROCEDURE(LONG buffer, size_t bufsize, size_t nmemb, LONG pUserData)
+!bytesReceived                   size_t, AUTO
+!ws                              &TCurlWebsocketClass
+!sbuffer                         STRING(bufsize * nmemb)
+!rc                              BOOL
+!  CODE
+!  IF pUserData = 0
+!    RETURN -1
+!  END
+!
+!  ws &= (pUserData)
+!  
+!  bytesReceived = bufsize * nmemb
+!  curl::memcpy(ADDRESS(sbuffer), buffer, bytesReceived)
+!!  ws.ds.Cat(sbuffer)
+!  curl::DebugInfo('curl::ws:WriteCB('& sbuffer &')')
+!  
+!  RETURN bytesReceived
 
 !!!region TCurlWebsocketClass
 TCurlWebsocketClass.Construct PROCEDURE()
@@ -108,6 +108,10 @@ res                                 CURLcode, AUTO
     res = CURLE_OK
   END
   RETURN res
+  
+TCurlWebsocketClass.Connected PROCEDURE()
+  CODE
+  RETURN CHOOSE(SELF.connRes = CURLE_OK)
 
 TCurlWebsocketClass.SendFrame PROCEDURE(*STRING pData, UNSIGNED pFlags)
 dataPtr                         LONG, AUTO
@@ -264,6 +268,22 @@ res                             CURLcode, AUTO
   END
   RETURN res
   
+TCurlWebsocketClass.Receive   PROCEDURE(*STRING pResponse)
+ds                              &IDynStr
+fs                              TCurlFileStruct
+dwBytes                         LONG, AUTO
+res                             CURLcode, AUTO
+  CODE
+  CLEAR(pResponse)
+  ds &= NewDynStr()
+  res = SELF.Receive(ds, SIZE(pResponse))
+  IF res = CURLE_OK
+    pResponse = ds.Str()
+  END
+  ds.Kill()
+  DisposeDynStr(ds)
+  RETURN res
+
 TCurlWebsocketClass.Receive   PROCEDURE(*IDynStr pResponse, LONG pBufSize=256)
 buf                             &STRING, AUTO
 bufPtr                          LONG, AUTO
@@ -280,21 +300,21 @@ res                             CURLcode, AUTO
   
   IF SELF.connRes <> CURLE_OK
     !- no connection
-    curl::DebugInfo('TCurlWebsocketClass.Receive(): Couldn''t connect to the server.')
+    curl::DebugInfo('TCurlWebsocketClass.Receive(): Connection was not established.')
     RETURN SELF.connRes
   END
 
   buf &= NEW STRING(pBufSize)
   bufPtr = ADDRESS(buf)
   bufLen = SIZE(buf)
-
+  
   LOOP
     res = curl_ws_recv(SELF.curl, bufPtr, bufLen, cbRecv, metap)
     IF res <> CURLE_OK
       !- error
       BREAK
     END
-    
+
     meta &= (metap)
     IF NOT BAND(meta.flags, flagMask)
       !- invalid flag
@@ -328,11 +348,11 @@ res                             CURLcode, AUTO
   END
   RETURN res
   
-TCurlWebsocketClass.Receive   PROCEDURE(STRING pFileName, LONG pBufSize=256)
-ds                              &IDynStr
-fs                              TCurlFileStruct
-dwBytes                         LONG, AUTO
-res                             CURLcode, AUTO
+TCurlWebsocketClass.ReceiveFile   PROCEDURE(STRING pFileName, LONG pBufSize=256)
+ds                                  &IDynStr
+fs                                  TCurlFileStruct
+dwBytes                             LONG, AUTO
+res                                 CURLcode, AUTO
   CODE
   ds &= NewDynStr()
   res = SELF.Receive(ds, pBufSize)

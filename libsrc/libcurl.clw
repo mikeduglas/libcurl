@@ -1,5 +1,5 @@
 !** libcurl for Clarion v1.65.0
-!** 11.08.2024
+!** 16.02.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -212,7 +212,7 @@
     END
   END
 
-curl::UserAgent               CSTRING('curl/8.1.2')
+curl::UserAgent               CSTRING('curl/8.11.0')
 
 winapi::INVALID_FILE_SIZE         EQUATE(-1)
 winapi::INVALID_SET_FILE_POINTER  EQUATE(-1)
@@ -758,7 +758,7 @@ TCurlClass.Destruct           PROCEDURE()
 
   DISPOSE(SELF.urlp)
   DISPOSE(SELF.headers)
-  DISPOSE(SELF.headers)
+  DISPOSE(SELF.Errors)
   
 TCurlClass.Init               PROCEDURE()
   CODE

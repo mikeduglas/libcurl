@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.66.0
-!** 11.08.2024
+!** libcurl for Clarion v1.67.0
+!** 11.03.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1388,7 +1388,7 @@ Charset                         PROCEDURE(STRING pCharset)
 
 !Examples of content types include "text/plain", "text/html", "text/css", "image/png", "image/gif", "image/jpeg", "video/mpeg", "audio/basic"
 !See GetMIMETypeFromFileExt()
-AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
+AddAttachment                   PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>, <STRING pRemoteName>)
 AddEmbeddedImage                PROCEDURE(STRING pFilename, STRING pCid, <STRING pName>)  !forces to use 'text/html' content-type
 
 Send                            PROCEDURE(), CURLcode, PROC

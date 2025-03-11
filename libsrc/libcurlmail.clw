@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.62
-!** 31.10.2023
+!** libcurl for Clarion v1.67.0
+!** 11.03.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -706,11 +706,11 @@ qIndex                                  LONG, AUTO
   END
   RETURN FALSE
 
-TCurlMailClass.AddAttachment  PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>)
+TCurlMailClass.AddAttachment  PROCEDURE(STRING pFilename, <STRING pContentType>, <STRING pCharset>, <STRING pRemoteName>)
   CODE
   CLEAR(SELF.attachments)
   SELF.attachments.filename = CLIP(pFilename)
-  SELF.attachments.shortname = GetShortFileName(pFilename)
+  SELF.attachments.shortname = CHOOSE(pRemoteName = '', GetShortFileName(pFilename), pRemoteName)
   
   IF pContentType
     SELF.attachments.contentType = CLIP(pContentType)
@@ -942,6 +942,7 @@ filedata                            &STRING
         part = mail.mime.AddPart()
         mail.mime.SetFileData(part, SELF.attachments.filename)
         mail.mime.SetName(part, SELF.attachments.shortname)
+        mail.mime.SetFileName(part, SELF.attachments.shortname)
         mail.mime.SetType(part, SELF.attachments.contentType & CHOOSE(SELF.attachments.charset <> '', '; charset='& SELF.attachments.charset &'', ''))
         mail.mime.SetEncoder(part, 'base64')
       ELSE

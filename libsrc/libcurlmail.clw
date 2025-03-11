@@ -25,6 +25,7 @@
     ExtractMailAddress(STRING pMailAddress), STRING, PRIVATE  !extracts 'user@gmail.com' from 'Joe Doe <user@gmail.com>'
     ExtractName(STRING pMailAddress), STRING, PRIVATE  !extracts 'Joe Doe' from 'Joe Doe <user@gmail.com>'
     EncodeHeaderPart(STRING pText), STRING  !subject, from, to, cc, bcc
+    EncodeFileName(STRING pFileName), STRING
 
     Base64::EncodeBlock(STRING in, *STRING out, LONG len), PRIVATE
     Base64::Encode(STRING input_buf), STRING  !, PRIVATE
@@ -464,6 +465,10 @@ startAngleBrPos                 LONG, AUTO
 EncodeHeaderPart              PROCEDURE(STRING pText)
   CODE
   RETURN '=?utf-8?B?'& Base64::Encode(ConvertToCodePage(CLIP(pText))) &'?='
+  
+EncodeFileName                PROCEDURE(STRING pFileName)
+  CODE
+  RETURN '=?utf-8?B?'& Base64::Encode(ConvertToCodePage(GetShortFileName(pFileName))) &'?='
 
 Base64::EncodeBlock           PROCEDURE(STRING in, *STRING out, LONG len)
   CODE

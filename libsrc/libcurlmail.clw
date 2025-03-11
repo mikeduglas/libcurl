@@ -1,4 +1,4 @@
-!** libcurl for Clarion v1.67.0
+!** libcurl for Clarion v1.67.1
 !** 11.03.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
@@ -19,15 +19,15 @@
     END
 
     ConvertToCodePage(STRING pStr, SIGNED pInputCodePage, SIGNED pOutputCodePage), STRING, PRIVATE  ! convert ASCII to UTF8
-    ConvertToCodePage(STRING pStr, SIGNED pOutputCodePage = CP_UTF8), STRING, PRIVATE  ! convert ASCII to UTF8
+    ConvertToCodePage(STRING pStr, SIGNED pOutputCodePage = CP_UTF8), STRING  !, PRIVATE  ! convert ASCII to UTF8
     GetMIMETypeFromFileExt(STRING pFilename), STRING, PRIVATE
-    GetShortFileName(STRING pFilename), STRING, PRIVATE
+    GetShortFileName(STRING pFilename), STRING  !, PRIVATE
     ExtractMailAddress(STRING pMailAddress), STRING, PRIVATE  !extracts 'user@gmail.com' from 'Joe Doe <user@gmail.com>'
     ExtractName(STRING pMailAddress), STRING, PRIVATE  !extracts 'Joe Doe' from 'Joe Doe <user@gmail.com>'
     EncodeHeaderPart(STRING pText), STRING  !subject, from, to, cc, bcc
 
     Base64::EncodeBlock(STRING in, *STRING out, LONG len), PRIVATE
-    Base64::Encode(STRING input_buf), STRING, PRIVATE
+    Base64::Encode(STRING input_buf), STRING  !, PRIVATE
 
     Header::DateTime(), STRING, PRIVATE  !Returns the current local date and time as string "Wed, 22 Aug 2018 12:32:25 +0300"
     Header::Recipient(STRING pRecipient), STRING, PRIVATE

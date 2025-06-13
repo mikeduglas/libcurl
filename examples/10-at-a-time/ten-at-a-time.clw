@@ -1,7 +1,7 @@
   PROGRAM
-  PRAGMA('project(#pragma link(libcurl.lib))')
 
-  INCLUDE('libcurl.inc')
+  PRAGMA('compile(CWUTIL.CLW)')
+  INCLUDE('libcurl.inc'), ONCE
 
   MAP
     init_q()
@@ -11,7 +11,7 @@
     add_transfer(TCurlMultiClass cm, LONG i)
     add_output(STRING pText)
 
-    INCLUDE('cwutil.inc')
+    INCLUDE('cwutil.inc'), ONCE
   END
 
 multi                         &TCurlMultiClass

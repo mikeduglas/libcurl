@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.67.1
-!** 11.03.2025
+!** libcurl for Clarion v1.68
+!** 20.08.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -7,10 +7,33 @@
 
   INCLUDE('libcurl.inc'), ONCE
 
+TSYSTEMTYPE                             GROUP, TYPE
+wYear                                     SHORT
+wMonth                                    SHORT
+wDayOfWeek                                SHORT
+wDay                                      SHORT
+wHour                                     SHORT
+wMinute                                   SHORT
+wSecond                                   SHORT
+wMilliseconds                             SHORT
+                                        END
+TTIME_ZONE_INFORMATION                  GROUP, TYPE
+Bias                                      LONG
+StandardName                              STRING(64)
+StandardDate                              LIKE(TSYSTEMTYPE)
+StandardBias                              LONG
+DaylightName                              STRING(64)
+DaylightDate                              LIKE(TSYSTEMTYPE)
+DaylightBias                              LONG
+                                        END
+TIME_ZONE_ID_UNKNOWN                    EQUATE(0)
+TIME_ZONE_ID_STANDARD                   EQUATE(1)
+TIME_ZONE_ID_DAYLIGHT                   EQUATE(2)
+
   MAP
     MODULE('Windows API')
       winapi::GetLocalTime(LONG lpSystemTime), PASCAL, NAME('GetLocalTime')
-      winapi::GetTimeZoneInformation(LONG lpTimeZoneInformation), ULONG, PROC, PASCAL, NAME('GetTimeZoneInformation')
+      winapi::GetTimeZoneInformation(LONG lpTimeZoneInformation), LONG, PASCAL, NAME('GetTimeZoneInformation')
       winapi::MultiByteToWideChar(long CodePage, long dwFlags, long lpMultiByteStr, long cbMultiByte, |
         long lpWideCharStr, long cchWideCharStr),long,pascal,name('MultiByteToWideChar'),proc
       winapi::WideCharToMultiByte(long CodePage, long dwFlags, long lpWideCharStr, long cchWideChar, |
@@ -537,29 +560,10 @@ Body::Add                     PROCEDURE(*TCurlMimeClass mime, curl_mimepart part
   mime.SetEncoder(part, 'base64')
 
 Header::DateTime              PROCEDURE()
-TSYSTEMTYPE                     GROUP, TYPE
-wYear                             SHORT
-wMonth                            SHORT
-wDayOfWeek                        SHORT
-wDay                              SHORT
-wHour                             SHORT
-wMinute                           SHORT
-wSecond                           SHORT
-wMilliseconds                     SHORT
-                                END
-TTIME_ZONE_INFORMATION          GROUP, TYPE
-Bias                              LONG
-StandardName                      STRING(64)
-StandardDate                      LIKE(TSYSTEMTYPE)
-StandardBias                      LONG
-DaylightName                      STRING(64)
-DaylightDate                      LIKE(TSYSTEMTYPE)
-DaylightBias                      LONG
-                                END
-
 lt                              LIKE(TSYSTEMTYPE), AUTO
 tz                              LIKE(TTIME_ZONE_INFORMATION), AUTO
-
+tzId                            LONG, AUTO
+bias                            LONG, AUTO
 weekDay                         STRING(3), AUTO
 monthName                       STRING(3), AUTO
 timezone                        STRING(5), AUTO
@@ -567,11 +571,14 @@ timezone                        STRING(5), AUTO
   !Date and Time Specification
   !https://tools.ietf.org/html/rfc2822#section-3.3
   
-  !- read local time and time zne info
+  !- read local time and time zone info
   winapi::GetLocalTime(ADDRESS(lt))
-  winapi::GetTimeZoneInformation(ADDRESS(tz))
-  
-  !- return date time in format of "Wed, 22 Aug 2018 12:32:25 +0300"
+  tzId = winapi::GetTimeZoneInformation(ADDRESS(tz))
+  bias = tz.Bias
+  IF tzId = TIME_ZONE_ID_DAYLIGHT
+    !- Take into account daylight saving time
+    bias += tz.DaylightBias
+  END
   
   EXECUTE lt.wDayOfWeek + 1 
     weekDay = 'Sun'
@@ -602,8 +609,9 @@ timezone                        STRING(5), AUTO
   !- The "+" or "-" indicates whether the time-of-day is ahead of (i.e., east of) or behind (i.e., west of) Universal Time.
   !- The first two digits indicate the number of hours difference from Universal Time, 
   !- and the last two digits indicate the number of minutes difference from Universal Time.
-  timezone = CHOOSE(tz.Bias < 0, '+', '-') & FORMAT(ABS(tz.Bias) / 60, @n02) & FORMAT(ABS(tz.Bias) % 60, @n02)
+  timezone = CHOOSE(bias < 0, '+', '-') & FORMAT(ABS(bias) / 60, @n02) & FORMAT(ABS(bias) % 60, @n02)
   
+  !- return date time in format of "Wed, 22 Aug 2018 12:32:25 +0300"
   RETURN weekDay &', '& | 
     lt.wDay &' '& monthName &' '& lt.wYear &' '& | 
     FORMAT(lt.wHour, @n02) &':'& FORMAT(lt.wMinute, @n02) &':'& FORMAT(lt.wSecond, @n02) &' '& | 

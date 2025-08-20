@@ -1,4 +1,7 @@
 ## Version history
+v1.68
+- CHG: TCurlMailClass.Header::DateTime did not take into account daylight saving time.
+
 v1.67
 - CHG: TCurlMailClass.AddAttachment now accepts pRemoteName omittable parameter.
 

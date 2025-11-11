@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.65.0
-!** 16.02.2025
+!** libcurl for Clarion v1.69.0
+!** 11.11.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -83,7 +83,7 @@
       curl_easy_setopt(CURL curl, CURLoption option, *CSTRING param), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ReadWriteProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ProgressDataProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
-!      curl_easy_setopt(CURL curl, CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
+      curl_easy_setopt(CURL curl, CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::DebugProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ChunkBgnProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
       curl_easy_setopt(CURL curl, CURLoption option, curl::ChunkEndProcType cbproc), CURLcode, C, RAW, NAME('curl_easy_setopt')
@@ -432,6 +432,28 @@ curl                            &TCurlClass
   IF ptr
     curl &= (ptr)
     RETURN curl.XFerInfo(dltotal, dlnow, ultotal, ulnow)
+  END
+  
+  RETURN 0
+
+curl::XFerInfo2               PROCEDURE(LONG ptr, LONG dltotalLo, LONG dltotalHi, LONG dlnowLo, LONG dlnowHi, LONG ultotalLo, LONG ultotalHi, LONG ulnowLo, LONG ulnowHi)
+curl                            &TCurlClass
+dltotal                         LIKE(curl_off_t), AUTO
+dlnow                           LIKE(curl_off_t), AUTO
+ultotal                         LIKE(curl_off_t), AUTO
+ulnow                           LIKE(curl_off_t), AUTO
+  CODE
+  IF ptr
+    curl &= (ptr)
+    dltotal.lo = dltotalLo
+    dltotal.Hi = dltotalHi
+    dlnow.lo = dlnowLo
+    dlnow.Hi = dlnowHi
+    ultotal.lo = ultotalLo
+    ultotal.Hi = ultotalHi
+    ulnow.lo = ulnowLo
+    ulnow.Hi = ulnowHi
+    RETURN curl.XFerInfo2(dltotal, dlnow, ultotal, ulnow)
   END
   
   RETURN 0
@@ -855,9 +877,9 @@ TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::ChunkEndProcTyp
   CODE
   RETURN curl_easy_setopt(SELF.curl, option, chunkendproc)
 
-!TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc)
-!  CODE
-!  RETURN curl_easy_setopt(SELF.curl, option, cbproc)
+TCurlClass.SetOpt             PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc)
+  CODE
+  RETURN curl_easy_setopt(SELF.curl, option, cbproc)
 
 TCurlClass.SetOpt             PROCEDURE(CURLoption option, TCurlSList plist)
   CODE
@@ -964,20 +986,49 @@ TCurlClass.ResetWriteCallback PROCEDURE()
   SELF.SetOpt(CURLOPT_WRITEDATA, 0)
   RETURN CURLE_OK
 
-TCurlClass.SetXFerCallback    PROCEDURE(<curl::ProgressDataProcType xferproc>)
+TCurlClass.SetXFerCallback    PROCEDURE()
 res                             CURLcode, AUTO
   CODE
-  IF OMITTED(xferproc)
-    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, curl::XFerInfo)
-  
-    ! pass self to progress function
-    res = SELF.SetOpt(CURLOPT_PROGRESSDATA, ADDRESS(SELF))
-    IF res <> CURLE_OK
-      RETURN res
-    END
-  ELSE
-    res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, xferproc)
+  res = SELF.SetOpt(CURLOPT_XFERINFOFUNCTION, curl::XFerInfo2)
+  IF res <> CURLE_OK
+    RETURN res
   END
+  
+  ! pass self to progress function
+  res = SELF.SetOpt(CURLOPT_XFERINFODATA, ADDRESS(SELF))
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  ! enable progress
+  res = SELF.SetOpt(CURLOPT_NOPROGRESS, FALSE)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+  
+  RETURN CURLE_OK
+
+TCurlClass.SetXFerCallback    PROCEDURE(curl::ProgressDataProcType xferproc)
+res                             CURLcode, AUTO
+  CODE
+!  res = SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, xferproc)
+!  IF res <> CURLE_OK
+!    RETURN res
+!  END
+!
+!  ! enable progress
+!  res = SELF.SetOpt(CURLOPT_NOPROGRESS, FALSE)
+!  IF res <> CURLE_OK
+!    RETURN res
+!  END
+!  
+!  RETURN CURLE_OK
+  RETURN SELF.SetXFerCallback()
+
+TCurlClass.SetXFerCallback    PROCEDURE(curl::XFerInfoProcType xferproc)
+res                             CURLcode, AUTO
+  CODE
+  res = SELF.SetOpt(CURLOPT_XFERINFOFUNCTION, xferproc)
   IF res <> CURLE_OK
     RETURN res
   END
@@ -992,6 +1043,8 @@ res                             CURLcode, AUTO
 
 TCurlClass.ResetXFerCallback  PROCEDURE()
   CODE
+  SELF.SetOpt(CURLOPT_XFERINFOFUNCTION, 0)
+  SELF.SetOpt(CURLOPT_XFERINFODATA, 0)
   SELF.SetOpt(CURLOPT_PROGRESSFUNCTION, 0)
   SELF.SetOpt(CURLOPT_PROGRESSDATA, 0)
   SELF.SetOpt(CURLOPT_NOPROGRESS, TRUE)
@@ -1304,6 +1357,13 @@ TCurlClass.XFerInfo           PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, 
   CODE
   RETURN 0
   
+TCurlClass.XFerInfo2          PROCEDURE(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+rc                              LONG, AUTO
+  CODE
+  !- backward compatibility
+  rc = SELF.XFerInfo(dltotal.lo, dlnow.lo, ultotal.lo, ulnow.lo)
+  RETURN rc
+
 TCurlClass.DebugCallback      PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext)
   CODE
   IF BAND(SELF.debugInfoMask, BSHIFT(1, ptype))

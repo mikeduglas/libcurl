@@ -32,6 +32,10 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.69
+- NEW: TCurlClass.XFerInfo2 callback. It uses CURLOPT_XFERINFOFUNCTION and CURLOPT_XFERINFODATA options instead of deprecated CURLOPT_PROGRESSFUNCTION and CURLOPT_PROGRESSDATA. XFerInfo callback is called from XFerInfo2 for backward compatibility, so existing code should not be broken.
+- FIX: TCurlHttpClass.DownloadFile: if a server does not provide Accept-Ranges response header then parameters pContentLength and pBytesWritten were not updated.
+
 v1.68
 - FIX: TCurlMailClass.Header::DateTime did not take into account daylight saving time.
 

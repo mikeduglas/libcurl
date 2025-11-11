@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.67.0
-!** 11.03.2025
+!** libcurl for Clarion v1.69.0
+!** 11.11.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1013,8 +1013,9 @@ filled                          LONG  !bytes written
 
     ! This is the CURLOPT_PROGRESSFUNCTION callback proto. It is now considered deprecated but was the only choice up until 7.31.0
     curl::ProgressDataProcType(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C, TYPE
-!    ! This is the CURLOPT_XFERINFOFUNCTION callback proto. It was introduced in 7.32.0, it avoids floating point and provides more detailed information.
+    ! This is the CURLOPT_XFERINFOFUNCTION callback proto. It was introduced in 7.32.0, it avoids floating point and provides more detailed information.
 !    curl::XFerInfoProcType(LONG ptr, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow), LONG, C, TYPE
+    curl::XFerInfoProcType(LONG ptr, LONG dltotalLo, LONG dltotalHi, LONG dlnowLo, LONG dlnowHi, LONG ultotalLo, LONG ultotalHi, LONG ulnowLo, LONG ulnowHi), LONG, C, TYPE
 
     curl::DebugProcType(LONG phandle, CURL_INFOTYPE ptype, LONG pdata, size_t psize, LONG userptr), LONG, C, TYPE
 
@@ -1057,6 +1058,9 @@ filled                          LONG  !bytes written
       curl::StringWrite(LONG buffer, size_t bufsize, size_t nmemb, LONG pStringStruct), size_t, C
       !progress function
       curl::XFerInfo(LONG ptr, REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, C
+      !progress function
+!      curl::XFerInfo2(LONG ptr, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow), LONG, C
+      curl::XFerInfo2(LONG ptr, LONG dltotalLo, LONG dltotalHi, LONG dlnowLo, LONG dlnowHi, LONG ultotalLo, LONG ultotalHi, LONG ulnowLo, LONG ulnowHi), LONG, C
       !debug function
       curl::DebugCallback(LONG phandle, CURL_INFOTYPE ptype, LONG pdata, size_t psize, LONG userptr), LONG, C
       !curl_chunk_bgn_callback
@@ -1159,7 +1163,9 @@ SetReadCallback                 PROCEDURE(curl::ReadWriteProcType readproc, LONG
 ResetReadCallback               PROCEDURE(), CURLcode, PROC
 SetWriteCallback                PROCEDURE(curl::ReadWriteProcType writeproc, LONG pData), CURLcode, PROC
 ResetWriteCallback              PROCEDURE(), CURLcode, PROC
-SetXFerCallback                 PROCEDURE(<curl::ProgressDataProcType xferproc>), CURLcode, PROC
+SetXFerCallback                 PROCEDURE(), CURLcode, PROC
+SetXFerCallback                 PROCEDURE(curl::ProgressDataProcType xferproc), CURLcode, PROC
+SetXFerCallback                 PROCEDURE(curl::XFerInfoProcType xferproc), CURLcode, PROC
 ResetXFerCallback               PROCEDURE(), CURLcode, PROC
 SetDebugCallback                PROCEDURE(curl::DebugProcType debugproc), CURLcode, PROC
 ResetDebugCallback              PROCEDURE(), CURLcode, PROC
@@ -1182,7 +1188,7 @@ SetOpt                          PROCEDURE(CURLoption option, *STRING param), CUR
 SetOpt                          PROCEDURE(CURLoption option, *CSTRING param), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ReadWriteProcType xferproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ProgressDataProcType xferproc), CURLcode, PROC
-!SetOpt                          PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, PROC
+SetOpt                          PROCEDURE(CURLoption option, curl::XFerInfoProcType cbproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::DebugProcType debugproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ChunkBgnProcType chunkbgnproc), CURLcode, PROC
 SetOpt                          PROCEDURE(CURLoption option, curl::ChunkEndProcType chunkendproc), CURLcode, PROC
@@ -1215,7 +1221,8 @@ PostFile                        PROCEDURE(STRING pUrl, STRING pArgname, STRING p
 PostFileStr                     PROCEDURE(STRING pUrl, STRING pArgname, STRING pFilename, <*STRING pResponseBuf>, <curl::ProgressDataProcType xferproc>), CURLcode, PROC
 
 !derive XFerInfo to display prgress info
-XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, PROC, VIRTUAL
+XFerInfo                        PROCEDURE(REAL dltotal, REAL dlnow, REAL ultotal, REAL ulnow), LONG, PROC, VIRTUAL  !- deprecated
+XFerInfo2                       PROCEDURE(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow), LONG, PROC, VIRTUAL
 
 !derive Debug to display debug info
 DebugCallback                   PROCEDURE(CURL_INFOTYPE ptype, STRING ptypetxt, STRING ptext), VIRTUAL

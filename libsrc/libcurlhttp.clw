@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.61
-!** 02.10.2023
+!** libcurl for Clarion v1.69.0
+!** 11.11.2025
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -376,7 +376,17 @@ res                             CURLcode, AUTO
   IF NOT SELF.bAcceptRangesEnabled
     !- Accept-Ranges header is missing: call ReadFile instead,
     curl::DebugInfo('TCurlHttpClass.DownloadFile: Accept-Ranges header is missing, continue with ReadFile.')
-    RETURN PARENT.ReadFile(pRemoteFile, sLocalFile, xferproc)
+    res = PARENT.ReadFile(pRemoteFile, sLocalFile, xferproc)
+    IF res = CURLE_OK
+      !- read content-length value
+      pContentLength = SELF.GetInfo::OFF_T(CURLINFO_CONTENT_LENGTH_DOWNLOAD_T)
+      IF SELF.GetResponseCode() = 200
+        !- assume we downloaded all bytes
+        pBytesWritten = pContentLength
+      END
+    END
+    
+    RETURN res
   END
   
   !- write callback
@@ -391,6 +401,7 @@ res                             CURLcode, AUTO
 
   !- get the Content-Length header
   nContentLength = SELF.GetInfo::OFF_T(CURLINFO_CONTENT_LENGTH_DOWNLOAD_T)
+  curl::DebugInfo('TCurlHttpClass.DownloadFile: Content-Length '& nContentLength)
   IF nContentLength = 0FFFFFFFFh  ! -1
     !- no Content-Length header found
     nContentLength = 0
@@ -434,6 +445,7 @@ res                             CURLcode, AUTO
       OF 206  !- Partial Content
         dwBytesWritten = SELF.GetInfo::OFF_T(CURLINFO_SIZE_DOWNLOAD_T)
         dwTotalBytesWritten += dwBytesWritten
+        curl::DebugInfo('TCurlHttpClass.DownloadFile: Partial Content (206), bytes written '& dwBytesWritten)
         
         !- set next byte range
         nRange1 += dwBytesWritten

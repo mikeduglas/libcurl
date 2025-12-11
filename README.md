@@ -12,7 +12,7 @@ libcurl for Clarion
 
 
 ## How to install
-Hit the 'Clone or Download' button and select 'Download Zip'.
+Hit the green 'Code' button and select 'Download Zip'.
 Now unzip libcurl-master.zip into a temporary folder somewhere.
 
 Copy the contents of...

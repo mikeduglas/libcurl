@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.69.0
-!** 11.11.2025
+!** libcurl for Clarion v1.69.1
+!** 25.03.2026
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1679,7 +1679,7 @@ TDbxThumbnailSize:1024h768    EQUATE('1024h768')
 
 
 TCurlDropboxClass             CLASS(TCurlHttpClass), TYPE, MODULE('libcurldropbox.clw'), LINK('libcurldropbox.clw')
-_accessToken                    CSTRING(1024), PROTECTED
+_accessToken                    CSTRING(2048), PROTECTED
 _response                       &IDynStr, PROTECTED
 _lastCurlCode                   CURLcode, PROTECTED
 

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.62
-!** 31.10.2023
+!** libcurl for Clarion v1.70
+!** 04.04.2026
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -387,7 +387,7 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
-  ! set WriteFile callback, otherwise libcure could fail with CURLE_WRITE_ERROR
+  ! set WriteFile callback, otherwise libcurl could fail with CURLE_WRITE_ERROR
   ! http://stackoverflow.com/questions/31900862/curl-simple-example-returning-curle-write-error
   res = SELF.SetWriteCallback(curl::FileWrite, 0)
   IF res <> CURLE_OK
@@ -424,7 +424,7 @@ res                             CURLcode, AUTO
     RETURN res
   END
   
-  ! set WriteFile callback, otherwise libcure could fail with CURLE_WRITE_ERROR
+  ! set WriteFile callback, otherwise libcurl could fail with CURLE_WRITE_ERROR
   ! http://stackoverflow.com/questions/31900862/curl-simple-example-returning-curle-write-error
   res = SELF.SetWriteCallback(curl::FileWrite, 0)
   IF res <> CURLE_OK
@@ -471,7 +471,36 @@ res                             CURLcode, AUTO
   IF res <> CURLE_OK
     RETURN res
   END
+
+  RETURN SELF.Perform()
+
+TCurlFtpClass.DeleteDir       PROCEDURE(STRING pUrl, STRING pDirname)
+ftpcmd                          TCurlSList
+res                             CURLcode, AUTO
+  CODE
+  IF SELF.AuthMethod = CURLSSH_AUTH_NONE
+    ftpcmd.AppendData('RMD '& CLIP(pDirname))
+  ELSE
+    ftpcmd.AppendData('rmdir '& CLIP(pDirname))
+  END
   
+  res = SELF.PostQuote(ftpcmd)  
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
+  res = SELF.SetUrl(pUrl)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+      
+  ! set WriteFile callback, otherwise libcurl could fail with CURLE_WRITE_ERROR
+  ! http://stackoverflow.com/questions/31900862/curl-simple-example-returning-curle-write-error
+  res = SELF.SetWriteCallback(curl::FileWrite, 0)
+  IF res <> CURLE_OK
+    RETURN res
+  END
+
   RETURN SELF.Perform()
 
 TCurlFtpClass.RenameDir       PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname)

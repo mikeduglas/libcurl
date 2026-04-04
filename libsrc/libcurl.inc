@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.69.1
-!** 25.03.2026
+!** libcurl for Clarion v1.70
+!** 04.04.2026
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1321,6 +1321,7 @@ IsDirExist                      PROCEDURE(STRING pUrl, STRING pDirname), CURLcod
 ! delete file or empty dir
 DeleteFile                      PROCEDURE(STRING pUrl, STRING pFilename), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pFilename is /home/files/testfile.txt
 RenameFile                      PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
+DeleteDir                       PROCEDURE(STRING pUrl, STRING pDirname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
 RenameDir                       PROCEDURE(STRING pUrl, STRING pOldname, STRING pNewname), CURLcode, PROC  !pUrl is ftp://user@95.96.97.98, pOldname/pNewname is /home/files/testfile.txt
 
 !ReadFile                        PROCEDURE(STRING pRemoteFile, STRING pLocalFile, <curl::ProgressDataProcType xferproc>), CURLcode, DERIVED, PROC

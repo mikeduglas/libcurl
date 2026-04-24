@@ -1,4 +1,8 @@
 ## Version history
+v1.71
+- CHG: TCurlDropboxClass takes into account recent changes in the Dropbox API.
+
+v1.70
 - NEW: TCurlFtpClass.DeleteDir method added.
 - CHG: FTPManager example uses new TCurlFtpClass.DeleteDir method.
 

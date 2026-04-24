@@ -2,15 +2,15 @@
 
   PROGRAM
 
-  PRAGMA('project(#pragma link(libcurl.lib))')
+!  PRAGMA('project(#pragma link(libcurl.lib))') not required anymore
 
-  INCLUDE('libcurl.inc')
-  INCLUDE('DbxJSON.inc')
-  INCLUDE('keycodes.clw')
+  INCLUDE('libcurl.inc'), ONCE
+  INCLUDE('DbxJSON.inc'), ONCE
+  INCLUDE('keycodes.clw'), ONCE
 
   MAP
     Authorize(), BOOL, PRIVATE
-    GetAccessToken(STRING pAuthCode, STRING pAppKey, STRING pAppSecret, *STRING pAccessToken), BOOL, PROC, PRIVATE
+    GetTokens(STRING pAuthCode, STRING pAppKey, STRING pAppSecret, *STRING pAccessToken, *STRING pRefreshToken), BOOL, PROC, PRIVATE
     DbxFileManager(), PRIVATE
   END
 
@@ -82,7 +82,8 @@ appKey                          STRING(32), AUTO
 appSecret                       STRING(32), AUTO
 
 authCode                        STRING(64), AUTO
-accessToken                     STRING(1023), AUTO
+accessToken                     STRING(2048), AUTO
+refreshToken                    STRING(64), AUTO
 
 AuthWindow                      WINDOW('Dropbox File manager'),AT(,,298,146),CENTER,GRAY,SYSTEM, |
                                   FONT('Tahoma',8)
@@ -103,10 +104,27 @@ rc                              BOOL(FALSE)
   appKey = GETINI('Application', 'Key', '', '.\dropbox.ini')
   appSecret = GETINI('Application', 'Secret', '', '.\dropbox.ini')
   accessToken = GETINI('Application', 'AccessToken', '', '.\dropbox.ini')
+  refreshToken = GETINI('Application', 'RefreshToken', '', '.\dropbox.ini')
   IF accessToken
-    curl.AccessToken(accessToken)
-    RETURN TRUE
+    !- check if the access token has expired
+    IF curl.CheckAccessTokenValidity(accessToken)
+      !- still valid, continue
+      curl.AccessToken(accessToken)
+      RETURN TRUE
+    END
   END
+  !- access token is missing or has expired
+  !- obtain access token using existing refresh token
+  IF refreshToken
+    IF curl.ExchangeCode(refreshToken, appKey, appSecret)
+      !- new access token is obtained
+      accessToken = curl.AccessToken()
+      PUTINI('Application', 'AccessToken', accessToken, '.\dropbox.ini')
+      RETURN TRUE
+    END
+  END
+  
+  !- Authorization required
   
   OPEN(AuthWindow)
   
@@ -117,11 +135,12 @@ rc                              BOOL(FALSE)
       
     OF ?bGetToken
       authCode = CLIPBOARD()
-      IF GetAccessToken(authCode, appKey, appSecret, accessToken)
+      IF GetTokens(authCode, appKey, appSecret, accessToken, refreshToken)
         !- save app settings for future use
         PUTINI('Application', 'Key', appKey, '.\dropbox.ini')
         PUTINI('Application', 'Secret', appSecret, '.\dropbox.ini')
-        PUTINI('Application', 'AccessToken', curl.AccessToken(), '.\dropbox.ini')
+        PUTINI('Application', 'AccessToken', accessToken, '.\dropbox.ini')
+        PUTINI('Application', 'RefreshToken', refreshToken, '.\dropbox.ini')
 
         !- continue
         rc = TRUE
@@ -136,7 +155,7 @@ rc                              BOOL(FALSE)
 
   RETURN rc  
   
-GetAccessToken                PROCEDURE(STRING pAuthCode, STRING pAppKey, STRING pAppSecret, *STRING pAccessToken)
+GetTokens                     PROCEDURE(STRING pAuthCode, STRING pAppKey, STRING pAppSecret, *STRING pAccessToken, *STRING pRefreshToken)
 json                            TDbxJSON
 dbxError                        LIKE(TDbxAuthError)
 rc                              BOOL, AUTO
@@ -150,6 +169,7 @@ res                             CURLcode, AUTO
   
   IF rc
     pAccessToken = curl.AccessToken()
+    pRefreshToken = curl.RefreshToken()
     RETURN TRUE
   END
 
@@ -214,6 +234,8 @@ MainWindow                      WINDOW('Dropbox File manager'),AT(,,679,324),CEN
                                 END
 
   CODE
+  SYSTEM{PROP:CharSet} = CHARSET:CYRILLIC
+  
   toolControls.feqToolbox = ?grpToolbox
   toolControls.feqCreateFolder = ?bCreateFolder
   toolControls.feqCopy = ?bCopy

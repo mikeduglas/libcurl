@@ -1,17 +1,19 @@
-!** libcurl for Clarion v1.57
-!** 20.02.2023
+!** libcurl for Clarion v1.71
+!** 24.04.2026
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
   MEMBER
 
   INCLUDE('libcurl.inc'), ONCE
+  INCLUDE('cjson.inc'), ONCE
 
   MAP
     MODULE('Windows API')
       winapi::Sleep(LONG dwMilliseconds), PASCAL, PROC, NAME('Sleep')
       winapi::ShellExecute(LONG phWnd, <*CSTRING pAction>, *CSTRING pFilename, <*CSTRING pParameters>, <*CSTRING pDirectory>, LONG pFlags=1), LONG, PASCAL, RAW, PROC, NAME('ShellExecuteA')
     END
+    INCLUDE('printf.inc'), ONCE
   END
 
 !!RPC endpoints
@@ -53,29 +55,89 @@ TCurlDropboxClass.Destruct    PROCEDURE()
 TCurlDropboxClass.AccessToken PROCEDURE(STRING pAccessToken)
   CODE
   ASSERT(pAccessToken)
-  SELF._accessToken = CLIP(pAccessToken)
+  SELF._accessToken = pAccessToken
   
 TCurlDropboxClass.AccessToken PROCEDURE()
   CODE
-  RETURN CLIP(SELF._accessToken)
-  
+  RETURN SELF._accessToken
+        
+TCurlDropboxClass.RefreshToken    PROCEDURE(STRING pRefreshToken)
+  CODE
+  SELF._refreshToken = pRefreshToken
+
+TCurlDropboxClass.RefreshToken    PROCEDURE()
+  CODE
+  RETURN SELF._refreshToken
+
 TCurlDropboxClass.Authorize   PROCEDURE(STRING pAppKey)
 szAction                        CSTRING('open')
-szUrl                           CSTRING(512)
+szUrl                           CSTRING(1024), AUTO
   CODE
-  szUrl = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id='& CLIP(pAppKey)
+  szUrl = printf('https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=%s&token_access_type=offline', pAppKey)
   winapi::ShellExecute(0, szAction, szUrl, , , SW_SHOWNORMAL)
 
+TCurlDropboxClass.CheckAccessTokenValidity    PROCEDURE(STRING pAccessToken)
+func                                            STRING('get_current_account')
+  CODE
+  SELF.FreeHttpHeaders()
+  SELF.AddHttpHeader('Authorization: Bearer '& pAccessToken)
+  SELF.SetHttpHeaders()
+  SELF._lastCurlCode = SELF.Send(domain_API, ns_Users, func)
+  IF SELF._lastCurlCode = CURLE_OK AND SELF.GetResponseCode() = 200
+    RETURN TRUE
+  END
+  RETURN FALSE
+  
 TCurlDropboxClass.AccessToken PROCEDURE(STRING pAuthCode, STRING pAppKey, STRING pAppSecret)
 func                            STRING('token')
-args                            CSTRING(1024)
-!json parsing
+args                            STRING(1024), AUTO
+sResponse                       ANY, AUTO
+jParser                         cJSONFactory
+jResponse                       &cJSON, AUTO
 access_token:start              LONG, AUTO
 access_token:end                LONG, AUTO
   CODE
-  args = 'code='& CLIP(pAuthCode) &'&grant_type=authorization_code' &'&client_id='&CLIP(pAppKey) &'&client_secret='& CLIP(pAppSecret)
-!  args = printf('code=%s&grant_type=authorization_code&client_id=%s&client_secret=%s', pAuthCode, pAppKey, pAppSecret)
+  args = printf('code=%s&grant_type=authorization_code&client_id=%s&client_secret=%s', pAuthCode, pAppKey, pAppSecret)
   SELF._lastCurlCode = SELF.SetAuthEndpoint(args)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+  
+  SELF._lastCurlCode = SELF.Send(domain_API, ns_OAuth2, func)
+  IF SELF._lastCurlCode <> CURLE_OK
+    RETURN FALSE
+  END
+
+  IF SELF.GetResponseCode() = 200
+    !- access token is valid
+    !- parse json response, format is:
+    !- {"access_token": "<ACCESS_TOKEN>", "token_type": "bearer", "uid": "<UID>"}
+    sResponse = SELF.DropboxResponse()
+    jResponse &= jParser.Parse(sResponse)
+    IF NOT jResponse &= NULL
+      SELF.AccessToken(jResponse.GetValue('access_token'))
+      SELF.RefreshToken(jResponse.GetValue('refresh_token'))
+      jResponse.Delete()
+      RETURN TRUE
+    ELSE
+      !- parsing error
+      printd('TCurlDropboxClass.AccessToken response: %s', sResponse)
+      printd('TCurlDropboxClass.AccessToken: error (%s at pos %i) parsing api response', jParser.GetError(), jParser.GetErrorPosition())
+      RETURN FALSE
+    END
+  ELSE
+    !- access token is invalid
+  END
+  
+TCurlDropboxClass.ExchangeCode    PROCEDURE(STRING pRefreshToken, STRING pAppKey, STRING pAppSecret)
+func                                STRING('token')
+sResponse                           ANY, AUTO
+jParser                             cJSONFactory
+jResponse                           &cJSON, AUTO
+access_token:start                  LONG, AUTO
+access_token:end                    LONG, AUTO
+  CODE
+  SELF._lastCurlCode = SELF.SetAuthEndpoint(printf('refresh_token=%s&grant_type=refresh_token&client_id=%s&client_secret=%s', pRefreshToken, pAppKey, pAppSecret))
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -90,19 +152,19 @@ access_token:end                LONG, AUTO
   END
 
   !- parse json response, format is:
-  !- {"access_token": "<ACCESS_TOKEN>", "token_type": "bearer", "uid": "<UID>"} 
-  access_token:start = INSTRING('{{"access_token": "', SELF.DropboxResponse(), 1, 1)
-  IF access_token:start
-    access_token:start += LEN('{{"access_token": "')
-    access_token:end = INSTRING('"', SELF.DropboxResponse(), 1, access_token:start)
-    IF access_token:end > 0
-      SELF.AccessToken(SUB(SELF.DropboxResponse(), access_token:start, access_token:end - access_token:start))
-      RETURN TRUE
-    END
+  !- {"access_token": "<ACCESS_TOKEN>", "token_type": "bearer", "expires_in": 14400}
+  sResponse = SELF.DropboxResponse()
+  jResponse &= jParser.Parse(sResponse)
+  IF NOT jResponse &= NULL
+    SELF.AccessToken(jResponse.GetValue('access_token'))
+    jResponse.Delete()
+    RETURN TRUE
+  ELSE
+    !- parsing error
+    printd('TCurlDropboxClass.ExchangeCode response: %s', sResponse)
+    printd('TCurlDropboxClass.ExchangeCode error (%s at pos %i) parsing api response', jParser.GetError(), jParser.GetErrorPosition())
+    RETURN FALSE
   END
-
-  !- parsing error
-  RETURN FALSE
 
 TCurlDropboxClass.Send        PROCEDURE(STRING pDomain, STRING pNamespace, STRING pFunction)
   CODE
@@ -206,11 +268,14 @@ rc                                              CURLcode, AUTO
 
 TCurlDropboxClass.Copy        PROCEDURE(STRING pFromPath, STRING pToPath)
 func                            STRING('copy')
-args                            CSTRING(1024)
+jArgs                           &cJSON, AUTO
   CODE
-  args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
-!  args = printf('{{"from_path":"%s","to_path":"%s"}', pFromPath, pToPath)
-  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('from_path', pFromPath)
+  jArgs.AddStringToObject('to_path', pToPath)
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -224,11 +289,14 @@ args                            CSTRING(1024)
     
 TCurlDropboxClass.Move        PROCEDURE(STRING pFromPath, STRING pToPath)
 func                            STRING('move')
-args                            CSTRING(1024)
+jArgs                           &cJSON, AUTO
   CODE
-  args = '{{"from_path": "'& CLIP(pFromPath) &'","to_path": "'& CLIP(pToPath) &'"}'
-!  args = printf('{{"from_path":"%s","to_path": "%s"}', pFromPath, pToPath)
-  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('from_path', pFromPath)
+  jArgs.AddStringToObject('to_path', pToPath)
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -242,11 +310,13 @@ args                            CSTRING(1024)
 
 TCurlDropboxClass.CreateFolder    PROCEDURE(STRING pPath)
 func                                STRING('create_folder')
-args                                CSTRING(512)
+jArgs                               &cJSON, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
-!  args = printf('{{"path":"%s"}', pPath)
-  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pPath)
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -260,11 +330,13 @@ args                                CSTRING(512)
 
 TCurlDropboxClass.Delete      PROCEDURE(STRING pPath)
 func                            STRING('delete')
-args                            CSTRING(512)
+jArgs                           &cJSON, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
-!  args = printf('{{"path":"%s"}', pPath)
-  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pPath)
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -278,13 +350,15 @@ args                            CSTRING(512)
 
 TCurlDropboxClass.Download    PROCEDURE(STRING pRemotePath, STRING pLocalPath)
 func                            STRING('download')
-args                            CSTRING(512)
+jArgs                           &cJSON, AUTO
 fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pRemotePath) &'"}'
-!  args = printf('{{"path":"%s"}', pRemotePath)
-  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pRemotePath)
+  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -306,21 +380,21 @@ dwBytes                         LONG, AUTO
 
 TCurlDropboxClass.Upload      PROCEDURE(STRING pLocalPath, STRING pRemotePath, <STRING pMode>, BOOL pAutorename = FALSE)
 func                            STRING('upload')
-args                            CSTRING(1024)
-fileContent                     &STRING
+jArgs                           &cJSON, AUTO
+fileContent                     &STRING, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pRemotePath) &'"'
-!  args = printf('{{"path":"%s"', pRemotePath)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pRemotePath)
   IF pMode
-    args = args & ', "mode": "'& CLIP(pMode) &'"'
-!    args = args & printf(',"mode":"%s"', pMode)
+    jArgs.AddStringToObject('mode', pMode)
   END
   IF pAutorename
-    args = args & ', "autorename": true'
+    jArgs.AddTrueToObject('autorename')
   END
-  args = args &'}'
   
-  SELF._lastCurlCode = SELF.SetContentUploadEndpoint(args)
+  SELF._lastCurlCode = SELF.SetContentUploadEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -350,16 +424,17 @@ fileContent                     &STRING
   
 TCurlDropboxClass.ListFolder  PROCEDURE(STRING pPath, BOOL pRecursive = FALSE)
 func                            STRING('list_folder')
-args                            CSTRING(512)
+jArgs                           &cJSON, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"'
-!  args = printf('{{"path":"%s"', pPath)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pPath)
   IF pRecursive
-    args = args &', "recursive": true'
+    jArgs.AddTrueToObject('recursive')
   END
-  args = args &'}'
 
-  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -373,11 +448,13 @@ args                            CSTRING(512)
 
 TCurlDropboxClass.Get_Copy_Reference  PROCEDURE(STRING pPath)
 func                                    STRING('copy_reference/get')
-args                                    CSTRING(512)
+jArgs                                   &cJSON, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
-!  args = printf('{{"path":"%s"}', pPath)
-  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pPath)
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -391,11 +468,14 @@ args                                    CSTRING(512)
   
 TCurlDropboxClass.Save_Copy_Reference PROCEDURE(STRING pPath, STRING pCopyReference)
 func                                    STRING('copy_reference/save')
-args                                    CSTRING(512)
+jArgs                                   &cJSON, AUTO
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'","copy_reference": "'& CLIP(pCopyReference) &'"}'
-!  args = printf('{{"path":"%s","copy_reference":"%s"}', pPath, pCopyReference)
-  SELF._lastCurlCode = SELF.SetRPCEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pPath)
+  jArgs.AddStringToObject('copy_reference', pCopyReference)
+  SELF._lastCurlCode = SELF.SetRPCEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -409,16 +489,18 @@ args                                    CSTRING(512)
 
 TCurlDropboxClass.Preview     PROCEDURE(STRING pPath, *STRING pTmpFile)
 func                            STRING('get_preview')
-args                            CSTRING(512)
+jArgs                           &cJSON, AUTO
 htmlDocTypeStr                  STRING('<<!DOCTYPE html>')
 pdfDocTypeStr                   STRING('%PDF')
 fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
 rc                              BOOL(FALSE)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'"}'
-!  args = printf('{{"path":"%s"}', pPath)
-  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pPath)
+  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -448,14 +530,18 @@ rc                              BOOL(FALSE)
 
 TCurlDropboxClass.Thumbnail   PROCEDURE(STRING pPath, TDbxThumbnailFormat pFormat, TDbxThumbnailSize pSize, *STRING pTmpFile)
 func                            STRING('get_thumbnail')
-args                            CSTRING(1024)
+jArgs                           &cJSON, AUTO
 fs                              TCurlFileStruct
 dwBytes                         LONG, AUTO
 rc                              BOOL(FALSE)
   CODE
-  args = '{{"path": "'& CLIP(pPath) &'", "format": "'& CLIP(pFormat) &'", "size": "'& CLIP(pSize) &'"}'
-!  args = printf('{{"path":"%s","format":"%s","size":"%s"}', pPath, pFormat, pSize)
-  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(args)
+  jArgs &= json::CreateObject()
+  jArgs.AddStringToObject('path', pPath)
+  jArgs.AddStringToObject('format', pFormat)
+  jArgs.AddStringToObject('size', pSize)
+  SELF._lastCurlCode = SELF.SetContentDownloadEndpoint(jArgs.ToUtf8())
+  jArgs.Delete()
+  
   IF SELF._lastCurlCode <> CURLE_OK
     RETURN FALSE
   END
@@ -482,5 +568,4 @@ TCurlDropboxClass.DropboxResponse PROCEDURE()
 TCurlDropboxClass.CurlResponse    PROCEDURE()
   CODE
   RETURN SELF._lastCurlCode
-  
 !!!endregion

@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.70
-!** 04.04.2026
+!** libcurl for Clarion v1.71
+!** 24.04.2026
 !** mikeduglas@yandex.com
 !** mikeduglas66@gmail.com
 
@@ -1680,7 +1680,8 @@ TDbxThumbnailSize:1024h768    EQUATE('1024h768')
 
 
 TCurlDropboxClass             CLASS(TCurlHttpClass), TYPE, MODULE('libcurldropbox.clw'), LINK('libcurldropbox.clw')
-_accessToken                    CSTRING(2048), PROTECTED
+_accessToken                    STRING(2048), PROTECTED
+_refreshToken                   STRING(64), PROTECTED
 _response                       &IDynStr, PROTECTED
 _lastCurlCode                   CURLcode, PROTECTED
 
@@ -1691,14 +1692,20 @@ Destruct                        PROCEDURE(), DERIVED
 !!!<param name="pAppKey">Application key</param>
 Authorize                       PROCEDURE(STRING pAppKey)
 
+CheckAccessTokenValidity        PROCEDURE(STRING pAccessToken), BOOL
+
 !!!<summary>Acquire a bearer token once the user has authorized the app</summary>
 !!!<param name="pAuthCode">The authorization code, which can be used to attain a bearer token</param>
 !!!<param name="pAppKey">Application key</param>
 !!!<param name="pAppSecret">Application secret</param>
 AccessToken                     PROCEDURE(STRING pAuthCode, STRING pAppKey, STRING pAppSecret), BOOL, PROC
 
+ExchangeCode                    PROCEDURE(STRING pRefreshToken, STRING pAppKey, STRING pAppSecret), BOOL, PROC
+
 AccessToken                     PROCEDURE(STRING pAccessToken)
 AccessToken                     PROCEDURE(), STRING
+RefreshToken                    PROCEDURE(STRING pRefreshToken), PROTECTED
+RefreshToken                    PROCEDURE(), STRING
 
 SetAuthEndpoint                 PROCEDURE(STRING pPostFields), CURLcode, PROC, PROTECTED
 SetRPCEndpoint                  PROCEDURE(STRING pJsonArgs), CURLcode, PROC, PROTECTED

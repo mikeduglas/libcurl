@@ -1,27 +1,31 @@
   MEMBER
 
-  INCLUDE('DbxJSON.inc')
-  INCLUDE('JSON.inc')
+  INCLUDE('DbxJSON.inc'), ONCE
+  INCLUDE('cJSON.inc'), ONCE
 
   MAP
+    INCLUDE('printf.inc'), ONCE
   END
 
 TDbxJSON.GetMetadata          PROCEDURE(STRING pJson, *TDbxMetadata pMetadata)
-json                            JSONDataClass
+factory                         cJSONFactory
   CODE
-  json.FromJSON(pJson, pMetadata)
+  factory.ToGroup(pJson, pMetadata) 
   
 TDbxJSON.GetEntries           PROCEDURE(STRING pJson, *TDbxEntries pEntries)
-json                            JSONDataClass
+factory                         cJSONFactory
+jRoot                           &cJSON, AUTO
   CODE
-  json.FromJSON(pJson, pEntries)
+  jRoot &= factory.Parse(pJson, CP_ACP)
+  jRoot.ToQueue('entries', pEntries)
+  jRoot.Delete()
   
 TDbxJSON.AuthError            PROCEDURE(STRING pJson, *TDbxAuthError pError)
-json                            JSONDataClass
+factory                         cJSONFactory
   CODE
-  json.FromJSON(pJson, pError)
+  factory.ToGroup(pJson, pError) 
 
 TDbxJSON.ApiError             PROCEDURE(STRING pJson, *TDbxApiError pError)
-json                            JSONDataClass
+factory                         cJSONFactory
   CODE
-  json.FromJSON(pJson, pError)
+  factory.ToGroup(pJson, pError) 

@@ -22,13 +22,19 @@ Lib into %ClarionRoot%\Accessory\lib
 Libsrc into %ClarionRoot%\Accessory\libsrc\win  
 Template into %ClarionRoot%\Accessory\template\win  
 
-Where %ClarionRoot% is the folder into which you installed Clarion 10.
+Where %ClarionRoot% is the folder into which you installed Clarion.
+
+Then install the packages from "Dependencies" section.  
 
 Now, with no APPs or DCTs loaded in the Clarion IDE, register the libcurl template by selecting...
 Clarion main menu - Tools - 'Edit Template Registry' - click on 'Register' and use the dialog to navigate to %ClarionRoot%\Accessory\template\win and double-click on libcurl.tpl and click 'Open'.
 
 You should see 'Class LibcurlTpl - Libcurl template' and the LibcurlGloExt and LibcurlLocExt templates are now in the list.
 Click on the Save icon 'floppy disk' and the Green arrow to close.
+
+## Dependencies
+- [printf](https://github.com/mikeduglas/printf)
+- [cjson](https://github.com/mikeduglas/cjson)
 
 
 ## Recent changes

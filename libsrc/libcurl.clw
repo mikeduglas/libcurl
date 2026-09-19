@@ -1,6 +1,6 @@
 !** libcurl for Clarion v1.69.0
 !** 11.11.2025
-!** mikeduglas@yandex.com
+!** mikeduglas@yandex.ru
 !** mikeduglas66@gmail.com
 
   MEMBER

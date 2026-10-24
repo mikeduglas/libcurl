@@ -39,7 +39,7 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 ## Recent changes
 v1.72
-D- CHG: TCurlMailClass: The custom header values like "Display Name xx@yyy.ru>" (for example: "Reply-To", "Disposition-Notification-To" and so on) are forcibly encoded.
+- CHG: TCurlMailClass: The custom header values like "Display Name xx@yyy.ru>" are forcibly encoded. For example: "Reply-To: Дед Пахом <mikeduglas@yandex.ru>".
 - CHG: TCurlMailClass: The names of attached files are forcibly encoded.
 - FIX: mailbody was not disposed in TCurlMailClass.Body method.
 

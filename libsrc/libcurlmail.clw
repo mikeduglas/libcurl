@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.68
-!** 20.08.2025
+!** libcurl for Clarion v1.72
+!** 24.10.2026
 !** mikeduglas@yandex.ru
 !** mikeduglas66@gmail.com
 
@@ -55,6 +55,7 @@ TIME_ZONE_ID_DAYLIGHT                   EQUATE(2)
 
     Header::DateTime(), STRING, PRIVATE  !Returns the current local date and time as string "Wed, 22 Aug 2018 12:32:25 +0300"
     Header::Recipient(STRING pRecipient), STRING, PRIVATE
+    Header::ComplexRecipient(STRING pRecipient), BOOL, PRIVATE  !- recipient contains display name and email address enclosed into the angle brackets (Joe Doe <jd@yandex.ru>)
     
     Body::Add(*TCurlMimeClass mime, curl_mimepart part, STRING pType, STRING pcharset, CONST *STRING pBody), PRIVATE
   END
@@ -623,6 +624,18 @@ sname                           STRING(256), AUTO
   sname = ExtractName(pRecipient)
   RETURN CHOOSE(sname <> '', EncodeHeaderPart(sname) &' <'& ExtractMailAddress(pRecipient) &'>', CLIP(pRecipient))
 
+Header::ComplexRecipient      PROCEDURE(STRING pRecipient)
+addressStartPos                 LONG, AUTO
+addressEndPos                   LONG, AUTO
+  CODE
+  addressStartPos = INSTRING('<<', pRecipient, 1, 1)
+  IF addressStartPos >= 3
+    addressEndPos = INSTRING('>', pRecipient, 1, addressStartPos+6)  !email must have at least 3 characters (x@y.z)
+    IF addressEndPos !  = LEN(CLIP(pRecipient))
+      RETURN TRUE
+    END
+  END
+  RETURN FALSE
 !!!endregion
   
 !!!region TCurlMailClass
@@ -723,16 +736,13 @@ TCurlMailClass.AddAttachment  PROCEDURE(STRING pFilename, <STRING pContentType>,
   CODE
   CLEAR(SELF.attachments)
   SELF.attachments.filename = CLIP(pFilename)
-  SELF.attachments.shortname = CHOOSE(pRemoteName = '', GetShortFileName(pFilename), pRemoteName)
-  
-  IF pContentType
-    SELF.attachments.contentType = CLIP(pContentType)
-  ELSE
-    SELF.attachments.contentType = GetMIMETypeFromFileExt(SELF.attachments.shortname)
-  END
-  
+  SELF.attachments.shortname = CHOOSE(pRemoteName = '', GetShortFileName(pFilename), CLIP(pRemoteName))
+  SELF.attachments.contentType = CHOOSE(pContentType = '', GetMIMETypeFromFileExt(SELF.attachments.shortname), CLIP(pContentType))
   SELF.attachments.charset = CLIP(pCharset)
-  
+
+  !- forced encoding
+  SELF.attachments.shortname = EncodeFileName(SELF.attachments.shortname)
+
   ADD(SELF.attachments)
 
 TCurlMailClass.AddEmbeddedImage   PROCEDURE(STRING pFilename, STRING pCid, <STRING pName>)
@@ -740,17 +750,14 @@ TCurlMailClass.AddEmbeddedImage   PROCEDURE(STRING pFilename, STRING pCid, <STRI
   CLEAR(SELF.attachments)
   
   SELF.attachments.filename = CLIP(pFilename)
-  
-  IF pName
-    SELF.attachments.shortname = CLIP(pName)
-  ELSE
-    SELF.attachments.shortname = GetShortFileName(pFilename)
-  END
-  
+  SELF.attachments.shortname = CHOOSE(pName = '', GetShortFileName(pFilename), CLIP(pName))
   SELF.attachments.contentType = GetMIMETypeFromFileExt(SELF.attachments.shortname)
   SELF.attachments.inline = TRUE
   SELF.attachments.cid = CLIP(pCid)
-  
+
+  !- forced encoding
+  SELF.attachments.shortname = EncodeFileName(SELF.attachments.shortname)
+
   ADD(SELF.attachments)
 
 TCurlMailClass.Subject        PROCEDURE(STRING pSubject, BOOL pEncode = TRUE)
@@ -769,12 +776,13 @@ TCurlMailClass.Subject        PROCEDURE(STRING pSubject, BOOL pEncode = TRUE)
 TCurlMailClass.AddCustomHeader    PROCEDURE(STRING pKey, STRING pValue)
   CODE
   SELF.customHeaderLines.Key = pKey
-  SELF.customHeaderLines.Value = pValue
+  SELF.customHeaderLines.Value = CHOOSE(Header::ComplexRecipient(pValue)=FALSE, pValue, Header::Recipient(pValue))
   ADD(SELF.customHeaderLines)
-  
+
 TCurlMailClass.Body           PROCEDURE(STRING pBody)
   CODE
   ASSERT(pBody <> '')
+  DISPOSE(SELF.mailbody)
   IF pBody <> ''
     SELF.mailbody &= NEW STRING(LEN(CLIP(pBody)))
     SELF.mailbody = CLIP(pBody)

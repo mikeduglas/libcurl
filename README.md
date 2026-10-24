@@ -38,6 +38,11 @@ Click on the Save icon 'floppy disk' and the Green arrow to close.
 
 
 ## Recent changes
+v1.72
+D- CHG: TCurlMailClass: The custom header values like "Display Name xx@yyy.ru>" (for example: "Reply-To", "Disposition-Notification-To" and so on) are forcibly encoded.
+- CHG: TCurlMailClass: The names of attached files are forcibly encoded.
+- FIX: mailbody was not disposed in TCurlMailClass.Body method.
+
 v1.71
 - CHG: TCurlDropboxClass takes into account recent changes in the Dropbox API.
 

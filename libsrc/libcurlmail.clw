@@ -1,5 +1,5 @@
-!** libcurl for Clarion v1.72
-!** 24.10.2026
+!** libcurl for Clarion v1.72.1
+!** 02.11.2026
 !** mikeduglas@yandex.ru
 !** mikeduglas66@gmail.com
 
@@ -73,7 +73,7 @@ rel                             &TCurlMimeClass, PRIVATE  !multipart/related
 
 TCurlMailAttachment           GROUP, TYPE
 filename                        CSTRING(256)
-shortname                       CSTRING(256)
+shortname                       CSTRING(256*2)  !- utf8+base64 encoded
 contentType                     CSTRING(256)
 charset                         CSTRING(33)
 inline                          BOOL
@@ -1060,6 +1060,5 @@ TCurlMailClass.Reset          PROCEDURE()
   SELF.bodyContentType = 'text/plain'
   SELF.bodyCharset = 'UTF-8'
 
-  PARENT.Reset()
-  
+  PARENT.Reset()  
 !!!endregion
